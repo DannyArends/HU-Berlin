@@ -7,6 +7,7 @@
 # Script for SNP analysis in Sudanese dairy cows
 
 setwd("d:/ammar")
+library(randomForest)
 rawdata <- read.table("genotypes.txt")
 
 numdata <- NULL
@@ -55,4 +56,7 @@ round(importance(ammar.rf), 1)                                                  
 ammar.mds <- cmdscale(ammar.rf$proximity, eig=TRUE)                                                     ## Do MDS on 1 - proximity
 colorz <- c("green", "orange", "purple", "blue", "yellow")[as.numeric(as.factor(ammardata[,"Race"]))]   ## Colors for the plot
 
-plot(cbind(ammar.mds$points), cex=0.8, pch=19, col=colorz, main="Ammar Data: MDS of Proximity (RandomForest)", xlab="Var1", ylab="Var2")
+png(file="randomForest.png", width=2000, height=2000)
+op <- par(cex = 2.5)
+plot(cbind(ammar.mds$points), cex=2.0, pch=19, col=colorz, main="Ammar Data: MDS of Proximity (RandomForest)", xlab="Var1", ylab="Var2")
+dev.off()

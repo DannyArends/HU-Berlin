@@ -35,6 +35,8 @@ write.table(annotatedProbes, file="annotatedExpressionData.txt", sep = "\t", row
 # LOCAL
 
 setwd("d:/CTLdata")
+library(limma)
+
 rawdata <- read.table("Kas_Tsu_RIdata.txt", sep='\t', header=TRUE, check.names=FALSE)             # Load our genotypes
 envdata <- read.table("environments.txt", sep=' ', header=FALSE, row.names=1)                     # Environments
 
@@ -79,5 +81,3 @@ mapQTL <- function(name = "AT3G16770_at", plot = TRUE){                         
 }
 
 lodscores <- mapQTL()
-
-

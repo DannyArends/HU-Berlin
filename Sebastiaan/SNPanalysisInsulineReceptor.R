@@ -13,20 +13,21 @@ rowheader   <- 1:6
 combinedFN  <- "S-1versusBFMI.txt"
 
 aa <- lapply(chromosomes, function(x){
-  chrdata <- read.csv(paste0("Mm_chr", x, "_snp_genotypes.txt"), colClasses = "character", sep="\t")
+  chrdata <- read.csv(paste0("Mm_chr", x, "_snp_genotypes_cleaned.txt"), colClasses = "character", sep="\t", skip = 4)
 
-  chr <- chrdata[10:nrow(chrdata),]
-  colnames(chr) <- as.character(unlist(chrdata[9,]))
-  colnames(chr)[7:ncol(chr)] <- as.character(unlist(chrdata[4,7:ncol(chr)]))
+  chr <- chrdata[c(6:nrow(chrdata)),]
+  colnames(chr)[1:6] <- as.character(unlist(chrdata[5,1:6]))
+#  colnames(chr)[7:ncol(chr)] <- as.character(unlist(chrdata[4,7:ncol(chr)]))
 
-  inconsistent <- which(chr[,"BFMI861_S1"] != chr[,"BFMI861-S1"])                           # The inconsistent SNPs _S1 and -S1
-  inconsistent <- c(inconsistent, which(chr[,"BFMI861_S2"] != chr[,"BFMI861-S2"]))          # The inconsistent SNPs _S2 and -S2
+  inconsistent <- which(chr[,"BFMI861.S1"] != chr[,"BFMI861.S1.1"])                         # The inconsistent SNPs _S1 and -S1
+  inconsistent <- c(inconsistent, which(chr[,"BFMI861.S2"] != chr[,"BFMI861.S2.1"]))        # The inconsistent SNPs _S2 and -S2
+  inconsistent <- c(inconsistent, which(chr[,"BFMI861.S1"] == "00"))                       # The SNPs not assessed in BFMI861.S1
   inconsistent <- unique(inconsistent)                                                      # Get only the unique ones
   
-  chr <- chr[-inconsistent, ]                                                               # Throw away the nonconsistent SNPs
+  chr <- chr[-inconsistent, ]                                                                                 # Throw away the nonconsistent SNPs
   
-  nonDiabetic <- c("BFMI852", "BFMI856", "BFMI860_12" , "BFMI860_S2", "BFMI861-S2")         # nonDiabetic BFMI mice
-  isDiabetic <- c("BFMI861-S1")                                                             # Diabetic strain
+  nonDiabetic <- c("BFMI852", "BFMI856", "BFMI860.12", "BFMI860.12.1" , "BFMI860.S2", "BFMI861.S2.1")         # nonDiabetic BFMI mice
+  isDiabetic <- c("BFMI861.S1")                                                             # Diabetic strain
 
   if(nrow(chr) > 0){
     dSNP <- NULL
@@ -34,7 +35,7 @@ aa <- lapply(chromosomes, function(x){
       if(!(chr[snp, isDiabetic] %in% chr[snp, nonDiabetic])){ dSNP <- c(dSNP, snp) }        # If the diabetic SNP is not in the non Diabetic group, Add the SNP
     }
 
-    snpOUT <- cbind(chr[dSNP, rowheader], chr[dSNP, c("BFMI861_S1", "BFMI861-S1")], chr[dSNP, nonDiabetic])
+    snpOUT <- cbind(chr[dSNP, rowheader], chr[dSNP, c("BFMI861.S1", "BFMI861.S1.1")], chr[dSNP, nonDiabetic])
 
     write.table(snpOUT, file=paste0("MM_diffences_chr", x, "_snps.txt"), sep="\t",row.names = FALSE)            # Write individual output files
     
@@ -78,17 +79,17 @@ interestingTargets <- rbind(c("Insr",          8,   3150922,   3279617),
                             c("Agrp",          8, 105566700, 105568298),
                             c("Pomc",         12,   3954951,   3960618),
                             c("Mc4r",         18,  66857715,  66860472))
-                            
-S1versusBFMI <- read.table("S-1 versus BFMI/S-1versusBFMI.txt", header=TRUE)
+
+S1versusBFMI <- read.table("S-1versusBFMI.txt", header=TRUE)
 
 for(tid in 1:nrow(interestingTargets)){
   target   <- interestingTargets[tid,]
   chrSNPs  <- which(S1versusBFMI[,"Chromosome"] == as.numeric(target[2]))
   snpOnCHR <- S1versusBFMI[chrSNPs, ]
-  inRange  <- ( snpOnCHR[, "SNP.Position..Build.37."] > as.numeric(target[3]) & snpOnCHR[, "SNP.Position..Build.37."] < as.numeric(target[4]) )
+  inRange  <- ( snpOnCHR[, "Pos.mm10"] > as.numeric(target[3])- 20000 & snpOnCHR[, "Pos.mm10"] < as.numeric(target[4]) + 200000 )
   if(any(inRange)){
     snpsInGene <- snpOnCHR[which(inRange), ]
-    cat("Found a SNP in:",target[1],", SNP:", as.character(snpsInGene[,"rs.Number"]),"\n")
+    cat("Found a SNP in:",target[1],", SNP:", as.character(snpsInGene[,"dbSNP.RS.ID"]),"\n")
     return()
   }
 }

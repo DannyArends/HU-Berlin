@@ -9,19 +9,37 @@
 setwd("D:/Saria_Horses")
 rawdata <- read.table("MicrosatellitesAnalyes.txt", sep='\t', row.names=1, header=TRUE, colClasses="character")
 
-frequencies <- vector("list", ncol(rawdata))
-names(frequencies) <- colnames(rawdata)
-for(column in 1:ncol(rawdata)){
-  genotypes <- unique(unlist(strsplit(unique(rawdata[,column]), "-")))
-  genotypeData <- strsplit(rawdata[,column], "-")
+rassen <- rawdata[,"Rassen"]
+rawdata <- rawdata[,-c(1)]
 
-  numbers <- NULL
-  for(geno in genotypes){ numbers <- c(numbers, sum(unlist(lapply(genotypeData, function(x){x == geno})))) }
+difrassen <- unique(rassen)
 
-  freq <- (numbers / sum(numbers))
-  names(freq) <- genotypes
-  frequencies[[column]] <- freq
+
+calculateFrequencies <- function(microsatellites){
+  frequencies <- vector("list", ncol(microsatellites))
+  names(frequencies) <- colnames(microsatellites)
+  for(column in 1:ncol(microsatellites)){
+    genotypes <- unique(unlist(strsplit(unique(microsatellites[,column]), "-")))
+    genotypeData <- strsplit(microsatellites[,column], "-")
+
+    numbers <- NULL
+    for(geno in genotypes){ numbers <- c(numbers, sum(unlist(lapply(genotypeData, function(x){x == geno})))) }
+
+    freq <- (numbers / sum(numbers))
+    names(freq) <- genotypes
+    frequencies[[column]] <- freq
+  }
+  return(frequencies)
 }
+
+fAll <- calculateFrequencies(rawdata)
+fH <- calculateFrequencies(rawdata[rassen=="H",])
+fS <- calculateFrequencies(rawdata[rassen=="S",])
+fK <- calculateFrequencies(rawdata[rassen=="K",])
+
+numberOfGenotypes <- cbind(lapply(fAll,length),lapply(fH,length),lapply(fS,length),lapply(fK,length))
+colnames(numberOfGenotypes) <- c("All", "H", "S", "K")
+
 
 # Calculate the polymorphic information content, based on the genotype frequencies
 PIC <- function(allelfreq){
@@ -34,5 +52,33 @@ PIC <- function(allelfreq){
       t2 = t2 + (Pi^2 * Pj^2)                   # Sum of squared between allele frequencies
     }
   }
-  return(1 - t1 - 2 * t2)                       # PIC formula
+  return(as.numeric(1 - t1 - 2 * t2))                       # PIC formula
 }
+
+pAll <- lapply(fAll,PIC)
+pH <- lapply(fH,PIC)
+pS <- lapply(fS,PIC)
+pK <- lapply(fK,PIC)
+
+
+PICsPerRassen <- cbind(pAll,pH,pS,pK)
+
+
+p <- NULL
+for(x in seq(0,1, 0.01)){
+ y <- 1-x
+ p <- c(p, PIC(c(x,y)))
+}
+ 
+ 
+# HardyWeinberg:
+
+datafor <- which(rawdata[,2] != "")
+freq <- table(rawdata[datafor,2]) / length(datafor)
+
+freqM = (0.08333333)^2 + 0.5 * 0.16666667
+freqN = 1 - freqM
+
+expectedMM = freqM^2
+expectedMN = freqM * freqN
+expectedNN = freqN^2

@@ -82,17 +82,16 @@ interestingTargets <- rbind(c("Insr",          8,   3150922,   3279617),
                             c("Pomc",         12,   3954951,   3960618),
                             c("Mc4r",         18,  66857715,  66860472))
 
-S1versusBFMI <- read.table("S-1versusBFMI/S-1versusBFMI.txt", colClasses = "character", header=TRUE)
+S1versusBFMI <- read.table("S-1versusBFMI.txt", colClasses = "character", header=TRUE)
 
 for(tid in 1:nrow(interestingTargets)){
   target   <- interestingTargets[tid,]
   chrSNPs  <- which(S1versusBFMI[,"Chromosome"] == as.numeric(target[2]))
   snpOnCHR <- S1versusBFMI[chrSNPs, ]
-  inRange  <- ( snpOnCHR[, "Pos.mm10"] > as.numeric(target[3])- 20000 & snpOnCHR[, "Pos.mm10"] < as.numeric(target[4]) + 200000 )
+  inRange  <- ( snpOnCHR[, "Pos.mm10"] > as.numeric(target[3])- 400000 & snpOnCHR[, "Pos.mm10"] < as.numeric(target[4]) + 300000 )
   if(any(inRange)){
     snpsInGene <- snpOnCHR[which(inRange), ]
     cat("Found a SNP in:",target[1],", SNP:", as.character(snpsInGene[,"dbSNP.RS.ID"]),"\n")
-    return()
   }
 }
 

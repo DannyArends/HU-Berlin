@@ -65,12 +65,28 @@ library(biomaRt)                                              # Biomart
 snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
 snps <- as.character(chrAnnotationShort[,"dbSNP_ID"])         # The RS_IDs we want to retrieve
 
-results <- NULL
-for(x in seq(1, length(snps),1000)){                                                                # Do 1000 per time, just to please biomaRt
-  xend <- min((x+1000),length(snps))                                                                # Don't walk passed the end of the array
-  cat("Retrieving", x, "/", xend,"\n")
-  res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                            # Use biomart to retrieve locations and reference alleles
-                     filters="snp_filter", values=snps[x:xend], mart=snp.db)
-  results <- rbind(results, res.biomart)
+if(!file.exists("SNPfromBioMart.txt")){
+  results <- NULL
+  for(x in seq(1, length(snps),1000)){                                                                    # Do 1000 per time, just to please biomaRt
+    xend <- min((x+1000),length(snps))                                                                    # Don't walk passed the end of the array
+    cat("Retrieving", x, "/", xend,"\n")
+    res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                                # Use biomart to retrieve locations and reference alleles
+                       filters="snp_filter", values=snps[x:xend], mart=snp.db)
+    results <- rbind(results, res.biomart)
+  }
+  write.table(results, file="SNPfromBioMart.txt", sep="\t", row.names=FALSE)
+}else{                                                                                                    # If the annotation file is there use it
+  results <- read.table("SNPfromBioMart.txt", sep="\t", header=TRUE)
 }
 
+orderInResults <- match(as.character(chrAnnotationShort[,5]), results[,1])                                # Match the results from biomaRt to chrAnnotationShort
+chrAnnotationLong <- cbind(chrAnnotationShort, results[orderInResults,])                                  # Merge
+
+orderingrequested <- c("JAX_ID", "dbSNP_ID", "Chr", "chrom_start", "Allele_A", "Allele_B", "allele")      # Only select the columns we're interested in
+chrAnnotationLong <- chrAnnotationLong[,orderingrequested]
+colnames(chrAnnotationLong) <- c("JAX_ID", "dbSNP_ID", "Chr", "Location", "JAX_A", "JAX_B", "Allele")     # Do some renaming of columns
+
+orderInAnnotation <- match(rownames(newdata), as.character(chrAnnotationLong[,"JAX_ID"]))
+
+fulldata <- cbind(chrAnnotationLong[orderInAnnotation,], newdata)                                         # Bind everything together
+write.table(fulldata, file="SNPAnnotated.txt", sep="\t", row.names=FALSE)                                 # Write out the numeric genotypes

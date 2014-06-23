@@ -1,58 +1,72 @@
 # SNPanalysisInsulineReceptor.R
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
-# last modified May, 2014
+# last modified June, 2014
 # first written May, 2014
 #
 # Analysis of data from Sebastiaan
 
-setwd("D://Sebastiaan_mouse")
+setwd("E:/Atlas/")
 
-chromosomes <- c(1:19, "M", "X", "Y")
-rowheader   <- 1:6
-combinedFN  <- "S-1versusBFMI.txt"
+nonDiabetic   <- c("BFMI852", "BFMI856", "BFMI860-12", "BFMI860-S2")                          # nonDiabetic BFMI mice
+isDiabetic    <- c("BFMI861-S1")                                                              # Diabetic BFMI strain
+isDuplicated  <- c("BFMI860-12", "BFMI861-S2", "BFMI861-S1")                                  # Strains measured multiple times
 
-aa <- lapply(chromosomes, function(x){
-  chrdata <- read.csv(paste0("Mm_chr", x, "_snp_genotypes_cleaned.txt"), colClasses = "character", sep="\t", skip = 4)
+SNPdata <- read.table("SNPAnnotated.txt", sep="\t", header=TRUE)
+cat("Starting with", nrow(SNPdata), "valid SNPs from the mouse diversity array\n")
 
-  chr <- chrdata[c(6:nrow(chrdata)),]
-  colnames(chr)[1:6] <- as.character(unlist(chrdata[5,1:6]))
+annotation <- read.table("MouseAnnotation.txt", header=TRUE)                                  # Load the annotation
+validAnnot <- match(colnames(SNPdata)[8:ncol(SNPdata)], colnames(annotation))                 # Annotation that matches the mice we have in our SNP data
+annotation <- t(annotation[1:6, validAnnot])
+colnames(annotation) <- c("Date", "Line", "Generation", "Phenotype", "Sex", "Diet")           # Correct header names
 
-  inconsistent <- which(chr[,"BFMI861.S1"] != chr[,"BFMI861.S1.1"])                         # The inconsistent SNPs .S1 and .S1.1
-  inconsistent <- c(inconsistent, which(chr[,"BFMI861.S2"] != chr[,"BFMI861.S2.1"]))        # The inconsistent SNPs .S2 and .S2.1
-  inconsistent <- c(inconsistent, which(chr[,"BFMI860.12"] != chr[,"BFMI860.12.1"]))        # The inconsistent SNPs .S2 and .S2.1
-  inconsistent <- c(inconsistent, which(chr[,"BFMI861.S1"] == "00"))                        # The SNPs not assessed in BFMI861.S1
-  inconsistent <- unique(inconsistent)                                                      # Get only the unique ones
-  
-  cat("Removing", length(inconsistent), "SNPs from chromosome", x,"\n")
-  
-  chr <- chr[-inconsistent, ]                                                                                   # Throw away the nonconsistent SNPs
-  
-  nonDiabetic <- c("BFMI852", "BFMI856", "BFMI860.12", "BFMI860.12.1" , "BFMI860.S2", "BFMI861.S2.1")           # nonDiabetic BFMI mice
-  isDiabetic <- c("BFMI861.S1")                                                                                 # Diabetic BFMI strain
+BFMIlines  <- grep("BFMI", annotation[,"Line"])                                               # Get only the BFMI lines
+annotation <- annotation[BFMIlines, ]                                                         # Get only the BFMI lines
 
-  if(nrow(chr) > 0){
-    dSNP <- NULL                                                                                                # SNPs possibly involved in diabetic
-    for(snp in 1:nrow(chr)){
-      if(!(chr[snp, isDiabetic] %in% chr[snp, nonDiabetic])){ dSNP <- c(dSNP, snp) }                            # If the diabetic SNP is not in the nonDiabetic group, Add the SNP
-    }
+inconsistentSNPs <- NULL
+for(mouseLine in isDuplicated){                                                               # Find the inconsistent SNPs between the strains
+  mouseNames <- names(which(annotation[,"Line"] == mouseLine))
+  unEqual <- which(apply(SNPdata[, mouseNames], 1, function(x){x[1] != x[2]}))
+  cat("Found", length(unEqual), "differences between duplicates of", mouseLine,"\n")
+  inconsistentSNPs <- c(inconsistentSNPs, unEqual)
+}
+inconsistentSNPs <- unique(inconsistentSNPs)
 
-    snpOUT <- cbind(chr[dSNP, rowheader], chr[dSNP, c("BFMI861.S1", "BFMI861.S1.1")], chr[dSNP, nonDiabetic])
+percentage <- paste0("(", round(length(inconsistentSNPs)/nrow(SNPdata)*100, d=1), "%)")       # % of inconsistent SNPs
+cat("Removing", length(inconsistentSNPs), percentage, "inconsistently genotypes SNPs\n")
+SNPdata <- SNPdata[-inconsistentSNPs, ]                                                       # Throw away the inconsistent SNPs
 
-    write.table(snpOUT, file=paste0("MM_diffences_chr", x, "_snps.txt"), sep="\t",row.names = FALSE)            # Write individual output files
-    
-    if(x==1){
-      write.table(snpOUT, file=combinedFN, sep="\t",row.names = FALSE)                                          # Write the combined output files *with header*
-    }else{
-      write.table(snpOUT, file=combinedFN, sep="\t",row.names = FALSE, append=TRUE, col.names=FALSE)            # Write the combined output files *no header, and appending*
-    }
-    cat(paste0("Done with chromosome ", x, ", detected: ", length(dSNP), " differences\n"))
-  }else{
-    cat("Skipping chromosome", x, "no consistent SNPs\n")
-  }
-})
+nonDMice <- NULL
+for(mouseLine in nonDiabetic){
+  nonDMice <- c(nonDMice, names(which(annotation[,"Line"] == mouseLine))[1])                  # The mouseID of a non-diabetic mouse
+}
 
-# Might be interesting as targets, build 38 coordinates :X
+isDMouse <- names(which(annotation[,"Line"] == isDiabetic))[1]                                # The mouseID of the diabetic mouse
+
+dSNP <- NULL                                                                                  # SNPs possibly involved in diabetic
+for(snp in 1:nrow(SNPdata)){
+  if(!(SNPdata[snp, isDMouse] %in% SNPdata[snp, nonDMice])){ dSNP <- c(dSNP, snp) }           # If the diabetic SNP is not in the nonDiabetic group, add the SNP
+}
+cat("Found", length(dSNP), "SNPs possibly involved with diabetes\n")
+
+snpOUT <- cbind(SNPdata[dSNP,1:7], SNPdata[dSNP, isDMouse], SNPdata[dSNP, nonDMice])          # Create the ouput (subset the whole SNP arrays)
+colnames(snpOUT) <- c(colnames(SNPdata)[1:7], isDiabetic, nonDiabetic)                        # Add a comprehensive header
+
+NASNPinDiabetic <- which(is.na(snpOUT[,isDiabetic]))                                          # Not genotyped in the diabetic mouse                                        
+cat("Removing", length(NASNPinDiabetic), "SNPs no genotype in the diabetic mouse\n")
+snpOUT <- snpOUT[-NASNPinDiabetic,]                                                           # Remove them
+
+NASNPinNonDiabetic <- which(apply(snpOUT[,nonDiabetic], 1, function(x){                       # Not genotyped in the non-diabetic mice
+    sum(is.na(x))== length(nonDiabetic)})
+  )
+cat("Removing", length(NASNPinNonDiabetic), "SNPs no genotype in the non-diabetic mouse\n")
+snpOUT <- snpOUT[-NASNPinNonDiabetic,]                                                        # Remoce them
+
+percentage <- paste0("(", round(nrow(snpOUT) / nrow(SNPdata) * 100, d = 1), "%)")             # % of possibly diabetes causing SNPs
+cat("Left with", nrow(snpOUT), percentage, "SNPs possibly involved in diabetes\n")
+write.table(snpOUT, file="possibleDiabetesSNPs.txt", sep="\t", row.names = FALSE)             # Write them to a file
+
+# Might be interesting as targets, GRCm38.p2 coordinates
 #
 # Insr: Insuline receptor       Chromosome 8:    3,150,922 -   3,279,617 reverse strand.
 # GLUT4/Slc2a4 :                Chromosome 11:  69,942,539 -  69,948,188
@@ -82,20 +96,18 @@ interestingTargets <- rbind(c("Insr",          8,   3150922,   3279617),
                             c("Pomc",         12,   3954951,   3960618),
                             c("Mc4r",         18,  66857715,  66860472))
 
-S1versusBFMI <- read.table("S-1versusBFMI.txt", colClasses = "character", header=TRUE)
-
 for(tid in 1:nrow(interestingTargets)){
   target   <- interestingTargets[tid,]
-  chrSNPs  <- which(S1versusBFMI[,"Chromosome"] == as.numeric(target[2]))
-  snpOnCHR <- S1versusBFMI[chrSNPs, ]
-  inRange  <- ( snpOnCHR[, "Pos.mm10"] > as.numeric(target[3])- 400000 & snpOnCHR[, "Pos.mm10"] < as.numeric(target[4]) + 300000 )
-  if(any(inRange)){
+  chrSNPs  <- which(snpOUT[,"Chr"] == as.numeric(target[2]))
+  snpOnCHR <- snpOUT[chrSNPs, ]
+  inRange  <- ( snpOnCHR[, "Location"] > as.numeric(target[3]) - 100000 & snpOnCHR[, "Location"] < as.numeric(target[4]) + 100000 )
+  if(any(inRange, na.rm=TRUE)){
     snpsInGene <- snpOnCHR[which(inRange), ]
-    cat("Found a SNP in:",target[1],", SNP:", as.character(snpsInGene[,"dbSNP.RS.ID"]),"\n")
+    cat("Found a SNP near/in:",target[1],", SNP:", as.character(snpsInGene[,"dbSNP_ID"]),"\n")
   }
 }
 
-# Inside the gene regions:
+# Inside the gene regions +/- 100_000 basepairs:
 #
-# Found a SNP in: Cux1 , SNP: rs32248143  5:   136051558    -> Upstream gene variant located in 5'
-# Found a SNP in: Pomc , SNP: rs49073952 12:     3957608    -> intron variant in Pomc & Downstream gene variant in EFR3
+# Found a SNP in: Cux1 , SNP: rs33588565  5:   136636006
+# Found a SNP in: Pomc , SNP: rs46819789 12:     3985182 -> intron variant in EFR3

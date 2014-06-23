@@ -13,8 +13,6 @@ arrays <- c(#"Array1_Atlas_BioLabs_2010-02-15/BRO_Genotypes/orig/quant-norm.pm-o
             "Array5_Atlas_BioLabs_2012-06-25/BRO_Genotypes/orig/quant-norm.pm-only.brlmm-p.calls",
             "Array6_Atlas_BioLabs_2014-02-20/Genotypes/orig/quant-norm.pm-only.brlmm-p.calls")
 
-annotation <- read.table("MouseAnnotation.txt", header=TRUE)
-
 calldata <- NULL; x <- 1
 for(carray in arrays){
   cdata <- read.table(carray, header=TRUE, row.names=1, na.strings = "-1")            # Read in calls from a single array
@@ -32,6 +30,7 @@ headerIDs <- unlist(lapply(strsplit(colnames(newdata), "_"), function(x){       
 colnames(newdata) <- headerIDs                                                        # Set the headers on the data
 colnames(newdata)[38:53] <- gsub("X", "X1", colnames(newdata)[38:53])                 # Header names do not match between annotation and raw data
 
+annotation <- read.table("MouseAnnotation.txt", header=TRUE)                          # Load the annotation
 which(!colnames(newdata) %in% colnames(annotation))                                   # Check if we can map everything to the mouse annotation should return integer(0)
 
 annotation <- annotation[1:6, match(colnames(newdata), colnames(annotation))]         # Reduce the header for only the Atlas mice
@@ -87,7 +86,6 @@ orderingrequested <- c("JAX_ID", "dbSNP_ID", "Chr", "chrom_start", "Allele_A", "
 chrAnnotationLong <- chrAnnotationLong[,orderingrequested]
 colnames(chrAnnotationLong) <- c("JAX_ID", "dbSNP_ID", "Chr", "Location", "JAX_A", "JAX_B", "Allele")     # Do some renaming of columns
 
-orderInAnnotation <- match(rownames(newdata), as.character(chrAnnotationLong[,"JAX_ID"]))
-
+orderInAnnotation <- match(rownames(newdata), as.character(chrAnnotationLong[,"JAX_ID"]))                 # Match the annotation to the data
 fulldata <- cbind(chrAnnotationLong[orderInAnnotation,], newdata)                                         # Bind everything together
-write.table(fulldata, file="SNPAnnotated.txt", sep="\t", row.names=FALSE)                                 # Write out the numeric genotypes
+write.table(fulldata, file="SNPAnnotated.txt", sep="\t", row.names=FALSE)                                 # Write out the annotated numeric genotypes

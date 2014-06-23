@@ -61,14 +61,15 @@ colnames(chrAnnotationShort) <- c("JAX_ID", "Allele_A", "Allele_B", "Chr", "dbSN
 hasAnnot <- which(rownames(newdata) %in% chrAnnotationShort[,1])                                    # What genotype data has Annotation (dbSNP_ID)
 newdata <- newdata[hasAnnot,]                                                                       # Keep only the annotated genotype data
 
-library(biomaRt)
-snp.db <- useMart("snp", dataset="mmusculus_snp")
+library(biomaRt)                                              # Biomart
+snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
+snps <- as.character(chrAnnotationShort[,"dbSNP_ID"])         # The RS_IDs we want to retrieve
+
 results <- NULL
-snps <- as.character(chrAnnotationShort[,"dbSNP_ID"])
-for(x in seq(1, length(snps),1000)){
-  xend <- min((x+1000),length(snps))
-  cat("retrieving", x, "/", xend,"\n")
-  res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                                       # Use biomart to retrive the locations
+for(x in seq(1, length(snps),1000)){                                                                # Do 1000 per time, just to please biomaRt
+  xend <- min((x+1000),length(snps))                                                                # Don't walk passed the end of the array
+  cat("Retrieving", x, "/", xend,"\n")
+  res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                            # Use biomart to retrieve locations and reference alleles
                      filters="snp_filter", values=snps[x:xend], mart=snp.db)
   results <- rbind(results, res.biomart)
 }

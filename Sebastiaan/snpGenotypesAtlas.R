@@ -38,5 +38,38 @@ annotation <- annotation[1:6, match(colnames(newdata), colnames(annotation))]   
 rownames(annotation) <- c("Date", "Line", "Generation", "Phenotype", "Sex", "Diet")   # Correct header names
 annotation <- t(annotation)                                                           # I just like annotations in columns
 
-chromosomeAnnotation <- read.table("JAXannotation/chr1.txt", header=FALSE, sep='\t')  # SNP / Chromosome annotation of the mouse diversity CHIP
-notperfect <- unique(as.character(chromosome1[which(chromosome1[,6] != 2), 1]))       # JAXidentifiers of not perfect hybridizing probes
+chromosomes <- c(1:19, "M", "X", "Y")
+chrAnnotationShort <- NULL
+aa <- lapply(chromosomes, function(chr){
+  chrAnnotation <- read.table(paste0("JAXannotation/chr",chr,".txt"), header=FALSE, sep='\t')       # SNP / Chromosome annotation of the mouse diversity CHIP
+  notperfect <- unique(as.character(chrAnnotation[which(chrAnnotation[,6] != 2), 1]))               # JAXidentifiers of not perfect hybridizing probes
+  weirdProbes <- which(as.character(chrAnnotation[,1]) %in% notperfect)                             # Which ones are they
+  if(length(weirdProbes) > 0){
+    chrAnnotation <- chrAnnotation[-weirdProbes,]                                                   # Remove them
+    cat("Chromosome", chr, "removing", length(weirdProbes), "probes\n")
+  }
+  chrShort <- chrAnnotation[,c(1,2,3,11,15)]                                                        # Take only the annotation of intrest
+  chrAnnotationShort <<- rbind(chrAnnotationShort, chrShort)
+})
+
+noRS <- which(as.character(chrAnnotationShort[,5]) == "")                                           # Remove the ones without an RSid
+chrAnnotationShort <- chrAnnotationShort[-noRS,]
+dupEntries <- which(duplicated(as.character(chrAnnotationShort[,1])))                               # Remove the duplicate entries
+chrAnnotationShort <- chrAnnotationShort[-dupEntries,]
+colnames(chrAnnotationShort) <- c("JAX_ID", "Allele_A", "Allele_B", "Chr", "dbSNP_ID")
+
+hasAnnot <- which(rownames(newdata) %in% chrAnnotationShort[,1])                                    # What genotype data has Annotation (dbSNP_ID)
+newdata <- newdata[hasAnnot,]                                                                       # Keep only the annotated genotype data
+
+library(biomaRt)
+snp.db <- useMart("snp", dataset="mmusculus_snp")
+results <- NULL
+snps <- as.character(chrAnnotationShort[,"dbSNP_ID"])
+for(x in seq(1, length(snps),1000)){
+  xend <- min((x+1000),length(snps))
+  cat("retrieving", x, "/", xend,"\n")
+  res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                                       # Use biomart to retrive the locations
+                     filters="snp_filter", values=snps[x:xend], mart=snp.db)
+  results <- rbind(results, res.biomart)
+}
+

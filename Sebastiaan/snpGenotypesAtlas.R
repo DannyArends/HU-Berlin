@@ -65,18 +65,19 @@ library(biomaRt)                                              # Biomart
 snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
 snps <- as.character(chrAnnotationShort[,"dbSNP_ID"])         # The RS_IDs we want to retrieve
 
-if(!file.exists("SNPfromBioMart.txt")){
+if(!file.exists("SNPAnnotation.txt")){
   results <- NULL
-  for(x in seq(1, length(snps),1000)){                                                                    # Do 1000 per time, just to please biomaRt
+  for(x in seq(1, length(snps), 1000)){                                                                    # Do 1000 per time, just to please biomaRt
     xend <- min((x+1000),length(snps))                                                                    # Don't walk passed the end of the array
     cat("Retrieving", x, "/", xend,"\n")
     res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                                # Use biomart to retrieve locations and reference alleles
                        filters="snp_filter", values=snps[x:xend], mart=snp.db)
     results <- rbind(results, res.biomart)
   }
-  write.table(results, file="SNPfromBioMart.txt", sep="\t", row.names=FALSE)
+  write.table(results, file="SNPAnnotation.txt", sep="\t", row.names=FALSE)
 }else{                                                                                                    # If the annotation file is there use it
-  results <- read.table("SNPfromBioMart.txt", sep="\t", header=TRUE)
+  cat("Loading from Disk\n")
+  results <- read.table("SNPAnnotation.txt", sep="\t", header=TRUE)
 }
 
 orderInResults <- match(as.character(chrAnnotationShort[,5]), results[,1])                                # Match the results from biomaRt to chrAnnotationShort

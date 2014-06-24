@@ -33,7 +33,10 @@ for(mouseLine in isDuplicated){                                                 
 inconsistentSNPs <- unique(inconsistentSNPs)
 
 percentage <- paste0("(", round(length(inconsistentSNPs)/nrow(SNPdata)*100, d=1), "%)")       # % of inconsistent SNPs
-cat("Removing", length(inconsistentSNPs), percentage, "inconsistently genotypes SNPs\n")
+cat("Removing", length(inconsistentSNPs), percentage, "inconsistently genotyped SNPs\n")
+SNPinconsistent <- SNPdata[inconsistentSNPs, ]                                                # Inconsistent SNPs
+write.table(SNPinconsistent[,1:7], file="inconsistentSNPs.txt", sep="\t", row.names = FALSE)  # Write them to a file
+
 SNPdata <- SNPdata[-inconsistentSNPs, ]                                                       # Throw away the inconsistent SNPs
 
 nonDMice <- NULL
@@ -111,3 +114,32 @@ for(tid in 1:nrow(interestingTargets)){
 #
 # Found a SNP in: Cux1 , SNP: rs33588565  5:   136636006
 # Found a SNP in: Pomc , SNP: rs46819789 12:     3985182 -> intron variant in EFR3
+
+chrInfo <- read.table("mouseChrInfo.txt", header=TRUE)
+chromosomes <- c(1:19, "X", "Y", "M")
+snpOUT       <- read.table("possibleDiabetesSNPs.txt", sep="\t", header=TRUE)
+markers      <- read.table("geneticMarkers.txt", sep="\t", header=TRUE)
+inconsistent <- read.table("inconsistentSNPs.txt", sep="\t", header=TRUE)
+
+mlength <- max(chrInfo[,"Length"])
+plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+cnt <- 1
+aa <- apply(chrInfo,1,function(x){
+  lines(c(0,x["Length"]), c(cnt, cnt), type="l", col="black", lty=1)
+  cnt <<- cnt + 1
+})
+aa <- apply(inconsistent, 1,function(x){
+  yloc <- match(x["Chr"], chromosomes); xloc <- x["Location"]
+  points(x=xloc, y=yloc, pch='|', col='black',cex=0.4)
+})
+aa <- apply(snpOUT, 1,function(x){
+  yloc <- match(x["Chr"], chromosomes); xloc <- x["Location"]
+  points(x=xloc, y=yloc+0.15, pch='▼', col='red',cex=0.5)
+})
+aa <- apply(markers, 1,function(x){
+  yloc <- match(x["Chr"], chromosomes); xloc <- x["Location"]
+  points(x=xloc, y=yloc-0.15, pch='▲', col='blue',cex=0.5)
+})
+axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
+axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
+

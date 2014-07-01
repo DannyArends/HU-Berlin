@@ -3,7 +3,7 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified June, 2014
 # first written June, 2014
-# CRAPHOLA WE NEED TO REDO THIS
+#
 
 setwd("E:/Atlas/")
 

@@ -5,10 +5,10 @@
 # first written June, 2014
 #
 
-setwd("E:/JAX/")
+setwd("E:/Agilent/")
 
-genedata <- read.table("MGI_Gene_Model_Coord.rpt", sep="\t", header=TRUE, row.names=1)
-genesOnChr3 <- which(genedata[,"Ensembl.gene.chromosome"]==3)
+genedata <- read.table("MGI_Gene_Model_Coord.rpt", sep="\t", header=TRUE, row.names=1)                    # All genes in the mouse genome according to MGI
+genesOnChr3 <- which(genedata[,"Ensembl.gene.chromosome"]==3)                                             # Take the ones on chromosome 3
 genedataChr3 <- genedata[genesOnChr3,]
 
 write.table(rownames(genedataChr3),"genesOnChr3.txt", col.names=FALSE, row.names=FALSE, quote=FALSE)

@@ -4,15 +4,15 @@
 # last modified June, 2014
 # first written June, 2014
 
-setwd("E:/Atlas/")
+setwd("E:/Mouse/DiversityArray/")
 
 chromosomes <- c(1:19, "X", "Y", "MT")
 
 # Create the database fasta from the ENSEMBLE fasta files
-cat("", file="Mus_musculus.GRCm38.74.dna.fasta")
+cat("", file="Analysis/Mus_musculus.GRCm38.74.dna.fasta")
 for(chr in chromosomes){
-  fastadata <- readLines(paste0("Sequence/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa"))
-  cat(fastadata, sep="\n", file="Mus_musculus.GRCm38.74.dna.fasta", append = TRUE)
+  fastadata <- readLines(paste0("Annotation/GenomeSequence/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa"))
+  cat(fastadata, sep="\n", file="Analysis/Mus_musculus.GRCm38.74.dna.fasta", append = TRUE)
 }
 
 # After this create the BLAST database files:
@@ -21,7 +21,7 @@ for(chr in chromosomes){
 # Create the blast query fasta from the JAX mouse diversity chip annotation files
 chrAnnotationJAX <- NULL
 aa <- lapply(chromosomes, function(chr){
-  chrAnnotation <- read.table(paste0("JAXannotation/chr",chr,".txt"), header=FALSE, sep='\t')       # SNP / Chromosome annotation of the mouse diversity CHIP
+  chrAnnotation <- read.table(paste0("Annotation/ProbeAnnotation/chr",chr,".txt"), header=FALSE, sep='\t')       # SNP / Chromosome annotation of the mouse diversity CHIP
   chrAnnotationJAX <<- rbind(chrAnnotationJAX, chrAnnotation[,c(1, 9)])                             # Take only the annotation of intrest
 })
 colnames(chrAnnotationJAX) <- c("JAX_ID", "Sequence")
@@ -32,9 +32,9 @@ chrAnnotationJAX <- chrAnnotationJAX[-emptySequence, ]
 dupEntries <- which(duplicated(as.character(chrAnnotationJAX[,"JAX_ID"])))                          # Remove the duplicate entries
 chrAnnotationJAX <- chrAnnotationJAX[-dupEntries,]
 
-cat("", file="JAXsequences.fasta")
+cat("", file="Analysis/JAXsequences.fasta")
 apply(chrAnnotationJAX, 1, function(annotation){
-  cat(paste0(">", annotation["JAX_ID"], "\n", as.character(annotation["Sequence"]), "\n"), file="JAXsequences.fasta", append = TRUE)
+  cat(paste0(">", annotation["JAX_ID"], "\n", as.character(annotation["Sequence"]), "\n"), file="Analysis/JAXsequences.fasta", append = TRUE)
 })
 
 # After this use blastn to query the database for the location of the JAX probe sequences

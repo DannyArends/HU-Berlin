@@ -36,7 +36,8 @@ interestingTargets <- rbind(c("Insr",          8,   3150922,   3279617),
                             c("Pomc",         12,   3954951,   3960618),
                             c("Mc4r",         18,  66857715,  66860472))
 
-setwd("E:/Atlas/")
+setwd("E:/Mouse/DiversityArray/")
+file         <- "Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt"
 snpOUT       <- read.table(file, sep="\t", header=TRUE)
 
 for(tid in 1:nrow(interestingTargets)){

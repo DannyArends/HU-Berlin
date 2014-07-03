@@ -6,7 +6,7 @@
 #
 # Analysis of candidate gene data from Sebastiaan
 
-chromosomePlot <- function(file = "BFMI861-S1vsALL_SNPs.txt"){
+chromosomePlot <- function(file, main){
   chromosomes  <- c(1:19, "X", "Y", "M")
   
   chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
@@ -15,7 +15,7 @@ chromosomePlot <- function(file = "BFMI861-S1vsALL_SNPs.txt"){
   inconsistent <- read.table("Analysis/inconsistentSNPsAtlas.txt", sep="\t", header=TRUE)
 
   mlength <- max(chrInfo[,"Length"])
-  plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="BFMI861-S1 versus the other BFMI",sub="Genotype errors: BFMI860-12, BFMI861-S2 and BFMI861-S1", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+  plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main=main, sub="Genotype errors: BFMI861-S2 and BFMI861-S1", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
   cnt <- 1
   aa <- apply(chrInfo,1,function(x){
     lines(c(0,x["Length"]), c(cnt, cnt), type="l", col="black", lty=1)
@@ -38,7 +38,14 @@ chromosomePlot <- function(file = "BFMI861-S1vsALL_SNPs.txt"){
 }
 
 setwd("E:/Mouse/DiversityArray/")
-chromosomePlot("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt")
-chromosomePlot("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt")
-chromosomePlot("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt")
+png(file="Analysis/Figures/BFMI861-S1vsALL_SNPs.png",width=1200, height=800)
+  chromosomePlot("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", "BFMI861-S1 versus the other BFMI")
+dev.off()
 
+png(file="Analysis/Figures/BFMI861-S1vsBFMI861-S2_SNPs.png",width=1200, height=800)
+  chromosomePlot("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt", "BFMI861-S1 versus BFMI861-S1")
+dev.off()
+
+png(file="Analysis/Figures/BFMI861-S1andBFMI860-12vsALL_SNPs.png",width=1200, height=800)
+  chromosomePlot("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", "BFMI861-S1 equal to BFMI860-12 versus the other BFMI")
+dev.off()

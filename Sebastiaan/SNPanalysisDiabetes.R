@@ -42,8 +42,9 @@ dendrogram <- as.dendrogram(hclust(dist(t(SNPdata[,9:ncol(SNPdata)][,rownames(an
 png(file="Analysis/Figures/DendrogramBFMI-lines.png")
   plot(dendrogram, main="Dendrogram BFMI-lines", xlab="", center=TRUE)
 dev.off()
-
 SNPdata <- SNPdata[-inconsistentSNPs, ]                                                           # Throw away the inconsistent SNPs
+
+###### Comparison 1: BFMI861-S1 versus BFMI852, BFMI856, BFMI860-12, BFMI860-S2 ######
 
 nonDMice <- NULL
 for(mouseLine in nonDiabetic){
@@ -58,20 +59,62 @@ for(snp in 1:nrow(SNPdata)){
 }
 cat("Found", length(dSNP), "SNPs possibly involved with diabetes\n")
 
-snpOUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, isDMouse], SNPdata[dSNP, nonDMice])              # Create the ouput (subset the whole SNP arrays)
-colnames(snpOUT) <- c(colnames(SNPdata)[1:8], isDiabetic, nonDiabetic)                            # Add a comprehensive header
+Comparison1OUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, isDMouse], SNPdata[dSNP, nonDMice])      # Create the ouput (subset the whole SNP arrays)
+colnames(Comparison1OUT) <- c(colnames(SNPdata)[1:8], isDiabetic, nonDiabetic)                    # Add a comprehensive header
 
-NASNPinDiabetic <- which(is.na(snpOUT[,isDiabetic]))                                              # Not genotyped in the diabetic mouse                                        
+NASNPinDiabetic <- which(is.na(Comparison1OUT[,isDiabetic]))                                      # Not genotyped in the diabetic mouse                                        
 cat("Removing", length(NASNPinDiabetic), "SNPs no genotype in the diabetic mouse\n")
-snpOUT <- snpOUT[-NASNPinDiabetic,]                                                               # Remove them
+Comparison1OUT <- Comparison1OUT[-NASNPinDiabetic,]                                               # Remove them
 
-NASNPinNonDiabetic <- which(apply(snpOUT[,nonDiabetic], 1, function(x){                           # Not genotyped in the non-diabetic mice
+NASNPinNonDiabetic <- which(apply(Comparison1OUT[,nonDiabetic], 1, function(x){                   # Not genotyped in the non-diabetic mice
   sum(is.na(x))== length(nonDiabetic)
 }))
 
 cat("Removing", length(NASNPinNonDiabetic), "SNPs no genotype in the non-diabetic mouse\n")
-snpOUT <- snpOUT[-NASNPinNonDiabetic,]                                                            # Remove them
+Comparison1OUT <- Comparison1OUT[-NASNPinNonDiabetic,]                                            # Remove them
 
-percentage <- paste0("(", round(nrow(snpOUT) / nrow(SNPdata) * 100, d = 1), "%)")                 # % of possibly diabetes causing SNPs
-cat("Left with", nrow(snpOUT), percentage, "SNPs possibly involved in diabetes\n")
-write.table(snpOUT, file="Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", sep="\t", row.names = FALSE)
+percentage <- paste0("(", round(nrow(Comparison1OUT) / nrow(SNPdata) * 100, d = 1), "%)")         # % of possibly diabetes causing SNPs
+cat("Left with", nrow(Comparison1OUT), percentage, "SNPs possibly involved in diabetes\n")
+write.table(Comparison1OUT, file="Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", sep="\t", row.names = FALSE)
+
+###### Comparison 2: BFMI861-S1 versus BFMI861-S2 ######
+
+mouseS1 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]                   # The mouseID of the diabetic 861-S1 mouse
+mouseS2 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S2"),])[1]                   # The mouseID of the non-diabetic S2 mouse
+
+dSNP <- NULL                                                                                      # SNPs different between S1 and S2
+for(snp in 1:nrow(SNPdata)){
+  if(!is.na(SNPdata[snp, mouseS1]) && !is.na(SNPdata[snp, mouseS2])){
+    if(SNPdata[snp, mouseS1] != SNPdata[snp, mouseS2]){ dSNP <- c(dSNP, snp) }                    # If the SNP is different, add the SNP
+  }
+}
+cat("Found", length(dSNP), "SNPs different between S1 and S2\n")
+
+Comparison2OUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, mouseS1], SNPdata[dSNP, mouseS2])        # Create the ouput (subset the whole SNP arrays)
+colnames(Comparison2OUT) <- c(colnames(SNPdata)[1:8], "BFMI861-S1", "BFMI861-S2")                 # Add a comprehensive header
+write.table(Comparison2OUT, file="Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt", sep="\t", row.names = FALSE)
+
+###### Comparison 3: BFMI861-S1 equal to BFMI860-12 versus BFMI861-S2 ######
+
+mouseS1 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]                   # The mouseID of the diabetic 861-S1 mouse
+mouse86012 <- rownames(annotation[which(annotation[,"Line"] == "BFMI860-12"),])                   # The mouseIDs of the sensitive 860-12 mouse
+
+nonSensitive  <- c("BFMI852", "BFMI856", "BFMI860-S2")                                            # nonSensitive BFMI mice
+nonSMice <- NULL
+for(mouseLine in nonSensitive){
+  nonSMice <- c(nonSMice, rownames(annotation[which(annotation[,"Line"] == mouseLine),])[1])      # The mouseID of a non-diabetic mouse
+}
+
+dSNP <- NULL                                                                                      # SNPs different between S1 and S2
+for(snp in 1:nrow(SNPdata)){
+  if(!is.na(SNPdata[snp, mouseS1]) && !any(is.na(SNPdata[snp, mouse86012]))){
+    if(SNPdata[snp, mouseS1] == SNPdata[snp, mouse86012[1]] && SNPdata[snp, mouseS1] == SNPdata[snp, mouse86012[2]]){      # BFMI861-S1 equal to BFMI860-12
+      if(!(SNPdata[snp, mouseS1] %in% SNPdata[snp, nonSMice])){ dSNP <- c(dSNP, snp) }                                     # If the SNP is not in the nonSensitive group, add the SNP
+    }
+  }
+}
+cat("Found", length(dSNP), "SNPs equal between 861-S1 and 860-12, but different in other BFMI\n")
+
+Comparison3OUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, mouseS1], SNPdata[dSNP, mouse86012[1]], SNPdata[dSNP, nonSMice])  # Create the ouput (subset the whole SNP arrays)
+colnames(Comparison3OUT) <- c(colnames(SNPdata)[1:8], "BFMI861-S1", "BFMI860-12", nonSensitive)                            # Add a comprehensive header
+write.table(Comparison3OUT, file="Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", sep="\t", row.names = FALSE)

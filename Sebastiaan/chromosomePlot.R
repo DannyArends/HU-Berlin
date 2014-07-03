@@ -39,6 +39,6 @@ chromosomePlot <- function(file = "BFMI861-S1vsALL_SNPs.txt"){
 
 setwd("E:/Mouse/DiversityArray/")
 chromosomePlot("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt")
-chromosomePlot("BFMI861-S1vsBFMI861-S2_SNPs.txt")
-chromosomePlot("BFMI861-S1andBFMI860-12vsALL_SNPs.txt")
+chromosomePlot("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt")
+chromosomePlot("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt")
 

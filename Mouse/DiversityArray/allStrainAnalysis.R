@@ -5,7 +5,7 @@
 # first written Juli, 2014
 #
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 calldata <- read.table(file="Analysis/measurementsALL_annotated.txt", sep="\t", header=TRUE)
 

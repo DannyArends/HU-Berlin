@@ -6,7 +6,7 @@
 #
 # Analysis of data from Sebastiaan
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 nonDiabetic   <- c("BFMI852", "BFMI856", "BFMI860-12", "BFMI860-S2")                              # nonDiabetic BFMI mice
 isDiabetic    <- c("BFMI861-S1")                                                                  # Diabetic BFMI strain

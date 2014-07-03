@@ -5,7 +5,7 @@
 # first written June, 2014
 #
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 calldataJAX    <- read.table("Analysis/MeasurementsJAX.txt", sep="\t", header=TRUE, colClasses=c("character"))                        # Load the unannotated data from JAX
 calldataAtlas  <- read.table("Analysis/measurementsAtlas_annotated.txt", sep="\t", header=TRUE, colClasses=c("character"))            # Load the annotated Atlas dataset

@@ -1,22 +1,24 @@
 # Analysis of JAX mouse diversity chip data
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
-# last modified June, 2014
+# last modified Juli, 2014
 # first written June, 2014
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/")
 
 chromosomes <- c(1:19, "X", "Y", "MT")
 
 # Create the database fasta from the ENSEMBLE fasta files
-cat("", file="Analysis/Mus_musculus.GRCm38.74.dna.fasta")
+cat("", file="DiversityArray/Analysis/Mus_musculus.GRCm38.74.dna.fasta")
 for(chr in chromosomes){
   fastadata <- readLines(paste0("Annotation/GenomeSequence/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa"))
-  cat(fastadata, sep="\n", file="Analysis/Mus_musculus.GRCm38.74.dna.fasta", append = TRUE)
+  cat(fastadata, sep="\n", file="DiversityArray/Analysis/Mus_musculus.GRCm38.74.dna.fasta", append = TRUE)
 }
 
 # After this create the BLAST database files:
 # makeblastdb -in Mus_musculus.GRCm38.74.dna.fasta -dbtype nucl -title Mus_musculus.GRCm38 -out Mus_musculus.GRCm38.74.dna.db
+
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 # Create the blast query fasta from the JAX mouse diversity chip annotation files
 chrAnnotationJAX <- NULL

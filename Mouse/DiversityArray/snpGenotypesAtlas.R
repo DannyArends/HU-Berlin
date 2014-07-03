@@ -5,7 +5,7 @@
 # first written June, 2014
 #
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 arrays <- c("Atlas/RAW/2010-08-20.calls",
             "Atlas/RAW/2011-10-06.calls",

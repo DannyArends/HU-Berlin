@@ -37,7 +37,8 @@ chromosomePlot <- function(file, main){
   axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 }
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
+
 png(file="Analysis/Figures/BFMI861-S1vsALL_SNPs.png",width=1200, height=800)
   chromosomePlot("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", "BFMI861-S1 versus the other BFMI")
 dev.off()

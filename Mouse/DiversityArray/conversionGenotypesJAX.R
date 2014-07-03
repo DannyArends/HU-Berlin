@@ -5,7 +5,7 @@
 # first written June, 2014
 #
 
-setwd("E:/Mouse/DiversityArray/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 verbose <- FALSE
 chromosomes <- c(1:19, "X", "Y", "MT")

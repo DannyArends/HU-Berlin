@@ -6,7 +6,7 @@
 #
 # Analysis of genetic marker data from Angelika Ackermann
 
-setwd("E:/Atlas/")
+setwd("E:/Mouse/DNA/DiversityArray/")
 
 snpsChr3 <- c("rs29616484", "rs33497409", "rs29591422", "rs48063146", "rs3152105", "rs3694769", "rs29986155", "rs3151486", "rs29993050", "rs3151465", "rs50516118",
               "rs50895669", "rs13477092", "rs30001450", "rs30731601", "rs36659747", "rs31664218", "rs32954388", "rs30106246", "rs3151486", "rs505161118",
@@ -37,4 +37,4 @@ colnames(res.biomart)     <- c("markerID", "Allele", "Chr", "Start", "End", "Loc
 colnames(microSatellites) <- c("markerID", "Allele", "Chr", "Start", "End", "Location")
 
 markersInLab <- as.data.frame(rbind(microSatellites, res.biomart))
-write.table(markersInLab, "geneticMarkers.txt", sep="\t", row.names=FALSE)
+write.table(markersInLab, "Annotation/GeneticMarkers.txt", sep="\t", row.names=FALSE)

@@ -25,10 +25,28 @@ c("D3Mit22",  "11/22",  3,  69718176,  69718412),
 c("D3Mit312", "22/11",  3, 101400619, 101400741),
 c("D3Mit89",  "11/22",  3, 156837105, 156837325))
 
+setwd("E:/Mouse/DNA/")
+
+inLab <- read.table("Annotation/LabGeneticMarkers.txt", sep="\t")
+mgiMarkerInfo <- read.table("Annotation/MGImarkers.txt", sep="\t", header=TRUE, colClasses=c("character"))
+
+markers <- as.character(inLab[grep("Mit", inLab[,1]),1])
+
+for(m in markers){
+  mgiID <- which(mgiMarkerInfo[,"Symbol"] %in% m)
+  if(length(mgiID) > 0){
+    if(!(m %in% microSatellites[,1]) && mgiMarkerInfo[mgiID,"Start"] != ""){
+      microSatellites <- rbind(microSatellites, c(m, NA, as.character(mgiMarkerInfo[mgiID,c("Chromosome","Start","End")])))
+    }
+  }
+}
+
 microSatellites <- cbind(microSatellites, round(as.numeric(microSatellites[,4]) + as.numeric(microSatellites[,5])/2, d=0))
 
+setwd("E:/Mouse/DNA/DiversityArray/")
+
 library(biomaRt)                                              # Biomart
-snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
+snp.db <- useMart("snp", dataset="mmusculus_snp", host="www.ensembl.org")             # For mouse SNPs
 res.biomart <- getBM(c("refsnp_id", "allele", "chr_name", "chrom_start", "chrom_start", "chrom_start"), filters="snp_filter", values=c(snpsChr3, snpsChr7), mart=snp.db)
 
 res.biomart <- apply(res.biomart,2,as.character)
@@ -38,3 +56,4 @@ colnames(microSatellites) <- c("markerID", "Allele", "Chr", "Start", "End", "Loc
 
 markersInLab <- as.data.frame(rbind(microSatellites, res.biomart))
 write.table(markersInLab, "Annotation/GeneticMarkers.txt", sep="\t", row.names=FALSE)
+

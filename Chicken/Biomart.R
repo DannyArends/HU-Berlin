@@ -15,7 +15,7 @@ snps <- snps[-which(is.na(snps))]                                               
 
 if(!file.exists("Analysis/DBSNPannotation.txt")){
   biomartResults <- NULL
-  for(x in seq(1, length(snps), 1000)){                                                             # Do 1000 per time, just to please biomaRt
+  for(x in seq(serr, length(snps), 1000)){                                                             # Do 1000 per time, just to please biomaRt
     xend <- min((x + 1000),length(snps))                                                            # Don't walk passed the end of the array
     cat("Retrieving", x, "/", xend,"\n")
     res.biomart <- getBM(c("refsnp_id","allele","chr_name","chrom_start"),                          # Use biomart to retrieve locations and reference alleles

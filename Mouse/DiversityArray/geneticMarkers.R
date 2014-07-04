@@ -41,12 +41,12 @@ for(m in markers){
   }
 }
 
-microSatellites <- cbind(microSatellites, round(as.numeric(microSatellites[,4]) + as.numeric(microSatellites[,5])/2, d=0))
+microSatellites <- cbind(microSatellites, round((as.numeric(microSatellites[,4]) + as.numeric(microSatellites[,5]))/2, d=0))
 
 setwd("E:/Mouse/DNA/DiversityArray/")
 
 library(biomaRt)                                              # Biomart
-snp.db <- useMart("snp", dataset="mmusculus_snp", host="www.ensembl.org")             # For mouse SNPs
+snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
 res.biomart <- getBM(c("refsnp_id", "allele", "chr_name", "chrom_start", "chrom_start", "chrom_start"), filters="snp_filter", values=c(snpsChr3, snpsChr7), mart=snp.db)
 
 res.biomart <- apply(res.biomart,2,as.character)

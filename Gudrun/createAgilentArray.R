@@ -5,7 +5,7 @@
 # first written June, 2014
 #
 
-setwd("E:/Agilent/")
+setwd("E:/Mouse/RNA/ArrayDesign/Agilent")
 
 genedata <- read.table("MGI_Gene_Model_Coord.rpt", sep="\t", header=TRUE, row.names=1)                    # All genes in the mouse genome according to MGI
 genesOnChr3 <- which(genedata[,"Ensembl.gene.chromosome"]==3)                                             # Take the ones on chromosome 3
@@ -31,3 +31,48 @@ write.table(rnaToTarget ,"rnasForAgilenteArray.txt", col.names=FALSE, row.names=
 
 # We can now upload this to Agilent eArray: https://earray.chem.agilent.com/
 # Select GE Probe Design, -> Genbank Accession & M. Musculus (UniGene Build #186)
+
+# Which ones can we leave off the array
+
+onArray <- read.csv("PGRID172954COMPLETE.tdt", sep="\t", header=TRUE, colClasses=c("character"))
+notExpressed <- read.table("MGItoREFSEQ.txt", sep="\t", header=TRUE, colClasses=c("character"))
+
+targetOnArray <- na.omit(unlist(lapply(strsplit(onArray[,"TargetID"],"|",fixed=TRUE),"[",2)))
+removalCandidates <- targetOnArray[targetOnArray %in% notExpressed[,"GenBank.RefSeq.ID"]]
+
+toRem <- onArray[which(onArray[,"TargetID"] %in% paste0("ref|", removalCandidates)), ]
+toRem <- toRem[-grep("chr3", toRem[,"ChromosomalLocation"]),]
+
+# Which ones are already on the array
+
+addToArray <- read.csv("OurProbeGroup.tdt", sep="\t", header=TRUE, colClasses=c("character"))
+wantToAdd <- unlist(lapply(strsplit(na.omit(unlist(lapply(strsplit(addToArray[,"TargetID"],"|",fixed=TRUE),"[",2))),".", fixed=TRUE),"[",1))
+
+toAdd <- wantToAdd[which(!wantToAdd %in% targetOnArray)]
+
+# We find: 1457 probes not on the array yet, which we want to add
+# We find: 3157 probes that can be removed/swapped by our new probes
+
+# Create an output TDT file containing our probes, and the ones from Agilent
+set.seed(1)
+doNotTake <- which(onArray[,"TargetID"] %in% toRem[,"TargetID"])
+AgilentPart <- onArray[-sample(doNotTake, 1457),]                          # Because of duplicates we only need 1617 ID's
+HUBerlinPart <- addToArray[which(wantToAdd %in% toAdd),]
+
+refseqIDs <- unlist(lapply(strsplit(na.omit(unlist(lapply(strsplit(HUBerlinPart[,"TargetID"],"|",fixed=TRUE),"[",2))),".", fixed=TRUE),"[",1))
+MGIs <- genbankFromMGI[match(refseqIDs,genbankFromMGI[,"GenBank.RefSeq.ID"]),"MGI.Gene.Marker.ID"]
+
+HUBerlinPart[,"GeneSymbol"] <- genedataChr3[MGIs,"marker.symbol"]
+HUBerlinPart[,"Description"] <- genedataChr3[MGIs,"marker.name"]
+HUBerlinPart[,"ChromosomalLocation"] <- paste0("mm|chr", genedataChr3[MGIs,"Ensembl.gene.chromosome"], ":", genedataChr3[MGIs,"Ensembl.gene.start"], "-", genedataChr3[MGIs,"Ensembl.gene.end"])
+
+newProbeGroup <- rbind(AgilentPart, HUBerlinPart)
+
+IDS <- c(2086, 2385, 3241, 5977, 18361, 18973, 19595, 25544, 30197, 33810, 37288, 37944, 43889, 44526, 47079, 48497, 50800, 51305)-1
+newProbeGroup[IDS, "Description"] <- "Agilent eArray bug for this description"
+
+write.table(newProbeGroup, "HUBerlinProbeGroup.tdt", sep="\t", quote=FALSE, row.names=FALSE)
+dim(AgilentPart)
+dim(HUBerlinPart)
+dim(onArray)
+dim(newProbeGroup)

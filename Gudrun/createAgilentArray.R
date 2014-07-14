@@ -33,6 +33,7 @@ write.table(rnaToTarget ,"rnasForAgilenteArray.txt", col.names=FALSE, row.names=
 # Select GE Probe Design, -> Genbank Accession & M. Musculus (UniGene Build #186)
 
 # Which ones can we leave off the array
+setwd("E:/Mouse/RNA/ArrayDesign/Agilent")
 
 onArray <- read.csv("PGRID172954COMPLETE.tdt", sep="\t", header=TRUE, colClasses=c("character"))
 notExpressed <- read.table("MGItoREFSEQ.txt", sep="\t", header=TRUE, colClasses=c("character"))
@@ -49,14 +50,18 @@ addToArray <- read.csv("OurProbeGroup.tdt", sep="\t", header=TRUE, colClasses=c(
 wantToAdd <- unlist(lapply(strsplit(na.omit(unlist(lapply(strsplit(addToArray[,"TargetID"],"|",fixed=TRUE),"[",2))),".", fixed=TRUE),"[",1))
 
 toAdd <- wantToAdd[which(!wantToAdd %in% targetOnArray)]
+cat("We want to add", length(toAdd), "probes / genes on chromosome 3\n")
 
 # We find: 1457 probes not on the array yet, which we want to add
-# We find: 3157 probes that can be removed/swapped by our new probes
+# We find: 2074 probes that can be removed/swapped by our new probes
 
 # Create an output TDT file containing our probes, and the ones from Agilent
 set.seed(1)
 doNotTake <- which(onArray[,"TargetID"] %in% toRem[,"TargetID"])
-AgilentPart <- onArray[-sample(doNotTake, 1457),]                          # Because of duplicates we only need 1617 ID's
+cat("We could remove", length(doNotTake), "non expressed genes\n")
+notTaken <- sample(doNotTake, 1457)
+AgilentPartRemoved <- onArray[notTaken,]                                                  # Because of duplicates we only need 1457 ID's
+AgilentPart <- onArray[-notTaken,]                                                        # Because of duplicates we only need 1457 ID's
 HUBerlinPart <- addToArray[which(wantToAdd %in% toAdd),]
 
 refseqIDs <- unlist(lapply(strsplit(na.omit(unlist(lapply(strsplit(HUBerlinPart[,"TargetID"],"|",fixed=TRUE),"[",2))),".", fixed=TRUE),"[",1))
@@ -76,3 +81,7 @@ dim(AgilentPart)
 dim(HUBerlinPart)
 dim(onArray)
 dim(newProbeGroup)
+
+
+write.table(onArray[doNotTake, ],"PossibleCandidatesForRemoval.txt",sep="\t", row.names=FALSE)
+write.table(onArray[notTaken, ],"MyCandidatesForRemoval.txt",sep="\t", row.names=FALSE)

@@ -81,29 +81,36 @@ if(!file.exists("BiomartAnnotation.txt")){
 biomartResults <- biomartResults[-which(duplicated(biomartResults[,"mgi_id"])),]                                      # Remove the duplicate annotations
 
 # Merge the biomart analysis to the BLAST results
-
-for(x in 1:nrow(blastResults)){                                                                                       # Match up the biomart genes to the blast results
-  mgis <- unique(biomartResults[which(biomartResults[,"chromosome_name"] == blastResults[x,"Chr"] & 
-                 biomartResults[,"start_position"] <= as.numeric(blastResults[x,"Start"]) & 
-                 biomartResults[,"end_position"] >= as.numeric(blastResults[x,"Stop"]) &
-                 biomartResults[,"strand"] == blastResults[x,"Strand"]
-                 ),"mgi_id"])
-  if(length(mgis) > 0){
-    annot <- NULL
-    for(hit in mgis){
-      id <- which(biomartResults[,"mgi_id"] == hit)
-      annot <- c(annot, paste(hit, biomartResults[id,"mgi_symbol"], biomartResults[id,"start_position"], biomartResults[id,"end_position"],sep=";"))
+if(!file.exists("IlluminaProbesBlastAnnotated.txt")){
+  for(x in 1:nrow(blastResults)){
+    mgis <- unique(biomartResults[which(biomartResults[,"chromosome_name"] == blastResults[x,"Chr"] & 
+                  biomartResults[,"start_position"] <= as.numeric(blastResults[x,"Start"]) & 
+                  biomartResults[,"end_position"] >= as.numeric(blastResults[x,"Stop"]) &
+                  biomartResults[,"strand"] == blastResults[x,"Strand"]
+                  ),"mgi_id"])
+    if(length(mgis) > 0){
+      annot <- NULL
+      for(hit in mgis){
+        id <- which(biomartResults[,"mgi_id"] == hit)
+        annot <- c(annot, paste(hit, biomartResults[id,"mgi_symbol"], biomartResults[id,"start_position"], biomartResults[id,"end_position"],sep=";"))
+      }
+      blastResults[x,"Annotation"] = paste0(annot,collapse="///")
     }
-    blastResults[x,"Annotation"] = paste0(annot,collapse="///")
+    if(x %% 1000 == 0) cat("Done",x,"/",nrow(blastResults),"\n")
   }
-  if(x %% 1000 == 0) cat("Done",x,"/",nrow(blastResults),"\n")
+  write.table(blastResults, file="IlluminaProbesBlastAnnotated.txt", sep="\t", row.names=FALSE)
+}else{
+  cat("Loading annotated BLAST results from disk\n")
+  blastResults <- read.table("IlluminaProbesBlastAnnotated.txt",sep="\t", header=TRUE, colClasses=c("character"))
 }
 
 # Not expressed genes
-expressionlevels <- cbind(apply(normdata, 1, median), apply(normdata, 1, sd))
+expressionlevels <- cbind(apply(normdata, 1, median), apply(normdata, 1, sd))                             # Calculate the expression levels
 
-notExpressed <- which(expressionlevels[,1] < 4.7 & expressionlevels[,2] < 0.1)
+notExpressed <- which(expressionlevels[,1] < 4.65 & expressionlevels[,2] < 0.1)                            # Mean expression lower then 4.6 and SD < 0.1
 image(normdata[notExpressed,])
+
+cat("Found", length(notExpressed), "Genes/Probes\n")
 
 hasAnnotation <- match(rownames(normdata[notExpressed,]), blastResults[,"decoder_ID"])
 hasAnnotation <- na.omit(hasAnnotation)
@@ -112,6 +119,23 @@ notExpressed <- na.omit(blastResults[hasAnnotation,])
 
 notExpressedAnnot <- lapply(unlist(strsplit(notExpressed[,"Annotation"],"///")), strsplit, ";")
 notExpressedMGI <- unlist(lapply(notExpressedAnnot,function(x){return(x[[1]][1]);}))
+
+cat("Not expressed MGIs", length(notExpressedMGI),"before using RNASeq data\n")
+
+setwd("E:/Mouse/RNA/Sequencing")                                                                          # Adding a second data source RNA Seq expression data
+
+RNASeqData <- read.table("BFMI_RPKM_ANN.txt", sep="\t", header=TRUE)
+
+RNASeqData <- RNASeqData[which(RNASeqData[,"mgi_id"] %in% notExpressedMGI),]
+MeanRNASeq <- RNASeqData[,grep("Mean", colnames(RNASeqData))]
+
+RNASeqExpressedMGI <- RNASeqData[which(!apply(MeanRNASeq,1,mean) < 15), "mgi_id"]                         # Expressed in the RNASeq dataset so not remove them
+
+notExpressedMGI <- notExpressedMGI[-which(notExpressedMGI %in% RNASeqExpressedMGI)]
+cat("Not expressed MGIs", length(notExpressedMGI),"after using RNASeq data\n")
+
+setwd("E:/Mouse/RNA/FV3")                                                                                 # Return to the FV3 Dataset
+
 cat(notExpressedMGI, sep="\n",file="notExpressedMGIs.txt")
 
 # Use http://www.informatics.jax.org/batch to query the resulting to REFSEQ sequences, then continue in the folder Array Design

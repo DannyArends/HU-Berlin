@@ -129,7 +129,7 @@ RNASeqData <- read.table("BFMI_RPKM_ANN.txt", sep="\t", header=TRUE)
 RNASeqData <- RNASeqData[which(RNASeqData[,"mgi_id"] %in% notExpressedMGI),]
 MeanRNASeq <- RNASeqData[,grep("Mean", colnames(RNASeqData))]
 
-RNASeqExpressedMGI <- RNASeqData[which(!apply(MeanRNASeq,1,mean) < 15), "mgi_id"]                         # Expressed in the RNASeq dataset so not remove them
+RNASeqExpressedMGI <- RNASeqData[which(apply(MeanRNASeq,1,mean) > 0.5), "mgi_id"]                         # Expressed in the RNASeq dataset so not remove them
 
 notExpressedMGI <- notExpressedMGI[-which(notExpressedMGI %in% RNASeqExpressedMGI)]
 cat("Not expressed MGIs", length(notExpressedMGI),"after using RNASeq data\n")

@@ -53,6 +53,9 @@ toRem <- onArray[which(onArray[,"TargetID"] %in% paste0("ref|", removalCandidate
 toRem <- toRem[-grep("chr3", toRem[,"ChromosomalLocation"]),]                                       # And not on chromosome 3
 
 addToArray <- read.csv("OurProbeGroup.tdt", sep="\t", header=TRUE, colClasses=c("character"))       # The ones we want to add
+
+addToArray <- addToArray[-which(duplicated(addToArray[,"Sequence"])),]
+
 wantToAdd <- unlist(lapply(strsplit(na.omit(unlist(lapply(strsplit(addToArray[,"TargetID"], "|", fixed=TRUE),"[",2))),".", fixed=TRUE),"[",1))
 
 
@@ -78,12 +81,16 @@ AddAnnot <- cbind(AddAnnotation, genedataChr3[match(AddAnnotation[,"Input"],rown
 
 AddAnnot <- AddAnnot[match(toAdd, AddAnnot[,"GenBank.RefSeq.ID"]),]                                     # In the toAdd ordering
 
-endOfChr3 <- which(as.numeric(as.character(AddAnnot[,"Ensembl.gene.end"])) > 85019840)                  # Which are at the end of chromosome 3
+endOfChr3 <- which(as.numeric(as.character(AddAnnot[,"Ensembl.gene.end"])) > 140920840)                  # Which are at the end of chromosome 3
 
 cat("We don't want", length(endOfChr3), "probes at the end of chromosome 3\n")
-toAdd <- toAdd[-endOfChr3]
+toAdd <- toAdd[-endOfChr3[1:51]]
 
 cat("We want to add", length(toAdd), "probes / genes on the beginning of chromosome 3\n")
+
+# After selection, we want to keep an additional couple of probes because otherwise we have to few
+toKeepGB <- read.table("NewCandidatesForRemoval_GAB.txt", sep="\t", header=TRUE)
+toRem <- toRem[-which(toRem[,"TargetID"] %in% toKeepGB[which(toKeepGB[,"X"]==1),"TargetID"]),]
 
 # Create an output TDT file containing our probes, and the ones from Agilent
 set.seed(1)
@@ -116,4 +123,6 @@ dim(onArray)
 dim(newProbeGroup)
 
 
-write.table(onArray[doNotTake, ],"NewCandidatesForRemoval.txt",sep="\t", row.names=FALSE)
+write.table(onArray[doNotTake, ],"Removals.txt",sep="\t", row.names=FALSE)
+write.table(HUBerlinPart,"Additionals.txt",sep="\t", row.names=FALSE)
+

@@ -11,8 +11,8 @@ setwd("E:/Mouse/DNA/DiversityArray/")
 snpOUT  <- read.table("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
 chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 
-snpInRegion <- 35
-maxDistance <- 4000000
+snpInRegion <- 35                                                         # A region should contain at least 35 SNPs
+maxDistance <- 4000000                                                    # If the neighbouring SNP is less that 4mb away, we continue with our region
 
 regions <- NULL
 for(chr in chromosomes){
@@ -44,3 +44,16 @@ for(chr in chromosomes){
 }
 
 colnames(regions) <- c("Chr","Start","End","SNPs")
+query.regions <- paste(regions[,"Chr"],regions[,"Start"],regions[,"End"], sep=":")                                  # Regions encoded for biomart
+
+library(biomaRt)
+bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                                            # Biomart for mouse genes
+res.biomart <- getBM(attributes = c("mgi_id","mgi_symbol", "mgi_description", "chromosome_name", "start_position", "end_position", "strand"), 
+                        filters = c("chromosomal_region", "biotype"), 
+                        values = list(query.regions,"protein_coding"), mart = bio.mart)
+
+sortnames <- c("chromosome_name", "start_position")                                                                 # Sort on multiple columns
+res.biomart <- res.biomart[do.call("order", res.biomart[sortnames]), ]
+
+write.table(regions, "Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_Regions.txt", sep="\t", row.names=FALSE)
+write.table(res.biomart, "Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_GenesInRegions.txt", sep="\t", row.names=FALSE)

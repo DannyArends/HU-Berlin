@@ -113,7 +113,7 @@ HUBerlinPart[,"ChromosomalLocation"] <- paste0("mm|chr", genedataChr3[MGIs,"Ense
 
 newProbeGroup <- rbind(AgilentPart, HUBerlinPart)
 
-IDS <- c(2086, 2385, 3241, 5977, 18361, 18973, 19595, 25544, 30197, 33810, 37288, 37944, 43889, 44526, 47079, 48497, 50800, 51305)-1
+IDS <- c(2133, 2439, 3312, 6108, 18527, 19152, 19779, 25797, 30518, 34242, 37855, 38537, 44649, 45300, 47925, 49396, 51732, 52248)-1
 newProbeGroup[IDS, "Description"] <- "Agilent eArray bug for this description"
 
 write.table(newProbeGroup, "HUBerlinProbeGroup.tdt", sep="\t", quote=FALSE, row.names=FALSE)

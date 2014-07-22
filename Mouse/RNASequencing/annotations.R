@@ -80,9 +80,8 @@ write.table(updatedData, file="BFMI_RPKM_ANN.txt", sep="\t", row.names=FALSE)
 # Quality control of the data
 
 RPKM_MEAN <- apply(RPKM, 1, mean)
-RPKM_SD <- apply(RPKM, 1, sd)
 
-notExpressed <- which(RPKM_MEAN <= 2 & RPKM_SD <= 0.1)
+notExpressed <- which(RPKM_MEAN <= 1)
 RPKM <- RPKM[-notExpressed, ]
 cat("Filtered out:", length(notExpressed), "genes (not expressed)\n")
 
@@ -123,12 +122,33 @@ findGroups <- function(BFMI, B6N, F1, pExp=0.1, p = 0.05){
   G5  <-  pval_B6N_L_BFMI < 0.1 & pval_B6N_L >= p & pval_BFMI_S <  p; wG5 <- which(G5);   cat("Group  5: BFMI == D1/D2  < B6N:", length(wG5), "\n")
   G6  <-  pval_B6N_L_BFMI < 0.1 & pval_B6N_L <  p & pval_BFMI_S >= p; wG6 <- which(G6);   cat("Group  6: BFMI  < D1/D2 == B6N:", length(wG6), "\n")
   GU2 <-  pval_B6N_L_BFMI < 0.1 & pval_B6N_L >= p & pval_BFMI_S >= p; wGU2 <- which(GU2); cat("Group U2: BFMI == D1/D2 == B6N:", length(which(GU2)), "\n")
-  return(list(B6N_F1_BFMI[G1,], B6N_F1_BFMI[G2,], B6N_F1_BFMI[G3,], B6N_F1_BFMI[G4,], B6N_F1_BFMI[G5,], B6N_F1_BFMI[G6,]))
+  return(list(B6N_F1_BFMI[G1,], B6N_F1_BFMI[G2,], B6N_F1_BFMI[G3,], B6N_F1_BFMI[GU1,], B6N_F1_BFMI[G4,], B6N_F1_BFMI[G5,], B6N_F1_BFMI[G6,], B6N_F1_BFMI[GU2,],
+              list(pval_B6N_S_BFMI, pval_B6N_L_BFMI, pval_B6N_S, pval_B6N_L, pval_BFMI_S, pval_BFMI_L)))
 }
 
+updatedData <- cbind(updatedData, "A/D_BFMI860-12xB6N" = rep(NA, nrow(updatedData)))
+
 analysis_LD1 <- findGroups(LBFMI, LB6N, LD1)
-analysis_LD1 <- findGroups(LBFMI, LB6N, LD2)
+updatedData[rownames(LD1), "A/D_BFMI860-12xB6N"] <- "-"
+updatedData[rownames(analysis_LD1[[1]]), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
+updatedData[rownames(analysis_LD1[[2]]), "A/D_BFMI860-12xB6N"] <- "B6N"
+updatedData[rownames(analysis_LD1[[3]]), "A/D_BFMI860-12xB6N"] <- "BFMI"
+updatedData[rownames(analysis_LD1[[4]]), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
+updatedData[rownames(analysis_LD1[[5]]), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
+updatedData[rownames(analysis_LD1[[6]]), "A/D_BFMI860-12xB6N"] <- "BFMI"
+updatedData[rownames(analysis_LD1[[7]]), "A/D_BFMI860-12xB6N"] <- "B6N"
+updatedData[rownames(analysis_LD1[[8]]), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
 
+updatedData <- cbind(updatedData, "A/D_B6NxBFMI860-12" = rep(NA, nrow(updatedData)))
+analysis_LD2 <- findGroups(LBFMI, LB6N, LD2)
+updatedData[rownames(LD2), "A/D_B6NxBFMI860-12"] <- "-"
+updatedData[rownames(analysis_LD2[[1]]), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
+updatedData[rownames(analysis_LD2[[2]]), "A/D_B6NxBFMI860-12"] <- "B6N"
+updatedData[rownames(analysis_LD2[[3]]), "A/D_B6NxBFMI860-12"] <- "BFMI"
+updatedData[rownames(analysis_LD2[[4]]), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
+updatedData[rownames(analysis_LD2[[5]]), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
+updatedData[rownames(analysis_LD2[[6]]), "A/D_B6NxBFMI860-12"] <- "BFMI"
+updatedData[rownames(analysis_LD2[[7]]), "A/D_B6NxBFMI860-12"] <- "B6N"
+updatedData[rownames(analysis_LD2[[8]]), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
 
-plot(as.numeric(LALL[wG1[1],]))
-plot(as.numeric(LALL[wG4[1],]))
+write.table(updatedData, file="BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)

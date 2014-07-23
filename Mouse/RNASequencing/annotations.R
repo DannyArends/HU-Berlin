@@ -128,27 +128,29 @@ findGroups <- function(BFMI, B6N, F1, pExp=0.1, p = 0.05){
 
 updatedData <- cbind(updatedData, "A/D_BFMI860-12xB6N" = rep(NA, nrow(updatedData)))
 
+dim(updatedData)
 analysis_LD1 <- findGroups(LBFMI, LB6N, LD1)
-updatedData[rownames(LD1), "A/D_BFMI860-12xB6N"] <- "-"
-updatedData[rownames(analysis_LD1[[1]]), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
-updatedData[rownames(analysis_LD1[[2]]), "A/D_BFMI860-12xB6N"] <- "B6N"
-updatedData[rownames(analysis_LD1[[3]]), "A/D_BFMI860-12xB6N"] <- "BFMI"
-updatedData[rownames(analysis_LD1[[4]]), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
-updatedData[rownames(analysis_LD1[[5]]), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
-updatedData[rownames(analysis_LD1[[6]]), "A/D_BFMI860-12xB6N"] <- "BFMI"
-updatedData[rownames(analysis_LD1[[7]]), "A/D_BFMI860-12xB6N"] <- "B6N"
-updatedData[rownames(analysis_LD1[[8]]), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
+updatedData[as.numeric(rownames(LD1)), "A/D_BFMI860-12xB6N"] <- "-"
+dim(updatedData)
+updatedData[as.numeric(rownames(analysis_LD1[[1]])), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
+updatedData[as.numeric(rownames(analysis_LD1[[2]])), "A/D_BFMI860-12xB6N"] <- "B6N"
+updatedData[as.numeric(rownames(analysis_LD1[[3]])), "A/D_BFMI860-12xB6N"] <- "BFMI"
+updatedData[as.numeric(rownames(analysis_LD1[[4]])), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
+updatedData[as.numeric(rownames(analysis_LD1[[5]])), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
+updatedData[as.numeric(rownames(analysis_LD1[[6]])), "A/D_BFMI860-12xB6N"] <- "BFMI"
+updatedData[as.numeric(rownames(analysis_LD1[[7]])), "A/D_BFMI860-12xB6N"] <- "B6N"
+updatedData[as.numeric(rownames(analysis_LD1[[8]])), "A/D_BFMI860-12xB6N"] <- "UNKNOWN"
 
 updatedData <- cbind(updatedData, "A/D_B6NxBFMI860-12" = rep(NA, nrow(updatedData)))
 analysis_LD2 <- findGroups(LBFMI, LB6N, LD2)
-updatedData[rownames(LD2), "A/D_B6NxBFMI860-12"] <- "-"
-updatedData[rownames(analysis_LD2[[1]]), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
-updatedData[rownames(analysis_LD2[[2]]), "A/D_B6NxBFMI860-12"] <- "B6N"
-updatedData[rownames(analysis_LD2[[3]]), "A/D_B6NxBFMI860-12"] <- "BFMI"
-updatedData[rownames(analysis_LD2[[4]]), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
-updatedData[rownames(analysis_LD2[[5]]), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
-updatedData[rownames(analysis_LD2[[6]]), "A/D_B6NxBFMI860-12"] <- "BFMI"
-updatedData[rownames(analysis_LD2[[7]]), "A/D_B6NxBFMI860-12"] <- "B6N"
-updatedData[rownames(analysis_LD2[[8]]), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
+updatedData[as.numeric(rownames(LD2)), "A/D_B6NxBFMI860-12"] <- "-"
+updatedData[as.numeric(rownames(analysis_LD2[[1]])), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
+updatedData[as.numeric(rownames(analysis_LD2[[2]])), "A/D_B6NxBFMI860-12"] <- "B6N"
+updatedData[as.numeric(rownames(analysis_LD2[[3]])), "A/D_B6NxBFMI860-12"] <- "BFMI"
+updatedData[as.numeric(rownames(analysis_LD2[[4]])), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
+updatedData[as.numeric(rownames(analysis_LD2[[5]])), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
+updatedData[as.numeric(rownames(analysis_LD2[[6]])), "A/D_B6NxBFMI860-12"] <- "BFMI"
+updatedData[as.numeric(rownames(analysis_LD2[[7]])), "A/D_B6NxBFMI860-12"] <- "B6N"
+updatedData[as.numeric(rownames(analysis_LD2[[8]])), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
 
 write.table(updatedData, file="BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)

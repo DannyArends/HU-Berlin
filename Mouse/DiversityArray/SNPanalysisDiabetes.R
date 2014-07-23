@@ -19,9 +19,6 @@ annotation <- read.table("Annotation/MouseAnnotation.txt", header=TRUE)         
 validAnnot <- match(colnames(SNPdata)[9:ncol(SNPdata)], rownames(annotation))                     # Annotation that matches the mice we have in our SNP data
 annotation <- annotation[validAnnot, ]
 
-BFMIlines  <- grep("BFMI", annotation[,"Line"])                                                   # Get only the BFMI lines
-annotation <- annotation[BFMIlines, ]                                                             # Get only the BFMI lines
-
 inconsistentSNPs <- NULL
 amount <- NULL
 for(mouseLine in isDuplicated){                                                                   # Find the inconsistent SNPs between the strains
@@ -44,6 +41,16 @@ png(file="Analysis/Figures/DendrogramBFMI-lines.png")
 dev.off()
 SNPdata <- SNPdata[-inconsistentSNPs, ]                                                           # Throw away the inconsistent SNPs
 
+###### Comparison Sebastiaan 1: BFMI861-S1 versus BFMI861-S2 ######
+S1 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]
+S2 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S2"),])[1]
+
+res <- apply(SNPdata[,c(S1,S2)], 1, function(x){ return(x[1] != x[2]) })
+cat(sum(as.numeric(res),na.rm=TRUE),"Out of",length(res),"\n")
+###### Comparison Sebastiaan 2: BFMI861-S1 versus B6 ######
+S1 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]
+res <- lapply(SNPdata[,c(S1)], function(x){ return(x[1] != 0) })
+cat(sum(as.numeric(res),na.rm=TRUE),"Out of",length(res),"\n")
 ###### Comparison 1: BFMI861-S1 versus BFMI852, BFMI856, BFMI860-12, BFMI860-S2 ######
 
 nonDMice <- NULL

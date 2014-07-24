@@ -8,28 +8,62 @@
 library(qtl)
 setwd("E:/Mouse/ClassicalPhenotypes/FV3")
 
-# crossFF <- read.cross("csv", file="cross_F2_FF.csv",genotypes=c("A","H","B"), na.strings="NA")
+cross <- read.cross("csv", file="cross_F2.csv",genotypes=c("A","H","B"), na.strings="NA")
+cross <- jittermap(cross)
 
+cross$pheno <- cbind(cross$pheno, FATDLEAN = cross$pheno[,"FAT70"] / cross$pheno[,"LEAN70"])
+
+sex         <- as.numeric(cross$pheno[,"Sex"])
+season      <- as.numeric(cross$pheno[,"sea"])
+futter      <- as.numeric(cross$pheno[,"Futter"])
+
+resFATDLEANFUTTER <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, futter), intcovar = futter)
+resFATDLEAN       <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, futter))
+resFUTTER         <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season))
+
+plot(resFUTTER, resFATDLEAN, resFATDLEANFUTTER, main="Fat/Lean = Sex + Season + Futter + G + G:Futter")
+
+
+
+crossFF <- read.cross("csv", file="cross_F2_FF.csv",genotypes=c("A","H","B"), na.strings="NA")
 crossNF <- read.cross("csv", file="cross_F2_NF.csv",genotypes=c("A","H","B"), na.strings="NA")
 crossNF <- calc.genoprob(crossNF)
+
+crossNF$pheno <- cbind(crossNF$pheno, FATDLEAN = crossNF$pheno[,"FAT70"] / crossNF$pheno[,"LEAN70"])
+
+genotypes <- pull.geno(fill.geno(crossNF))
+phenotype <- crossNF$pheno[,"FATDLEAN"]
 
 sex <- as.numeric(crossNF$pheno[,"Sex"])
 season <- as.numeric(crossNF$pheno[,"sea"])
 littersize <- as.numeric(crossNF$pheno[,"WG21"])
 
-crossNF$pheno <- cbind(crossNF$pheno, FATDLEAN = crossNF$pheno[,"FAT70"] / crossNF$pheno[,"LEAN70"])
-crossNF$pheno <- cbind(crossNF$pheno, FATDCW = crossNF$pheno[,"FAT70"] / crossNF$pheno[,"BW70_10"])
+resFATDLEAN   <- scanone(crossNF, pheno.col="FATDLEAN", addcovar=cbind(sex, season, littersize))
+topmarker <- genotypes[,rownames(resFATDLEAN[which.max(resFATDLEAN[,3]),])]
 
-resFAT        <- scanone(crossNF, pheno.col="FAT70", intcovar=cbind(sex, season, littersize))
-resFATDLEAN   <- scanone(crossNF, pheno.col="FATDLEAN", intcovar=cbind(sex, season, littersize))
-resFATDCW     <- scanone(crossNF, pheno.col="FATDCW", intcovar=cbind(sex, season, littersize))
-plot(resFATDLEAN, resFAT, resFATDCW)
+genotypes <- genotypes[which(topmarker!=1),]
+phenotype <- phenotype[which(topmarker!=1)]
 
-RESvar <- lm(crossNF$pheno[,"FAT70"] ~ pull.geno(crossNF)[,"rs3151604"])
+lods <- apply(genotypes, 2, function(genotype){ return(-log10(anova(lm(phenotype ~ as.factor(genotype)))[[5]][1])) })
+plot(lods, t='l')
 
-crossNF$pheno <- cbind(crossNF$pheno, ResFATDCW = RESvar / crossNF$pheno[,"CW"])
+crossNF$pheno <- cbind(crossNF$pheno, FATDCW = crossNF$pheno[,"FAT70"] / crossNF$pheno[,"CW"])
 
-#SSexp   <- anova(lm(crossNF$pheno[,"FAT70"] ~ as.factor(pull.geno(crossNF)[,"rs3151604"])))[,"Sum Sq"]
-SSexp   <- anova(lm(crossNF$pheno[,"FAT70"] ~ pull.geno(crossNF)[,"rs3151604"]))[,"Sum Sq"]
-SStotal <- sum((crossNF$pheno[,"FAT70"] - mean(crossNF$pheno[,"FAT70"],na.rm=TRUE))^2,na.rm=TRUE)
+resFAT        <- scanone(crossNF, pheno.col="FAT70", addcovar=cbind(sex, season, littersize))
+
+plot(resFAT, resFATDLEAN, col=c("green", "blue"))
+
+RESvar <- lm(crossNF$pheno[,"FATDLEAN"] ~ sex + season + littersize + genotypes[,which(resFATDLEAN[,3] > 10)][,1])
+phenoresiduals <- rep(NA,nrow(crossNF$pheno))
+phenoresiduals[as.numeric(names(RESvar$residuals))] <- RESvar$residuals
+
+crossNF$pheno   <- cbind(crossNF$pheno, FATDLEANres = phenoresiduals)
+resFATDLEANres  <- scanone(crossNF, pheno.col="FATDLEANres")
+plot(resFATDLEAN, resFATDLEANres, col=c("blue", "black"))
+
+
+SSexp   <- anova(lm(crossNF$pheno[,"FATDLEANres"] ~ as.factor(pull.geno(crossNF)[,"rs3151604"])))[,"Sum Sq"]
+SStotal <- sum((crossNF$pheno[,"FATDLEANres"] - mean(crossNF$pheno[,"FATDLEANres"],na.rm=TRUE))^2,na.rm=TRUE)
 SSexp/SStotal
+
+

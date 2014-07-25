@@ -8,6 +8,8 @@
 library(qtl)
 setwd("E:/Mouse/ClassicalPhenotypes/FV3")
 
+# Analyse the whole F2 cross
+
 cross <- read.cross("csv", file="cross_F2.csv",genotypes=c("A","H","B"), na.strings="NA")
 cross <- jittermap(cross)
 
@@ -16,14 +18,15 @@ cross$pheno <- cbind(cross$pheno, FATDLEAN = cross$pheno[,"FAT70"] / cross$pheno
 sex         <- as.numeric(cross$pheno[,"Sex"])
 season      <- as.numeric(cross$pheno[,"sea"])
 futter      <- as.numeric(cross$pheno[,"Futter"])
+littersize  <- as.numeric(cross$pheno[,"pupsize"])
 
-resFATDLEANFUTTER <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, futter), intcovar = futter)
-resFATDLEAN       <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, futter))
-resFUTTER         <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season))
+resFATDLEANFUTTER <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, littersize, futter), intcovar = futter)
+resFATDLEAN       <- scanone(cross, pheno.col="FATDLEAN", addcovar = cbind(sex, season, littersize, futter))
+resFUTTER         <- scanone(cross, pheno.col="Futter", addcovar = cbind(sex, season, littersize))
 
 plot(resFUTTER, resFATDLEAN, resFATDLEANFUTTER, main="Fat/Lean = Sex + Season + Futter + G + G:Futter")
 
-
+# Analyse the different parts (NF versus FF)
 
 crossFF <- read.cross("csv", file="cross_F2_FF.csv",genotypes=c("A","H","B"), na.strings="NA")
 crossNF <- read.cross("csv", file="cross_F2_NF.csv",genotypes=c("A","H","B"), na.strings="NA")

@@ -59,6 +59,11 @@ for(x in IndNF){                                                                
 
 genotypes <- t(genotypes)
 
+crossNF[which(crossNF[,"WG21"] >= 7 & crossNF[,"WG21"] <= 9),"WG21"] <- 2                                           # Harmonize the litter-size between the two datasets
+crossNF[which(crossNF[,"WG21"] >= 10 & crossNF[,"WG21"] <= 12),"WG21"] <- 3
+crossNF[which(crossNF[,"WG21"] >= 13 & crossNF[,"WG21"] <= 14),"WG21"] <- 4
+colnames(crossNF)[which(colnames(crossNF) == "WG21")] <- "pupsize"                                                  
+
 crossFFm <- crossFF[,which(colnames(crossFF) %in% colnames(crossNF)[2:63])]
 crossNFm <- crossNF[3:nrow(crossNF),match(colnames(crossFFm),colnames(crossNF))]
 

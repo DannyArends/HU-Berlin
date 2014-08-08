@@ -47,7 +47,7 @@ logfile       <- paste0(fileBase,"log.txt")
 trimmomatic   <- "/opt/Trimmomatic-0.32/"
 gatk          <- "/opt/GenomeAnalysisTK-2.7-2/GenomeAnalysisTK.jar"
 
-cat("", file=logfile)     # Clear the logfile
+#cat("", file=logfile)     # Clear the logfile
 
 inputfiles  <- c(paste0(fileBase, "R1_001.fastq.gz"), paste0(fileBase, "R2_001.fastq.gz"))
 outputfiles <- c(paste0(fileBase, "R1_001.P_trimmed.fastq.gz"), paste0(fileBase, "R1_001.U_trimmed.fastq.gz"), 
@@ -74,26 +74,26 @@ command     <- paste0(command, "samtools view -Sb - | ")
 filePrefix   <- fileBase
 outputSBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.bam")
 command      <- paste0(command, "samtools sort -@ 4 -m 2G -o - ", filePrefix, " > ", outputSBAM)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
 ### Add a read group ###
 outputSRGBAM <- paste0(fileBase, "P_trimmed.aligned.sorted.rg.bam")
 IDcode       <- substr(fileBase, 1, 4)
 command      <- paste0("java -Xmx4g -jar /opt/picard-tools-1.99/AddOrReplaceReadGroups.jar INPUT=", outputSBAM, " OUTPUT=", outputSRGBAM," CREATE_INDEX=false RGID=",IDcode," RGLB=LIB",IDcode," RGPL=Illumina RGPU=X RGSM=", IDcode)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
 ### Move the file with the read group over the previous file
 command <- paste0("mv ", outputSRGBAM, " ", outputSBAM)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
 ### Index the BAM file (10 minutes) ###
 outputSBAI   <- paste0(fileBase, "P_trimmed.aligned.sorted.bai")
 command      <- paste0("samtools index ", outputSBAM, " ", outputSBAI)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
 ### Get some basic statistics (5 to 10 minutes)
 command      <- paste0("samtools flagstat ", outputSBAM)
-cat(system(command, intern=TRUE), file=paste0(fileBase,"stats.txt"), sep="\n"))
+cat(system(command, intern=TRUE), file=paste0(fileBase,"stats.txt"), sep="\n")
 
 ### Indel Realign
 outputSNPS    <- "output.snp.intervals"
@@ -101,10 +101,10 @@ outputSIBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.bam")
 knownindels   <- "genomes/mgp.v3.indels.rsIDdbSNPv137.vcf"                              # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
 if(!file.exists(outputSNPS)){
   command <- paste0("java -Xmx4g -jar ", gatk, " -nt 4 -T RealignerTargetCreator -R ", reference, " -known ", knownindels, " -o ", outputSNPS, " -U ALLOW_N_CIGAR_READS")
-  cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK RealignerTargetCreator, only need to be done because the knownSNPlist does not change
+  cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK RealignerTargetCreator, only need to be done because the knownSNPlist does not change
 }
 command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference, " -targetIntervals ", outputSNPS, " -maxReads 150000 -I ", outputSBAM, " -o ",outputSIBAM," -known ",knownindels, " -U ALLOW_N_CIGAR_READS")
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))     # Call the GATK IndelRealigner
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")     # Call the GATK IndelRealigner
 
 ### Base Recalibration
 knownsnps     <- "genomes/mgp.v3.snps.rsIDdbSNPv137.vcf"                                # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
@@ -114,13 +114,13 @@ plotfile      <- paste0(fileBase, "recalibration.pdf")
 outputSIRBAM  <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.recalibrated.bam")
 
 command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T BaseRecalibrator -R ", reference, " -knownSites ", knownsnps, " -I ", outputSIBAM," -o ",  covfile1, " -U ALLOW_N_CIGAR_READS")
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK BaseRecalibrator
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK BaseRecalibrator
 command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T PrintReads -R ", reference," -I ", outputSIBAM," -BQSR ", covfile1, " -U ALLOW_N_CIGAR_READS -o ", outputSIRBAM)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK PrintReads
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK PrintReads
 command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T BaseRecalibrator -R ", reference, " -knownSites ", knownsnps, " -I ", outputSIRBAM," -o ", covfile2, " -U ALLOW_N_CIGAR_READS")
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK BaseRecalibrator
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK BaseRecalibrator
 command <- paste0("java -Xmx4g -jar ", gatk, " -T AnalyzeCovariates -R ", reference, " -before ", covfile1, " -after ", covfile2, " -U ALLOW_N_CIGAR_READS -plots ", plotfile)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK AnalyzeCovariates
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK AnalyzeCovariates
 
 ### SNP calling -> VCF for NoverlSNPer
 # See http://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_sting_gatk_walkers_haplotypecaller_HaplotypeCaller.html
@@ -128,7 +128,7 @@ outputVCF    <- paste0(fileBase, ".snps.vcf")
 settings     <- "-recoverDanglingHeads -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
 
 command <- paste0("java -Xmx4g -jar ", gatk, " -T HaplotypeCaller -R ", reference, " -I ", outputSIRBAM, "  --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF)
-cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n"))   # Call the GATK HaplotypeCaller
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK HaplotypeCaller
 
 ### Expression via Express, DeSeq2
 #library("GenomicAlignments")

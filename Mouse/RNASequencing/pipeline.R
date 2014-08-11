@@ -10,36 +10,6 @@ fileBase      <- as.character(cmdlineargs[1])
 referenceDir  <- "genomes"
 referenceName <- "Mus_musculus.GRCm38.74.dna"
 
-########### SETUP THE REFERENCE AND KNOWN SNPS AND INDELS ###########
-
-### Download the reference genome, and create a single big FASTA
-reference     <- paste0(referenceDir, "/", referenceName, ".fasta")
-#chromosomes <- c(1:19, "X", "Y", "MT")
-#cat("", file=reference)
-#for(chr in chromosomes){
-#  system(paste0("wget -P temp ftp://ftp.ensembl.org/pub/release-76/fasta/mus_musculus/dna/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa.gz"))
-#  system(paste0("gunzip temp/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa.gz"))
-#  fastadata <- readLines(paste0("temp/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa"))
-#  cat(fastadata, sep="\n", file = reference, append = TRUE)
-#  system(paste0("rm temp/Mus_musculus.GRCm38.74.dna.chromosome.", chr, ".fa.gz")) # Delete the temp fasta file
-#}
-
-### Download the known INDELS and SNPs
-# system("wget -P genomes ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.indels.rsIDdbSNPv137.vcf.gz")
-# system("wget -P genomes ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.snps.rsIDdbSNPv137.vcf.gz")
-
-########### PRE-PROCESSING THE REFERENCE ###########
-
-### Create A BWA index file from the reference genome / transcriptome (10 to 100 minutes) ###
-#system(paste0("/opt/bwa-0.7.10/bwa index ", reference))
-
-### Create A SAMTOOLS index file from the reference genome ###
-#system(paste0("samtools faidx ", reference))
-
-### Create a Picard dictionary file
-#referenceDict <- paste0(referenceDir, "/", referenceName, ".dict")
-#system(paste0("java -jar /opt/picard-tools-1.99/CreateSequenceDictionary.jar R=", reference, " O=", referenceDict))
-
 ########### ANALYSIS ###########
 
 ### Trimmomatic: Remove adapters and trim reads based on quality scores (1 to 2 hours) ###
@@ -125,20 +95,9 @@ cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call 
 ### SNP calling -> VCF for NoverlSNPer
 # See http://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_sting_gatk_walkers_haplotypecaller_HaplotypeCaller.html
 outputVCF    <- paste0(fileBase, ".snps.vcf")
-settings     <- "-recoverDanglingHeads -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
+settings     <- "-dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
 
 command <- paste0("java -Xmx4g -jar ", gatk, " -T HaplotypeCaller -R ", reference, " -I ", outputSIRBAM, "  --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK HaplotypeCaller
 
-### Expression via Express, DeSeq2
-#library("GenomicAlignments")
-#library("Rsamtools")
-
-#hse         <- makeTranscriptDbFromGFF("/path/to/your/genemodel.GTF", format = "gtf")
-#exonsByGene <- exonsBy(hse, by = "gene")
-#files       <- list.files("/path/to/bam/files", pattern="bam$", full=TRUE)
-#bamfiles    <- BamFileList(files, yieldSize=100000)
-#se          <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
-
-#head(assay(se))
 q("no")

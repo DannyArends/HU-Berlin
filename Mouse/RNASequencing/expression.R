@@ -11,12 +11,15 @@ library("GenomicFeatures")
 library("Rsamtools")
 
 setwd("E:/Mouse/RNA/Sequencing")
+chrominfo <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
+
 sampleIDs <- read.table("FASTQ/sampleIDs.txt",sep="\t", header=TRUE)
 
-mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf")
+mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
+                                         species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 exonsByGene   <- exonsBy(mouse, by = "gene")
 infiles       <- list.files("Analysis", pattern="recalibrated.bam$", full=TRUE)
-bamfiles      <- BamFileList(infiles, yieldSize = 1000000)
+bamfiles      <- BamFileList(infiles, yieldSize = 250000)
 se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
 head(assay(se))

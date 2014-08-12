@@ -8,7 +8,7 @@
 
 library(biomaRt)
 
-setwd("E:/Mouse/RNA/Sequencing")
+setwd("E:/Mouse/RNA/Sequencing/MPI_RPKM_ANALYSIS")
 
 RPKM <- read.csv("2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE)                                               # RNA-Seq summary data from MDC
 probeannotation <-  RPKM[,1:6]                                                                                    # Split the data from the probe annotation

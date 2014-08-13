@@ -1,0 +1,222 @@
+\documentclass[a4paper]{article}
+\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc} 
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{soul} % underline text mit \ul{text}
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+ 
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{26. Juni 2013}
+
+\begin{document}
+
+\maketitle
+
+\section{Multiples Testen}
+\subsection{Das Problem}
+In einer wissenschaftlichen Studie wurde nachgewiesen, dass
+sich Milchk{\"u}he der Rassen A und B hinsichtlich ihrer
+Jahresmilchleistung {\em nicht}  signifikant unterscheiden. 
+Ein Wissenschaftler zweifelt dieses Ergebnis an und m{\"o}chte
+beweisen, dass Rasse A signifikant mehr Milch gibt
+als Rasse B. Zu diesem Zwecke zieht er zwei Stichproben vom
+Umfang jeweils $N = 100$ und f{\"u}hrt einen einseitigen t-Test aus.
+Als Ergebnis bekommt er $p = 0,56$. Damit will sich der
+Wissenschaftler nicht zufriedengeben. Er schiebt das unerw{\"u}nschte
+Resultat auf eine ``ungl{\"u}ckliche''  Stichprobenziehung zur{\"u}ck 
+und wiederholt das Experi\-ment, indem er zwei weitere Stichproben
+zieht und wiederum gegeneinander testet. Wiederum ist
+das Resultat entt{\"a}uschend: $p = 0,75$. Er gibt jedoch nicht
+auf und wiederholt die Stichproben-Ziehung mit anschlie{\ss}endem
+Test 17 mal, bevor er sein Traumergebnis bekommmt: $p = 0,02$.
+
+Intuitiv ist klar, dass dieses Vorgehen nicht als gute
+wissenschaftliche Praxis bezeichnet werden kann. Es ist in der 
+Tat so, dass es in der Statistik und insbesondere beim
+statistischen Testen aufgrund ``untypischer'' Stichprobenziehung\-en
+zu Ergebnissen kommen kann, die zu falschen Schl{\"u}ssen verleiten.
+Dies liegt in der Natur der Sache und ist unvermeidlich. 
+Die Gefahr einer falschen Schlussfolgerung kann jedoch mit dem $p$-Wert  quantifiziert
+werden. 
+Zur Erinnerung: wird eine Null-Hypothese z.~B.\ wegen eines $p$-Wertes von z.B. kleiner  $0,05$ zur{\"u}ckgewiesen
+beträgt die Irrtumswahrscheinlichkeit 5\% (Fehler 1.Art, \emph{type II error}), d.h. man kalkuliert, das in 5\% aller Untersuchungen die Null-Hypothese zur{\"u}ckgewiesen wird, obwohl sie in tatsächlich korrekt wäre. Mit anderen Worten man weist einen signifikanten Effekt nach, der gar nicht existiert (falsch-positives Ergebnis).
+Demgegenüber steht die Irrumswahrscheinlichkeit $\beta$ (der Fehler 2.Art, \emph{type II error}), die kontrolliert mit welcher Wahrscheinlichkeit die Null-Hypothese beibehalten wird, obwohl die Alternativ-Hypothese tatsächlich korrekt wäre - also der Nachweis eines falsch-negativen Ergebnisses.
+%Mehr dazu im Kapitel Poweranalyse - Berechnung des Stichprobenumfangs
+
+Die M{\"o}glichkeit der ``ungl{\"u}cklichen'' Stichprobenentnahme darf nicht 
+daf{\"u}r mi{\ss}braucht werden, ein gew{\"u}nschte Testresultat
+durch mehrfaches Testen zu erzwingen.
+
+\subsection{Korrekturverfahren}
+Multiples Testen ist jedoch \emph{per se}  nicht ``verboten''. Die $p$-Werte, die
+w{\"a}hrend des multiplen Testens berechnet werden, m{\"u}ssen jedoch
+entsprechend behandelt oder korrigiert werden. 
+
+\begin{itemize}
+\item \textit{Bonferroni-Korrektur}\\
+Die einfachste aller Korrekturen ist die \textit{Bonferroni}-Korrektur. Sie
+besteht darin, dass die unkorrigierten $p$-Werte mit der Anzahl
+$n$ der insgesamt durchgef{\"u}hrten Tests multipliziert wird. Wird ein
+Wert $> 1$ erzielt, wird dann nur $p = 1$ angegeben.
+Dieses Korrekturverfahren ist sehr konservativ und in vielen F{\"a}llen zu streng, d.h. man korrigiert
+oftmals echte Effekt weg. Trotzdem kann man für den Fall, dass nach Bonferroni-Korrekur signifikante Ergebnisse
+vorliegen, ziemlich sicher sein, dass diesen wahre Effekte zugrunde liegen.
+
+%Von den vielen weiteren Verfahren sei hier nur noch das Korrektur-Verfahren nach \textit{Holm-Bonferroni} vorgestellt. 
+\item \textit{Holm-Bonferroni}\\
+Das Verfahren nach \textit{Holm-Bonferroni} besteht darin, dass der kleinste $p$-Wert mit
+$n$, der zweit-kleinste mit $n - 1$, etc.\ multipliziert wird, bis zum gr{\"o}{\ss}ten, der nicht
+ver{\"a}ndert wird. W"urde durch die Anwendung dieser Korrektur ein urspr"unglich
+schlechterer p-Wert einen besseren "uberholen, dann wird dieser auf den gleichen
+Wert gesetzt wie der korrigierte bessere. Im Beispiel unten
+w"urde der beste p-Wert $0,005$ mit 10 multipliziert werden, also zu $0,05$ werden,
+der zweit-beste $0,0055$ mit 9 multipliziert werden, also zu $0,0495$ werden.
+Dies w"are unlogisch, denn die Reihenfolge der unkorrigierten p-Werte 
+sollte selbstverst"andlich durch die Korrektur nicht ver"andert werden.
+Deshalb wird der zweit-beste p-Wert nach der Korrektur auch auf $0,05$ gesetzt.\\
+
+\item \textit{False Discovery Rate (FDR)}\\ 
+Die  \textit{False Discovery Rate} einer Serie von Testergebnissen ist der erwartete prozentuale Anteil falsch positiver Testergebnisse. 
+Das Prinzip der FDR basiert auf der Bewertung, dass ein höherer Prozentsatz fälschlicherweise angenommener Alternativhypothesen ein gravierenderer Fehler ist als ein niedrigerer Prozentsatz, z.B.
+5 falsche Entdeckungen (\textit{false discoveries}) bei 10 zurückgewiesenen Nullhypothesen sind schlechter als 30 falsche Entdeckungen unter 90 zurückgewiesenen Nullhypothesen.
+Bei einer FDR von 0.3 erwartet man also 70 korrekte Testergebnisse.  Den Unterschied zweischen einem unkorrigierten p-Wert und einem FDR korrigierten p-Wert kann man auch so sehen:  ein p-Wert von 0.05 impliziert die Akzeptanz, dass 5\% aller Testergebnisse falsch positive Ergebnisse sind. Ein FDR korrigierter p-Wert von 0.05 bedeutet, dass 5\% aller \emph{signifikanten} Tests zu falsch positiven Ergebnissen führt. Letzteres stellt eine deutlich kleinere Menge (oder kleineren Fehler) dar. 
+
+Die FDR kontrolliert also die Anzahl falscher Entdeckungen unter allen Testergebnissen, die zu einer ``Entdeckung'' führen, d.h. signifikant sind. Die FDR ist weniger konservativ als der Bonferroni Ansatz und besonder bei Hochdurchsatz-Analysen besser geeignet echte signifikante Ergebnisse herauszufiltern.
+\end{itemize}
+
+
+Das Problem des multiplen Testens ist erst mit der Verbreitung
+von Software-Paketen zur schnellen und m{\"u}helosen Durchf{\"u}hrung von massenweisen
+Tests akut geworden. Es ist ein Forschungsgebiet, das sich derzeit noch
+in der Ent\-wicklung befindet und es ist durchaus m{\"o}glich, dass weitere
+und bessere Verfahren entwickelt werden. Die Standard-Einstellung 
+in vielen R-Funktionen ist die Korrektur nach Holm-Bonferroni, die als Kompromi{\ss}
+zwischen der strengen Bonferroni-Korrektur und gar keiner Korrektur 
+gesehen werden kann.
+
+Zur Korrektur von p-Werten einer Serie von statistischen Tests, kann man die Funktion \texttt{p.adjust()} anzuwenden. Dafür m{\"u}ssen
+alle $p$-Werte Testserie in einen Vektor geschrieben werden.\\
+Zum Beispiel:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+vec.p <- c(0.48, 0.67, 0.23, 0.01, 0.23, 0.05, 0.20, 0.17, 0.005, 0.0055)
+p.adjust(vec.p)
+@
+\end{center}
+
+Hier wird also nach der Standardeinstellung Holm-Bonferroni korrigiert.
+Die beiden kleinsten $p$-Werte sind auch nach der Korrektur noch
+auf dem Niveau $\alpha = 0.05$ signifikant.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+p.adjust(vec.p, method = "bonferroni")
+@
+\end{center}
+Wenn Sie die gleichen $p$-Werte nach Bonferroni korrigieren,
+``{\"u}berlebt'' nur noch der kleinste Wert.
+
+
+% FDR + Tabelle mit Typ1 und Typ2 Fehler
+
+
+\subsection*{Multiple Stichprobenvergleiche}
+Falls Sie drei oder mehr Stichproben haben und alle gegen alle testen
+wollen, ist die Funktion \texttt{pairwise.t.test()} sehr n{\"u}tzlich.
+Die {\"U}bergabe der Messwerte ist allerdings etwas anders,
+als Sie es von der Funktion \texttt{t.test()} her kennen.
+
+F{\"u}r \texttt{pairwise.t.test()} m{\"u}ssen die Werte f{\"u}r alle Stichproben
+in einem gemeinsamen Vektor vorliegen. In einem zweiten Vektor, dem Gruppierungsvektor,
+der nat{\"u}rlich die gleiche L{\"a}nge haben muss, wird angegeben, zu welcher
+Gruppe der jeweilige Messwert geh{\"o}rt. 
+Als Beispiel f{\"u}r einen Gruppierungsvektor kann die Spalte \texttt{Species}
+aus dem Datensatz \texttt{iris} dienen. Die Attribute \texttt{setosa,
+versicolor, virginica}
+legen eindeutig fest, welcher Sorte die Me{\ss}werte zuzuordnen sind.
+
+Die Breite der Sepalen der drei Sorten werden so gegeneinander getestet:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(iris)
+pairwise.t.test(iris$Sepal.Width, iris$Species)
+@
+\end{center}
+Auch hier ist wiederum die Standardkorrekturmethode ``holm'', d.h. Korrektur
+nach Holm-Bonferroni.
+Andere Verfahren k{\"o}nnen mit \texttt{p.adjust.method} festgelegt werden, z.~B.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+pairwise.t.test(iris$Sepal.Width, iris$Species, p.adjust.method = "bonferroni")
+@
+\end{center}
+Und wenn man unbedingt auf die Korrektur verzichten m{\"o}chte, w{\"a}hlt man
+\texttt{none}.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+pairwise.t.test(iris$Sepal.Width, iris$Species, p.adjust.method = "none")
+@
+\end{center}
+
+\texttt{pairwise.t.test()} berechnet standardm\"assig die kombinierte (pooled)
+Standardabweichung und benutzt sie f\"ur den \textit{t}-Test.
+Falls dies nicht der Fall sein sollte, wird das mit der Option
+\texttt{pool.sd = FALSE} spezifiziert.
+
+Es gibt auch eine Funktion f{\"u}r den paarweisen Wilcoxon-Test,
+\texttt{pairwise.wilcox.test}, deren Aufruf genauso funktioniert.
+
+
+Im Gegensatz zu den ``Stamm-''funktionen \texttt{t.test()} und
+\texttt{wilcox.test()}
+gibt es f{\"u}r die alle-gegen-alle-Tests nicht die M{\"o}glichkeit des
+einseitigen Testens.
+Man darf auch nicht wegen des Namens der Funktion durcheinanderkommen: 
+Der Begriff \emph{``pairwise''} bezieht sich auf das Bilden aller m\"oglichen
+Paarungen von Gruppen, die gegeneinander getestet werden. 
+Gepaarte Tests k\"onnen wie im Zweistichprobenfall mit der Option
+\texttt{paired = TRUE} durchgef\"uhrt werden. Es ist dann selbstverst\"andlich
+auch hier Sorge daf\"ur zu tragen, dass die Reihenfolge der statistischen
+Untersuchungseinheiten in jeder Gruppe die gleiche ist.
+
+\newpage
+\clearpage
+
+\section{Überblick zur Anwendungsentscheidung statistischer Methoden}
+
+\setkeys{Gin}{width=1.0\textwidth}
+\begin{center}
+\begin{figure}[ht]
+\includegraphics[width=1.0\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Statistische_Tests1.pdf}
+\includegraphics[width=1.0\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Statistische_Tests2.pdf}
+\end{figure}
+\end{center}
+
+\subsection{Varianzanalyse (ANOVA)}
+Varianzanalyse ist eine spezielle Art der statistischen Modellierung, die man anwendet, wenn alle erklärenden Variablen kategorieller Natur sind. Die erklärenden Variable werden auch als \emph{Faktoren} bezeichnet und ihre Ausprägungen als Faktorstufen (\emph{Levels}). Man kann sich auch vorstellen, dass durch die Faktorstufen Gruppen in den Messwerten der Zielvariable gebildet werden, deren Mittelwerte man vergleichen möchte. Experimentell Designs die eine Zielvariable und eine erklärende Faktorvariable mit mehr als zwei mehr Faktorstufen haben werden mit einer sogenannten \textbf{Einfaktoriellen Varianzanalyse} (\emph{One-way ANOVA}) untersucht. 
+
+Bei einer Einfaktoriellen Varianzanalyse untersucht man den Einfluss einer unabhängigen Variable (Faktor) mit k verschiedenen Stufen (Gruppen) auf die Ausprägungen einer Zufallsvariablen. Dazu werden die k Mittelwerte der Ausprägungen für die Gruppen miteinander verglichen, und zwar vergleicht man die Varianz \textit{zwischen den Gruppen} mit der Varianz \textit{innerhalb der Gruppen}. Weil sich die Gesamt-Varianz aus den zwei genannten Komponenten zusammensetzt, spricht man von Varianzanalyse. Die einfaktorielle ANOVA ist die Verallgemeinerung des t-Tests im Falle mehr als zwei Gruppen. Für k=2 ist sie äquivalent mit dem t-Test.
+
+Die Zwei- oder multifaktorielle Varianzanalyse (\emph{Multi-way ANOVA}) berücksichtigt zur Erklärung der Zielvariablen zwei oder mehrere Faktoren.
+
+Die Funktion zur Varianzanalyse in \texttt{R} heisst \texttt{aov()} und wird in gleicher Weise verwendet wie \texttt{lm()}.
+
+
+\subsection{Posthoc Tests}
+ Posthoc Tests werden in Siutationen verwendet in denen man mit einem F-test (\texttt{var.test()}) schon einen signifikanten Zusammenhang zwischen einem mehrstufigen Faktor und der Zielvariable etabliert hat, z.B. durch ANOVA. Im Anschluss an die ANOVA möchte man oftmals wissen, welche Mittelwerte in den vorligenden Faktorstufen den stärksten Beitrag zur Signifikanz des Modells leisten und wendet dazu Tests die mehrere Mittwelwerte vergleichen, wie z.B. den Tukey-Test (\texttt{TukeyHSD}). Eine einfache Möglichkeit wäre auch die Verwendung der o.g. Funktion \texttt{pairwise.t.test()}.
+
+
+%\setkeys{Gin}{width=1.0\textwidth}
+%\begin{center}
+%\begin{figure}
+%\includegraphics[width=1.0\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Statistische_Tests2.pdf}
+%\end{figure}
+%\end{center}
+
+\end{document}

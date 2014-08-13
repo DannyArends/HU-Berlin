@@ -1,0 +1,549 @@
+\documentclass[a4paper]{article}
+\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc} 
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+ 
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{29. Mai 2013}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Bivariate Analyse metrisch skalierter Daten}
+Dieser Typ von Analyse ist in den Lebenswissenschaften
+sehr h\"aufig. Man kann sich als Beispiel die Erhebung
+von K\"orpergr\"o{\ss}e und Gewicht von repr\"asentativ ausgew\"ahlten
+Passanten vorstellen. Die Frage lautet nun, ob es einen
+Zusammenhang zwischen diesen beiden Gr\"o{\ss}en gibt und
+wie man ihn quantifizieren kann. Vor der quantitativen Analyse empfiehlt sich unbedingt
+die graphische Darstellung.
+
+
+
+\subsection{Graphische Darstellung bivariater metrisch skalierter Daten}
+Die Me{\ss}werte zweier metrisch skalierter Variablen
+werden in einem sogenannten Streudiagramm (engl.\ \emph{scatter plot}) dargestellt.
+Jedem Paar von Messwerten wird ein Punkt in der Ebene zugeordnet.
+Wichtig ist, dass ein Paar von Messwerten von ein und demselben
+Individuum (allgemeiner: Untersuchungseinheit, engl. \emph{observational unit}) stammt.
+
+Ein Beispiel f\"ur einen m\"a{\ss}ig starken Zusammenhang stellen die Petalenl\"angen
+und -breiten f\"ur die Schwertlilien-Sorte ``\emph{Setosa}'' dar.
+ 
+\setkeys{Gin}{width=0.5\textwidth}
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+data(iris)
+iris.setosa <- subset(iris, Species == "setosa", select = c(Petal.Length, Petal.Width) )
+plot(x = iris.setosa$Petal.Length, 
+       y = iris.setosa$Petal.Width, 
+       xlab = "Petalenlaenge", 
+       ylab = "Petalenbreite",
+       main  = "Setosa") 
+@
+\end{center}
+
+Der Streuplot wird mit der Funktion \texttt{plot()} erzeugt. Als Argumente werden
+die Messwertpaare als zwei getrennte Vektoren \"ubergeben. Der Zugriff auf die
+beiden Matrix-Spalten (Vektoren) geschieht wiederum mit Hilfe des Dollar-Zeichens.
+
+
+Die Funktion \texttt{subset()} dient zum Filtern von Datens\"atzen.
+Der Aufruf kann abstrakt so geschrieben werden:
+
+%\begin{center}
+%<<fig=FALSE,echo=TRUE>>=
+\begin{equation}
+\mbox{Daten.neu <- subset(Daten, Bedingung, Auswahl)}
+\end{equation}
+%@
+%\end{center}
+wobei ``Bedingung'' durch eine Vergleichsoperation spezifiziert wird und
+sich ``Auswahl'' auf die Spalten bezieht, die in den neuen Datensatz \texttt{Daten.neu}
+zu \"ubernehmen sind. Im obigen Aufruf stellt also \texttt{Species ==}``\texttt{setosa}''}
+die Bedingung dar (``nimm nur Datens\"atze, die zur Sorte Setosa geh\"oren'')
+und \texttt{select = c(Petal.Length, Petal.Width)} die Auswahl an Spalten (n\"amlich
+Petalenl\"agen und -breiten), die im neuen Datensatz vertreten sein sollen.
+Man beachte, dass bei Vergleichsoperationen, in denen die Gleichheit
+von Gr\"o{\ss}en \"uberpr\"uft wird, das doppelte Istgleichzeichen \texttt{ == }  verwendet wird.
+Man beachte die exakte Schreibweise: ``setosa'' klein
+und ``Species'' mit großem Anfangsbuchstaben (da es genau so im Datensatz kodiert ist!).
+Man kann das Filtern auch in zwei getrennten Schritten durchf\"uhren:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+iris.setosa <- subset(iris, Species == "setosa")
+iris.setosa <- subset(iris.setosa, select = c(Petal.Length, Petal.Width) )
+@
+\end{center}
+Man beachte, dass der Input f\"ur den zweiten Filter-Schritt der Output des ersten
+Schritts, also \texttt{iris.setosa} ist und dass die beiden Schritte
+nur in dieser Reihenfolge ausgef\"uhrt werden k\"onnen. Man mache sich klar,
+warum dies so ist. Die Stärke der \texttt{subset()} Funktin liegt in der Möglichkeit eine Bedingung zu formulieren, denn 
+das Verhalten des Parameters \texttt{select} lässt sich auch mit dem bekannten $[,]$ Operator erzielen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+iris.setosa <- subset(iris, Species == "setosa")[,3:4]
+head(iris.setosa,2)
+@
+\end{center}
+
+Um einen \"Uberblick \"uber Daten zu bekommen, gen\"ugt es oft, die Daten nur teilweise
+darzustellen. Diesem Zweck dient die Funktion \texttt{head()}.
+Die ersten (standarmäßig n = 6) Komponenten eines Vektors oder die ersten sechs Zeilen einer Matrix/eines Dataframe k\"onnen
+damit bequem  angezeigt werden.
+
+Alternativ kann der Plot auch in dieser Form erzeugt werden:
+\setkeys{Gin}{width=0.5\textwidth}
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+plot(Petal.Width ~ Petal.Length, data = iris.setosa,
+       xlab = "Petalenlaenge", 
+       ylab = "Petalenbreite",
+       main  = "setosa") 
+@
+\end{center}
+
+Hier wird nun der Datensatz mit Hilfe des Parameters \texttt{data} \"ubergeben, und die Spezifikation der beiden Variablen geschieht mit Hilfe der
+symbolischen Formelschreibweise. Die Tilde $\sim$  steht dabei f\"ur den
+Ausdruck ``wird beschrieben durch'' oder ``\emph{is modelled as a function of}''. Diese Schreibweise wird uns bei
+der Spezifikation von Modellen wieder begegnen.
+
+
+Man erkennt, dass in obigem Plot nur knapp die H\"alfte der 50 Datenpunkte f\"ur
+Setosa sichtbar werden. Ein Blick auf die Daten z.~B. mit \texttt{table()} 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+table(iris.setosa)
+@
+\end{center}
+
+zeigt, dass viele der Messwerte mehrfach vorkommen. Das Wertepaar (Petalenl\"ange = 1,4;
+Petalenbreite = 0,2) z.~B.\ insgesamt acht mal. Das Ph\"anomen des mehrfachen Vorkommens
+wird \"ubrigens h\"aufig auch als Entartung bezeichnet.
+Im Plot erscheinen diese acht Punkte, die ja acht verschiedenen Pflanzen entsprechen,
+nat\"urlich \"ubereinander und erscheinen deshalb als ein einziger Punkt.
+Um diese Punkte dennoch sichtbar zu machen, bedient man sich eines Tricks.
+Mit der Funktion \texttt{jitter()} werden die beiden Input-Vektoren minimal
+nach dem Zufalls\-prinzip ver\"andert.  Der Effekt der Funktion \texttt{jitter()} 
+kann so verdeutlicht werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+head(iris.setosa$Petal.Length)
+head(jitter(iris.setosa$Petal.Length))
+@
+\end{center}
+Man sagt auch, dass man mit der Funktion \texttt{jitter()} die Daten
+verrauscht oder Rauschen auf die Daten gibt.
+Und der Plot mit den ``zappeligen'' Daten (engl. jitter: zappelig sein) sieht nun
+so aus:
+
+\setkeys{Gin}{width=0.5\textwidth}
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(x = jitter(iris.setosa$Petal.Length), 
+       y = jitter(iris.setosa$Petal.Width), 
+       xlab = "Petalenlaenge", 
+       ylab = "Petalenbreite",
+       main  = "Setosa - verrauschte Daten") 
+@
+\end{center}
+Durch das Verrauschen der Daten treten nun kleine Gr\"uppchen von
+Punkten auf, insbesondere gut erkennbar f\"ur die Punkte mit Petalenbreite = 0,2.
+Man beachte, dass \texttt{jitter()} mit einem echten Zufallsgenerator
+funktioniert. Der nochmalige Aufruf von \texttt{jitter()} liefert also
+ein anderes Ergebnis. Die St\"arke des Rauschens kann mit dem Parameter \texttt{factor}
+der Funktion \texttt{jitter()} bestimmt werden. Spielen Sie damit herum!
+
+\texttt{R} bietet mit der Funktion \texttt{pairs()} eine bequeme M\"oglichkeit, Streudiagramme
+f"ur alle metrischen Variablen eines Datensatzes in einer einzigen Graphik zu erzeugen:
+
+\begin{center}
+\setkeys{Gin}{width=0.9\textwidth}
+<<fig=TRUE,echo=TRUE>>=
+pairs(iris, pch=21, bg=c("red","green3","blue")[iris$Species],
+main="Iris Data - 3 Species" ) 
+@
+\end{center}
+Die farbkodierte Darstellung der Spezies erfordert einen kleinen Kunstgriff. Durch Angabe eines faktoriellen Vektors (\texttt{iris\$Species})
+mittels des $[\ldots]$ Operators nach dem Charaktervektor mit den Farbcodes, werden die Farben im Plot den einzelnen Faktorstufen (\emph{levels}) zugeordnet. 
+Die Anzahl der Farben muss dabei gleich der Anzahl der Faktorstufen sein.
+\vspace{0.5cm}
+\clearpage
+
+
+
+
+
+\section{Korrelationskoeffizienten}
+
+Ein Streudiagramm vermittelt schon eine recht gute Vorstellung davon, ob
+ein Zusammenhang zwischen zwei Variablen besteht und auch ob er eher stark oder eher schwach ist.
+Korrelationskoeffizienten dienen dazu, die St\"arke des Zusammenhangs (Korrelation) zu quantifizieren. Sie werden meist verwendet, wenn
+die \emph{Richtung des Zusammenhangs zweier Variablen nicht bekannt} ist.
+
+
+Folgende Punkte sind f\"ur die Interpretation von Streudiagrammen in Hinblick auf Korrelationen wichtig:
+\begin{itemize}
+\item
+Die Korrelation ist umso h\"oher, je enger die Punkte um eine gedachte
+Gerade, die die Punktwolke am besten beschreibt, herumliegen.
+\item
+Die Steigung der Geraden (sofern sie verschieden von 0 ist) 
+hat keinen Einflu{\ss} auf die St\"arke der Korrelation.
+\item
+Der st\"arkste Zusammenhang besteht, wenn die Punkte exakt auf einer Linie (mit
+Steigung verschieden von 0) liegen.
+\item
+Der schw\"achste Zusammenhang besteht, wenn die Punkte durch eine Geraden
+mit der Steigung 0 (waagerechte Linie) beschrieben werden k\"onnen.
+\item
+Die St\"arke der Korrelation wird mit dem Korrelationskoeffizienten $r$ 
+quantifiziert, der Werte zwischen -1 und +1 annimmt.
+
+\end{itemize}
+
+Die folgende Grafik (aus: K\"ohler, Schachter, Voleske, Biostatistik, Springer-Verlag)
+gibt ein Reihe von konstruierten Beispielen f\"ur Korrelationen wider.
+\setkeys{Gin}{width=0.9\textwidth}
+%\begin{center}
+\begin{figure}[htb]
+\centering
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/KorrelationsKoeffizienten.pdf}
+\caption{Beispiele f\"ur einige Punktwolken mit den dazugeh\"origen
+Werten f\"ur Korrelationskoeffizienten. (aus: K\"ohler, Schachter, Voleske, Biostatistik, Springer-Verlag)}  
+\label{korkoeff}
+\end{figure}
+%\end{center}
+
+
+
+\clearpage
+\subsection{Der Pearsonsche Korrelationskoeffizient}
+
+Wenn die graphische Darstellung der Me{\ss}werte einen linearen
+Zusammenhang nahelegt, dann kann der Korrelationskoeffizient nach
+Pearson $r$ ausgerechnet werden 
+
+\begin{equation}
+r = \frac{ \sum{ ( x_i - \bar{x} ) }{ ( y_i - \bar{y} ) } } { \sqrt { \sum{ ( x_i - \bar{x} )^2 }{ \sum { ( y_i - \bar{y} )^2 }   }   }  }
+\end{equation}
+\vspace{0.25cm}
+
+wobei sich die Summation \"uber alle Me{\ss}werte erstreckt.
+Wichtig zum Verst\"andnis dieser Formel ist vor allem der Z\"ahler. Der Nenner dient allein Normierungs\-zwecken, d.~h., er sorgt
+daf\"ur, da{\ss} sich $r$ im Intervall von -1 bis +1 bewegt.
+
+Die Produkte der Differenzen im Z\"ahler sind dann positiv, wenn beide Faktoren positiv oder beide negativ sind, 
+wenn also die Einzelme{\ss}werte eines Paares ent\-weder beide gr\"o{\ss}er oder beide kleiner als
+der entsprechende Mittelwert sind.
+Im folgenden Diagramm, in dem die Mittelwerte f\"ur X und Y als vertikale bzw. horizontale Linien eingezeichnet wurden,
+erkennt man, da{\ss} Punkte in den Quadranten I und III positive
+Beitr\"age liefern (sie vergr\"o{\ss}ern also $r$), Punkte in den Quadranten II und IV hingegen negative
+($r$ wird vermindert).
+Aus dem Diagramm wird ferner deutlich, da{\ss} die positive Korrelation zwischen $X$ und $Y$ daf\"ur sorgt, da{\ss} 
+die Quadranten I und III st\"arker besetzt sind (mehr Punkte enthalten) als II und IV.
+
+ 
+\begin{center}
+\setkeys{Gin}{width=0.5\textwidth}
+<<fig=TRUE,echo=FALSE>>=
+X <- rnorm(20)
+Y <- X + rnorm(20) 
+plot(X, Y)
+abline(h = mean(Y))
+abline(v = mean(X))
+text ( x = 1 , y = 1, labels = "I", cex = 2)
+text ( x = -1 , y = 1, labels = "II", cex = 2)
+text ( x = - 1 , y = - 1, labels = "III", cex = 2)
+text ( x = 1 , y = - 1, labels = "IV", cex = 2)
+
+@
+\end{center}
+Wir erw\"ahnen an dieser Stelle {\em en passant}, da{\ss} der Kendallsche Korrelationskoeffizient
+$\tau$ allein auf den Besetzungszahlen der Quadranten beruht, die genaue Lage der Punkte
+in den Quadranten jedoch keinen Einflu{\ss} hat.
+
+Die Funktion zur Berechnung von Korrelationskoeffizienten in \texttt{R} ist \texttt{cor()}.
+
+F\"ur das Beispiel, f\"ur das wir das Streudiagramm erstellt haben ergibt sich:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(iris)
+iris.setosa <- subset(iris, Species == "setosa")
+corr.coeff <- cor(x = iris.setosa$Petal.Length, 
+       y = iris.setosa$Petal.Width) 
+corr.coeff
+@
+\end{center}
+Standardmäßig berechnet \texttt{cor()} den Pearsonschen Korrelationskoeffizienten.
+Wie wir schon aufgrund des Plots vermutet haben, besteht ein eher m\"a{\ss}iger
+Zusammenhang zwischen der Petalenbreite und -l\"ange bei Schwertlilien der
+Sorte \emph{Setosa}.
+
+%%%% cor() matrix
+Die Funktion cor() kann neben zwei Merkmalen auch Korrelationen zwischen mehreren Merkmalen berechnen.
+In diesem Fall übergibt man ihr einen Matrix oder einen Dataframe mit den zu korrelierenden Größen.
+und \texttt{cor()} liefert eine Korrelationsmatrix zurück.
+<<fig=FALSE,echo=TRUE>>=
+(round(cor(iris[,1:4]),2))
+@
+
+Eine besondere Bedeutung hat auch das sogenannte Bestimmtheitsma"s als Quadrat
+des Korrelationskoeffizienten: $B = r^2$. Es bedeutet den Anteil der Varianz der
+einen Variable, der durch die Varianz der anderen Variable erkl\"art wird.
+
+%%%%%%%%%%%%%%%%%%%%% SPEARMAN %%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Der Spearmansche Korrelationskoeffizient}
+
+Es ist indes vorstellbar, dass in manchen F\"allen die Me{\ss}werte nicht
+entlang einer geraden Linie liegen, sondern sich eher durch
+eine gekr\"ummte Kurve beschreiben lassen. 
+Wenn diese Kurve einen monotonen Verlauf hat (also {\em immer} steigt oder {\em immer} f\"allt),
+kann ein anderer Korrelationskoeffizient berechnet werden, und zwar nach
+Spearman. Er hei{\ss}t in der Literatur nicht mehr $r$, sondern $\rho$ (\emph{rho}).
+Die Berechnung nach Spearman beruht nicht mehr auf den eigentlichen
+Me{\ss}\-werten, sondern auf R\"angen. Daher ist $\rho$ auch für ordinalskalierte Daten geeignet, 
+wobei für die Ränge Gleichabständigkeit (\textit{Äquidistanz}) gelten muss. 
+Beiden Me{\ss}werten eines Me{\ss}wertpaares werden die entsprechenden R\"ange unabh\"angig voneinander zugewiesen. 
+
+Die Formel
+f\"ur $\rho$ lautet:
+\begin{equation}
+\rho = 1 - \frac{6 \sum d_i^2} { n ( n^2 - 1 ) }
+\end{equation}
+wobei $n$ die Anzahl der Me{\ss}werte ist und $d_i$ die Differenz der R\"ange
+f\"ur die beiden Variablen f\"ur Me{\ss}wert $i$ ist. Hier ist wichtig zu verstehen,
+dass die Summe \"uber die Differenzen die Seele der Formel ist: Gro{\ss}e Differenzen
+erh\"ohen den Subtrahend, der von 1 abgezogen wird und verringern damit $\rho$.
+
+
+Die Berechnung in \texttt{R} erfolgt durch
+\"Ubergabe des Parameters \texttt{method =} ``\texttt{spearman}''} an die Funktion \texttt{cor()}.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+corr.coeff <- cor(x = iris.setosa$Petal.Length, 
+       y = iris.setosa$Petal.Width, method = "spearman") 
+corr.coeff
+@
+\end{center}
+
+Auch hier ist wiederum die Schreibweise von ``spearman'' zu beachten.
+Der Vollst\"andigkeit halber sei noch erw\"ahnt, dass der Kendallsche Korrelationskoeffizient $\tau$
+durch \texttt{method = } ``\texttt{kendall}'' spezifiziert wird. Dieser kann auch auf rein ordinalkalierte Daten ohne 
+das Kriterium der Gleichabsändigkeit verwendet werden.
+Der Spearmannsche und Kendallsche Korrelationskoeffizient gehören zu den nicht-parametrischen Korrelationen.\\ 
+
+Mit der Funktion \texttt{cor.test} kann neben dem Korrelationskoeffizient
+ein p-Wert berechnet werden, der sich auf die Null-Hypothese ``Es gibt
+keine Korrelation zwischen den Me{\ss}werten'' bezieht.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+cor.test.output <- cor.test(x = iris.setosa$Petal.Length, 
+       y = iris.setosa$Petal.Width, method = "spearman") 
+cor.test.output
+@
+\end{center}
+Wie schon bei den Funktionen \texttt{density} und \texttt{chisq.test} produziert
+\texttt{cor.test} ein komplexes Objekt, das teilweise latent ist.
+
+\subsection{Wann welcher Korrelationskoeffizient?}
+Wie immer, empfiehlt es sich, zuerst die Daten anzusehen.
+Wenn die gedachte Linie durch die Punktwolke eine Gerade ist, wenn sowohl x als auch y-Werte
+ann\"ahernd normal-verteilt sind und wenn es
+keine Ausreisser gibt, empfiehlt sich der ``normale'' Korrelationskoeffizient
+(Pearson).
+Falls es Aureisser gibt, wird ihr Effekt durch den Rang-basierten
+Korrelationskoeffizient nach Spearman gemildert. Er ist auch f\"ur
+nicht-lineare Zusammenh\"ange geeignet, sofern ein monotoner Zusammenhang besteht, d.~h.\
+die y-Werte sind tendenziell nur steigend oder nur fallend, also keine U-f\"ormigen
+Zusammenh\"ange.
+ 
+Der Korrelationskoeffizient $\tau$ nach Kendall ist der robusteste. Er wird
+angewendet bei Nicht-Normalverteilungen der Merkmale und bei kleinen Stichproben.
+In seine Berechnung flie{\ss}en nur die Besetzungszahlen in den Quadranten eine
+Rolle, nicht jedoch die Lage der Punkte in den Quadranten.
+%\vspace{0.5cm}
+\clearpage
+
+\section{Scheinkorrelationen}
+Beim Berechnen von Korrelationen ist nicht nur auf die Form der Punktwolke
+zu achten (linear, monoton), sondern auch auf sogenannte Scheinkorrelationen.
+Beispiele hierf\"ur sind:
+\begin{itemize}
+\item
+Ein weitab von der Punktwolke im I. oder III. Quadranten liegender Punkt
+kann einen hohen Pearsonschen Korrelationskoeffizienten produzieren, da
+die Abst\"ande von den Mittelwerten der beiden Variablen multipliziert werden.
+Man sollte pr\"ufen, ob es sich um einen Ausreisser handelt und den Punkt
+dann gegebenenfalls entfernen. Andernfalls Spearmanscher
+Korrelationskoeffizient.
+
+\item
+Wenn sich zwei Gr\"o{\ss}en (ann\"ahernd) zu 100 \% erg\"anzen, sind sie
+trivialerweise (fast) perfekt anti-korreliert. Beispiel: Wenn 
+bei Wahlen immer die gleichen zwei Parteien fast alle Stimmen gewinnen.
+
+\item
+Wenn die Punktwolke nicht aus einer, sondern aus mehreren Verteilungen
+stammt, kann eine starke Korrelation vorgespiegelt werden, wenn die
+Einzel-Punktwolken weit voneinander entfernt liegen. L\"osung:
+Korrelationskoeffizienten f\"ur die Gruppen einzeln berechnen.
+\end{itemize}
+Dieser letzte Fall ist am schwierigsten zu erkennen.
+\subsection{Beispiel f\"ur Scheinkorrelation}
+Im Fall des
+Iris-Datensatzes
+ergeben sich f\"ur die Einzelsorten meistens eher m\"a{\ss}ige Korrelationskoeffizienten, f\"ur
+den gesamten Datensatz jedoch ein recht hoher.
+
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(iris)
+iris.setosa <- subset(iris, Species == "setosa" )
+cor(iris.setosa$Petal.Length, iris.setosa$Petal.Width)
+
+iris.versicolor <- subset(iris, Species == "versicolor" )
+cor(iris.versicolor$Petal.Length, iris.versicolor$Petal.Width)
+
+iris.virginica <- subset(iris, Species == "virginica" )
+cor(iris.virginica$Petal.Length, iris.virginica$Petal.Width)
+
+cor(iris$Petal.Length, iris$Petal.Width)
+@
+\end{center}
+
+Wie kann man nun solche F\"alle erkennen?
+Ein genauer Blick auf den Datensatz z.B. mit \texttt{summary()} macht
+klar, da{\ss} der Datensatz \texttt{iris} mehrere Sorten enth\"alt.
+Auch ein Plot gibt oft Hinweise auf heterogene Daten.
+
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+
+plot(x = iris$Petal.Length, 
+y = iris$Petal.Width, 
+xlab = "Petalenlaenge", 
+ylab = "Petalenbreite",
+main  = "Iris Datensatz - 3 Spezies"
+)
+@
+\end{center}
+Die Daten in der linken unteren Ecke scheinen einer anderen
+Gruppe anzugeh\"oren als die rechts oben. Klarheit, ob dies wirklich so ist,
+verschafft man 
+sich, indem man die Punkte der drei Sorten in verschiedenen
+Farben oder mit verschiedenen Symbolen anzeigt.
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(x = iris$Petal.Length, 
+y = iris$Petal.Width, 
+xlab = "Petalenlaenge", 
+ylab = "Petalenbreite",
+main  = "Iris Datensatz - 3 Spezies",
+pch=21,
+bg=c("red", "green3", "blue")[iris$Species]
+)
+@
+\end{center}
+
+Alternativ kann der Plot auch mit Hilfe der low-level Plotfunktion \texttt{points()} erezugt werden. 
+Zwei Dinge sind zu beachten. Erstens, man legt mit dem \texttt{plot()}-Aufruf
+den Plot an. Weitere Daten können dem Plot dann mit \texttt{points()} hinzugef\"ugt werden.
+Wenn der Aus\-schnitt des bestehenden Plots
+so ist, dass die ergänzten Punkte au{\ss}erhalb des Plots liegen, werden sie nicht
+angezeigt, wobei leider auch keine Warn-Meldung ausgegeben wird.
+Deshalb muss vor dem Erzeugen des Plots sichergestellt werden, dass alle
+Daten hineinpassen werden. Die Lage der zu erwartenden Punkte kann mit \texttt{summary(iris)}
+ermittelt werden. Der Plot-Ausschnitt kann mit den Parametern \texttt{xlim} und
+\texttt{ylim} spezifiziert werden.
+
+Hier kommt der Plot mit verschiedenen Symbolen, falls kein Farbdrucker zur Verf\"ugung
+steht, und einer passenden Legende:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(Petal.Width~Petal.Length,
+data = iris,  
+xlab = "Petalenlaenge", 
+ylab = "Petalenbreite",
+main  = "Iris Datensatz - 3 Spezies",
+pch=c(15,16,17)[iris$Species])
+@
+\end{center}
+Die verschiedenen Optionen f\"ur Plot-Symbole k\"onnen mit \texttt{?points} erfragt und mit
+\texttt{pch} spezifiziert werden. Die gleichzeitige Verwendung von verschiedenen
+Farben und verschiedenen Symbolen wird nicht empfohlen.
+
+Wie man leicht erkennen kann, ist der recht hohe Korrelationskoeffizient f\"ur den
+Gesamt-Datensatz vor allem deshalb zustande gekommen, weil es sich um einen
+heterogenen Datensatz aus drei Spezies handelt.
+
+
+
+\section{Multi-Panel Grafiken}
+Oftmals ist es aus Gr\"unden der \"Ubersichtlichkeit w\"unschenswert,
+mehrere Graphiken nebeneinander zu zeigen. Dies kann in \texttt{R}
+mit der Funktion \texttt{par} bewerkstelligt werden.
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+data(iris)
+iris.setosa <- subset(iris, Species == "setosa" )
+iris.versicolor <- subset(iris, Species == "versicolor" )
+iris.virginica <- subset(iris, Species == "virginica" )
+op <- par(mfrow = c(1,3), pty = 's', mar=c(2,2,2,2), oma=c(0,0,0,0),
+plot(iris.setosa$Petal.Length, iris.setosa$Petal.Width)
+plot(iris.versicolor$Petal.Length, iris.versicolor$Petal.Width)
+plot(iris.virginica$Petal.Length, iris.virginica$Petal.Width)
+par(op)
+@
+\end{center}
+Mit dem Parameter \texttt{mfrow = c(1,3)} wird der Gesamt-Plot in drei
+kleine Felder aufgeteilt, die nebeneinanderliegen. Die umgekehrte
+Zahlenfolge w\"urde die drei Plots \"ubereinander darstellen.
+Eine einmal mit \texttt{par} gew\"ahlte Parameter-Einstellung
+gilt solange, bis sie mit einem neuen Aufruf von \texttt{par}
+\"uberschrieben wird oder bis sie mit dem Befehl \texttt{par(op)}
+wieder auf die Standardeinstellung zur\"uckgesetzt wird.
+In der Variable \texttt{op} werden die
+Parameter abgelegt, die durch den \texttt{par}-Aufruf
+ver\"andert wurden. Mit \texttt{pty = 's'} erreicht man
+eine quadratische Darstellung der Einzelplots. Ohne diese
+Angabe w\"urde der gesamte Platz ausgenutzt werden, was unter
+Umst\"anden zu einer Verzerrung der Bilder f\"uhrt. Abstände zwischen den Panelen können
+mi dem Parameter \texttt{mar} kontrolliert werden. Werte für diesen Parameter werden durch einen numerischen
+Vektor übergeben (\texttt{mar=c(a,b,c,d)}), der die Breite des a) unteren, b) linken, c) oberen und d) rechten Plot-Rand
+festlegt. Ähnlich funktioniert der Parameter \texttt{oma} mit dem die Ränder der Grafikanzeige (also um alle Panele herum)
+eingestellt werden können. Zusammen mit der Funnktion \texttt{mtext(... ,outer=TRUE)} kann so eine Panel-übergreifende x- und y-Achsen-Beschriftung realisiert werden.
+
+\vspace{0.5cm}
+
+Alternativ kann man sogenannte \texttt{trellis} Grafiken mit dem Paket \texttt{lattice}
+erzeugen. Die Funktion \texttt{xyplot()} erwarte dabei als erstes Argument eine Formel der Form x~y|z,
+wobei z die bedingende Variable, z.B. eine Faktorvariable ist, nach welcher der Datensatz stratifiziert wird.
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+# Faktorweises Plotten
+library(lattice)
+data(iris)
+xyplot(Sepal.Width ~ Sepal.Length | Species, data=iris)
+@
+\end{center}
+
+
+\end{document}

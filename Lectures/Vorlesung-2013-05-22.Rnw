@@ -1,0 +1,684 @@
+\documentclass[a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc} 
+\usepackage{geometry}
+\geometry{a4paper,left=2cm, right=2cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+ 
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{22. Mai 2013}
+
+\begin{document}
+
+\maketitle
+
+\section{Bivariate Analyse nominal skalierter Daten}
+In dieser Art von Analyse werden Zusammenh"ange zwischen \emph{zwei}
+nominal skalierten Merkmalen gesucht. Ein Beispiel mag dies
+verdeutlichen:
+In einer Erhebung wurden von 10 zuf"allig ausgew"ahlten Passanten
+Augen- und Haarfarbe bestimmt. Man interessiert sich daf"ur, ob
+gewisse Kombinationen von Augen- und Haarfarben bevorzugt 
+auftreten (oder auch vermieden werden), oder ob es keine solche Bevorzugung
+oder Vermeidung gibt. 
+
+Eine Tabelle mit den Variablen Augen- und Haarfarben kann angelegt
+werden, indem man zuerst die zwei entsprechenden Einzelvektoren anlegt:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+Haarfarbe  <- c("braun", "braun", "schwarz", "blond", "blond", 
+"braun", "braun", "schwarz", "blond", "rot")
+Augenfarbe <- c("braun", "gruen", "braun", "blau", 
+"blau", "blau", "braun", "braun", "blau", "blau")
+@
+\end{center}
+
+Dann werden die beiden Vektoren mit der Funktion \texttt{cbind()} zu einer
+zweispaltigen
+Matrix zusammengefasst, die noch mit der Funktion \texttt{as.data.frame()}
+in eine Datentabelle ({\it data frame}) umgewandelt werden muss.
+Der Unterscheid zwischen einem \emph{data frame} und einer \emph{matrix} ist hierbei die Art und Weise wie \texttt{R} die Datentypen dieser Objekte
+behandelt. Im Gegensatz zu Datentabellen müssen bei einer Matrix (wie auch bei Vektoren) \emph{alle Elemente} vom gleichen Datentyp sein.
+Sollte dies nicht der Fall sein, wird eine Typumwandlung erzwungen. Die Funktion \texttt{as.matrix()} erzeugt eine Zeichenketten-Matrix sobald eine nicht-numerische Spalte vorliegt. Andernfalls wird die übliche Umwandlungshierarchie angewendet (logisch < integer < double < komplex), so dass z.B. eine gemischte Matrix aus logischen und numerischen Werten zu einer numerischen Matrix umgewandelt wird (wobei \texttt{TRUE=1 und FALSE=0}).
+\emph{Data frames} sind also flexibler, was die Struktur der gespeicherten Daten betrifft, jedoch können mit Ihnen keine arithmetischen Matrizen-Operationen (z.B. Kreuzprodukt, Invertierung etc.) durchgeführt werden.
+
+\begin{center}
+<<fig=FALSE, echo=TRUE>>=
+Colors <- cbind(Augenfarbe, Haarfarbe)
+is.matrix(Colors)
+(Colors <- as.data.frame(Colors))
+@
+\end{center}
+
+
+\textbf{Wichtig} für die \texttt{cbind()} Funktion ist, dass die zu verknüpfenden Vektoren, die gleiche Länge haben.
+
+Eine Form der Darstellung f"ur 2-dimensionale nominal-skalierte Daten ist
+die sogenannte Kontingenz-Tafel. Sie wird mit dem Aufruf \texttt{table()}
+erstellt.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(kont.tafel <- table(Colors))
+@
+\end{center}
+Die Elemente in der Kontingenztafel geben an, wieviele Personen es
+mit der jeweiligen Kombination von Augen- und Haarfarbe gibt, also
+beispielsweise drei blau"augige blonde Personen.
+Man beachte, dass die Funktion \texttt{table()} sowohl auf 1- als auch 2-dimensionale
+kategoriale Daten anwendbar ist. Im ersten Fall wird eine H"aufigkeitstabelle
+erzeugt, im zweiten eine Kontingenz-Tafel.
+
+Mit der Funktion \texttt{addmargins()} k"onnen die sogenannten Marginal-Summen
+angezeigt werden. Das sind die Gesamtanzahlen der Individuen mit einer
+bestimmten Augen- oder Haarfarbe.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+addmargins(kont.tafel)
+@
+\end{center}
+Mit der Funktion \texttt{prop.table()} k"onnen die relativen H"aufigkeiten der Tabelle
+angezeigt werden. 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+prop.table(kont.tafel)
+@
+\end{center}
+Auch hier k"onnen wiederum die Marginal- oder Randsummen dargestellt werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(kont.tafel.marginal <- addmargins(prop.table(kont.tafel)))
+@
+\end{center}
+Aus dieser Darstellung ergeben sich sofort die Wahrscheinlichkeiten
+f"ur die Einzelmerkmale, also 50\% der Passanten sind blau"augig,
+40\% braun-"augig, 10\% gr"un-"augig. 30\% sind blond,
+40\% braun-haarig, 10\% rothaarig und 20\%
+schwarzhaarig. Diese Wahrscheinlichkeiten werden wir sp"ater
+ben"otigen, um die Wahrscheinlichkeiten und Erwartungswerte 
+f"ur alle Kombinationen aus Haar- und Augenfarbe
+zu berechnen, wenn wir statistische Unabh"angigkeit annehmen.
+
+Mit 100 multipliziert ergeben sich die relativen H"aufigkeiten in Prozent:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+100 * prop.table(kont.tafel)
+@
+\end{center}
+30\% der Passanten sind also z.~B.\ blond und blau"augig.
+
+
+
+\subsection*{Bedingte Wahrscheinlichkeiten}
+
+Interessant ist die Zusammensetzung eines Merkmals f"ur eine bestimmte
+Auspr"ag\-ung des anderen Merkmals, also z.~B.\ die Verteilung der Augenfarben
+separat f"ur alle blonden, braun-, rot- oder schwarzhaarigen Personen.
+Oder die Verteilung der Haarfarben separat f"ur alle
+blau-, braun- oder gr"un-"augigen Personen.
+
+Dies erreicht man mit der Spezifikation von \texttt{margin} im Aufruf von \texttt{prop.table}.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+prop.table(kont.tafel, margin = 1)
+@
+\end{center}
+Hier werden die Augenfarben (Zeilen) auf 1 normiert.\\
+\textbf{Beispiel:} 3 von 5 (60\%) aller blauäugigen sind blond.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+prop.table(kont.tafel, margin = 2)
+@
+\end{center}
+Hier werden die Haarfarben (Spalten) auf 1 normiert.\\
+\textbf{Beispiel:} unter allen braun-haarigen gibt es 25 \% blau-"augige,
+50\% braun-"augige und 25\% gr"un-"augige Personen.\\
+
+In der Wahrscheinlichkeitslehre (Stochastik) spricht man von
+bedingten Wahrscheinlichkeiten. Die Wahrscheinlichkeit, dass eine braun-haarige Person blaue Augen hat, ist also 25\%.
+\begin{equation}
+P(\mbox{Augenfarbe = blau} | \mbox{Haarfarbe = braun} ) = 0,25
+\end{equation}
+Sprechweise: ``Die Wahrscheinlichkeit f"ur Augenfarbe blau {\it gegeben}
+(oder unter der Bedingung) Haarfarbe braun''.
+Dies ist im allgemein etwas anderes als
+\begin{equation}
+P( \mbox{Haarfarbe = braun} | \mbox{Augenfarbe = blau} ) = 0,20
+\end{equation}
+Ein Viertel aller braunhaarigen ist also blau"augig,
+aber nur ein F"unftel aller blau"augigen ist braunhaarig.
+
+
+\subsection*{Signifikanz des Zusammenhangs mit dem $\chi^2$-Test}
+Die bisherige Betrachtung legt den Verdacht nahe, dass die Kombination
+``blond und blau"augig'' doch eher bevorzugt auftritt als die Kombination
+``schwarz und blau"augig''. Um den Verdacht zu erh"arten, muss man sich "uberlegen,
+wie unsere Kontingenztafel aussehen w"urde, wenn es {\it keinen} Zusammenhang
+zwischen Augen- und Haarfarbe geben w"urde. Diese Annahme nennt man 
+in der Statistik {\it Nullhypothese}. Im allgemeinen ist die Nullhypothese
+eine genaue Definition einer Situation, wie die Welt aussehen {\it k"onnte}.
+
+Wir "uberlegen uns nun, wie die Kontingenztafel f"ur Augen- und Haarfarbe
+aussehen w"urde, wenn die Nullhypothese der Wahrheit entsprechen w"urde.
+
+Im Falle der statistischen Unabh"angigkeit ist die Wahrscheinlichkeit
+des Auftretens einer Kombination von Merkmalen das Produkt der 
+Einzelwahrscheinlichkeiten.
+
+Die Ereignisse (oder Merkmale) \emph{A} und \emph{B} hei"sen stochastisch unabhängig, wenn
+gilt: 
+\begin{equation} 
+    P ( A \cap B ) = P ( A ) \cdot P ( B )
+\end{equation}
+Sprechweise: ``Die Schnittmenge der Wahrscheinlichkeiten f"ur Merkmal A und B ist gleich dem Produkt 
+der Wahrscheinlichkeiten von Merkmal A und Merkmal B''.
+Zwei Ereignisse sind also stochastisch unabhängig, wenn die Wahrscheinlichkeit, dass beide Ereignisse eintreten, 
+gleich dem Produkt ihrer Einzelwahrscheinlichkeiten ist.\\
+
+Die folgenden Rechenschritte dienen nur zur Verdeutlichung des statistischen
+Rechenverfahrens; sie m"ussen nicht einzeln ausgef"uhrt werden, da es hierf"ur
+fertige Funktionen in R gibt
+Die Produkte der Einzelwahrscheinlichkeiten kann man mit Hilfe der Randwahrscheinlichkeiten berechnen
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+C <- addmargins(prop.table(kont.tafel))
+(Spaltensummen<-C[4,])
+(Zeilensummen<-C[,5])
+@
+\end{center}
+Die Funktion \texttt{outer()} berechnet das Vektorprodukt aus den Randsummen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>= 
+ (Wk <- outer(C[4,], C[,5]))
+@
+\end{center}
+Die dazugeh"origen Erwartungswerte erh"alt man durch Multiplikation mit
+der Stichprobengr"o"se, also 10. Der Erwartungswert einer Variable ist die Zahl, welche die Variable im Mittel annimmt.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(Kont.exp <- Wk * 10)
+@
+\end{center}
+Das Vorkommen nicht-ganzer Zahlen f"ur Erwartungswerte, die Anzahlen von
+Personen darstellen,  mag verwundern. Es handelt sich jedoch nur
+um theoretische Konstrukte f"ur die weitere Rechnung.
+Wir w"urden beispielsweise 1,5 blonde blau"augige Personen in unserer Stichprobe erwarten,
+wenn die beiden Merkmale nicht miteinander assoziiert w"aren.
+Tats"achlich wurden drei beobachtet.\\
+
+Die Abweichung von beobachteten Werten und erwarteten Werten
+kann als Ma{"s} f"ur die Assoziationsst"arke gesehen werden.
+
+Zu diesem Zweck wird die Prüfgr"o"se $\chi^2$ berechnet:
+
+\begin{equation}
+\chi^2 = \sum_{i,j} \frac{ (B_{ij} - E_{ij})^2 } { E_{ij} } = \sum_{i,j} \frac{ B_{ij} - E_{ij} } {\sqrt{E_{ij} } }
+\end{equation}
+wobei $B_{ij}$ f"ur die beobachteten und $E_{ij}$ f"ur
+die erwarteten Häufigkeiten der Merkmale stehen. Die Indizes \textit{ij} bezeichnen die jeweilige Kategorie in den Merkmalen Augenfarbe (\textit{i}) und Haarfarbe (\textit{j}).
+Frage: Wie verhält sich $\chi^2$ wenn beobachtete und erwartete Werte stark voneinander abweichen?\\
+
+Je gr"o{"s}er $\chi^2$, desto gr"o"ser ist die Abweichung
+der Beobachtung von der Annahme der statistischen Unabh"angigkeit. 
+$\chi^2$ wird nur dann 0, wenn Beobachtung und Modell genau
+"ubereinstimmen, und nie negativ.
+$\chi^2$ ist zun"achst nur eine Zahl, die nicht viel aussagt.
+Um diese Zahl beurteilen zu k"onnen, muss man sie vergleichen
+mit $\chi^2$-Werten, die man erhalten w"urde, wenn die Null-Hypothese
+zutreffen w"urde, wenn also Haar- und Augenfarbe nichts miteinander
+zu tun h"atten. Man w"urde, wenn man die Untersuchung viele Male
+wiederholen w"urde, sicherlich nicht immer das gleiche $\chi^2$ 
+bekommen, da die Stichproben gewissen Schwankungen unterworfen
+sein werden. Es ist jedoch genau berechenbar, mit welcher
+Wahrscheinlichkeit man welches $\chi^2$ erhalten w"urde.
+In anderen Worten: die \textbf{$\chi^2$-Verteilung} ist bekannt.\\
+
+Die Chi-Quadrat-Verteilung mit \emph{n} Freiheitsgraden ist eine stetige Verteilung der 
+Summe \emph{n} unabhängiger, quadrierter, standardnormalverteilter Zufallsvariablen.
+Beispiel:
+\begin{equation}
+    Z_k \sim \mathcal{N}(0,1)\ \ \textit{k = 1, \dots, n}.
+\end{equation}
+$Z$ ist eine Zufallsvariable, d.h. jede Instanz dieser Variable entstammt einer standard-normalverteilten Grundgesamtheit.
+Hier wären unsere Merkmale \emph{Augenfarbe} und \emph{Haarfarbe} die unabhängigen Zufallsvariablen $Z_1$ und $Z_2$, welche sich quadriert und aufsummiert.
+\begin{equation}
+  Q = Z_1^2 + Z_2^2
+\end{equation}
+wie eine $\chi^2$ verteilte Zufallsvariable mit 2 Freiheitsgraden verhalten:
+\begin{equation}
+  Q \sim \chi^2_2 
+\end{equation}
+Allgemein folgt dann:
+\begin{equation}
+  \chi^2_n \sim Z_1^2 + \dots + Z_n^2
+\end{equation}
+Die Chi-Quadrat-Verteilung hat als einzigen Parameter die Anzahl der Freiheitsgrade.
+Die Abhängigkeit der Wahrscheinlichkeitsdichtefunktion wird in der folgenden Abbildung deutlich:
+\clearpage
+<<fig=TRUE,echo=FALSE, height=4>>=
+par(mfrow=c(1,2), mar=c(2,2,1,1), oma = c(3, 3, 2, 0.5)) # c(bottom, left, top, right)
+x<-seq(0,60,0.25)
+df<-seq(2,30,4)
+cld<-rainbow(length(df))
+for(i in seq(along=df)){
+	if(i==1){
+		plot(x, dchisq(x,df[i]), type="l", xlab="", ylab="", col=cld[i])
+	} else {
+		lines(x, dchisq(x,df[i]), col=cld[i])
+	}
+}
+legend("topright", legend=paste(df, "df"), col=cld, lty=1, bty="n") 
+
+# Einzelverteilung
+d<-6
+plot(x, dchisq(x,d), type="l", xlab="", ylab="", lwd=2.5, xlim=c(0,25))
+abline(h=0)
+abline(v=qchisq(0.975, d), col="darkgray", lty=2)
+text(15, 0.1, paste("critical value:", round(qchisq(0.975, d),2)), pos=3) # x^2;alpha/2 = 0.975 for alpha=5%
+legend("topright", legend=paste(d, "df"), lty=1, bty="n")
+
+mtext("Dichtefunktionen der Chiquadrat Verteilung", side = 3, outer = TRUE, line=0, font=2)
+mtext("Chiquadrat Statistik", side = 1, outer = TRUE, line=1, font=2)
+mtext("Wahrscheinlichkeisdichte", side = 2, outer = TRUE, line=1, font=2)
+@
+
+Damit lässt sich berechnen, mit welcher Wahrscheinlichkeit
+man ein $\chi^2$ rein zuf"allig erhalten w"urde, das genauso gro"s
+oder gr"o"ser als das $\chi^2$ ist, das man beobachtet hat. In der obigen Abbildung beträgt beispielsweise der kritische Wert für $\chi^2_{\alpha/2}$ ($\alpha$=5\%) und 6 Freiheitsgraden 14.45. D.h. wenn unsere experimentell ermittelte Prüfgröße  kleiner oder gleich diesem kritischen Wert ist, müssen wir davon ausgehen, dass das Ergebnis mit mehr als fünfprozentiger wahrscheinlichkeit auch zufällig herauskommt. Diese Wahrscheinlichkeit spielt in der Statistik als Ma"s f"ur Signifikanz eine gro"se Rolle und wird \textbf{p-Wert} genannt. Traditionell werden p-Werte kleiner als 0.05 als signifikant bezeichnet und in \texttt{R} mit folgenden Signifikanz-Codes gekennzeichnet: * (p < 0.05), ** (p < 0.01), *** (p < 0.001) gekennzeichnet.
+
+In \texttt{R} kann $\chi^2$ mit der Funktion \texttt{chisq.test()} ermittelt werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(chitest.out<-chisq.test(kont.tafel))
+@
+\end{center}
+In der einfachsten Variante dieser Funktion unter Angabe einer Kontingenztafel wird ein $\chi^2$ Unabhänigkeits-Test 
+durchgeführt. Bei der Überprüfung der Unabhängigkeit der Merkmale Augen- und Haarfarbe muss die Anzahl der Freiheitsgrade unter Berücksichtigung der Anzahl der Kategorien (\emph{Ausprägungen, outcomes}) der Merkmale bestimmt werden:\\
+4 Haarfarben (k) und 3 Augenfarben (m)  $\rightarrow$ df = (k-1)*(m-1) = 6.   
+
+In unserem Fall w"urde man also mit einer 20 prozentigen Wahrscheinlichkeit
+einen $\chi^2$ Wert von 8.5 rein zufällig erhalten. D.h. selbst wenn in Realit"at 
+die beiden Merkmale nicht korreliert w"aren würde man einen so starken Zusammenhang beobachten, allerdings
+unter der Ma"sgabe einer nicht-repr"asentativen Stichprobe.
+
+
+\subsection*{Das \texttt{chisq.test}-Objekt}
+Genau wie beim Aufruf des Befehls \texttt{density()} wird beim
+Aufruf von \texttt{chisq.test()} ein Objekt erzeugt, das nur
+einen Teil seiner Information sofort preisgibt. Der Befehl
+\texttt{class()} zeigt uns an, dass es sich um ein Objekt
+der Klasse \texttt{htest} (f"ur Hypothesen-Test) handelt.
+
+\begin{center}
+\singlespacing
+<<fig=FALSE,echo=TRUE>>=
+chitest.out
+class(chitest.out)
+@
+\end{center}
+
+Auf den Bildschirm werden nur die wichtigsten Informationen
+des Outputs geschrieben: Welcher Test wurde angewendet? 
+$\chi^2$, Anzahl der Freiheitsgrade (\texttt{df}), und p-Wert.
+Die Warnung \texttt{Warning message:
+Chi-squared approximation may be incorrect in: chisq.test(kont.tafel)},
+die w"ahrend des Aufrufs auf dem Bildschirm erscheint,
+bezieht sich auf den geringen Stichprobenumfang von $N = 10$, den wir
+gew"ahlt haben, um die Beispeile "ubersichtlicher zu gestalten.
+Unter ''normalen`` Analyse-Bedingungen ist eine solche Warnung
+durchaus ernst zu nehmen!
+
+Mit der Funktion \texttt{str()} kann nun wieder die 
+Struktur des \texttt{chisq.text}-Objekts sichtbar gemacht werden:
+
+\begin{center}
+\singlespacing
+<<fig=FALSE,echo=TRUE>>=
+str(chitest.out)
+@
+\end{center}
+%\onehalfspacing
+
+In unserem Fall enth"alt des Objekt \texttt{chitest.out} z.~B.\ 
+folgende weitere versteckte Informationen: 
+\begin{itemize}
+\item \texttt{observed}  - beobachtete Werte, also die Kontingenztafel,
+die wir als Input "ubergeben haben,
+\item \texttt{expected}  - erwartete
+Werte, falls die Null-Hypothese der Unabh"angigkeit gelten w"urde,
+\item \texttt{data.name} - Name der Variablen, die wir als Input
+"ubergeben haben,
+\item \texttt{residuals} - die Terme (Summanden) der Prüfstatistik
+\item etc.
+\end{itemize}
+Wir erkennen weiterhin, dass die uns interessierende
+Gr"o"se $\chi^2$ unter dem Namen \texttt{statistic}
+im Objekt abgespeichert ist. Ebenso der P-Wert unter dem Namen \texttt{p.value}. 
+(Achtung: Groß- und Kleinschreibung beachten!).
+Ferner wird uns mitgeteilt, dass \texttt{chitest.out}
+in Form einer {\em Liste} vorliegt. 
+
+Auf die Elemente der Liste kann wieder mit dem Dollar-Zeichen
+zugegriffen werden, z.~B.\ auf die Matrix mit den Erwartungswerten:
+
+\begin{center}
+\singlespacing
+<<fig=FALSE,echo=TRUE>>=
+chitest.out$expected
+@
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{St"arke des Zusammenhangs: der Pearsonsche Kontingenzkoeffizient}
+
+Mittels $\chi^2$ kann man den Pearsonschen Kontingenzkoeffizient
+({\it contingency coefficient, Pearson's C}) berechnen:
+\begin{equation}
+C = \sqrt{ \frac{\chi^2}{\chi^2 + N} }
+\end{equation}
+wobei $N$ die Gr"o"se der Stichprobe ist. Für C gilt: $ 0 \leq C < 1$.
+<<fig=FALSE,echo=TRUE>>=
+x<-as.numeric(chitest.out$statistic)
+n<-sum(chitest.out$observed)
+(C <- round(sqrt(x/(x+n)),3))
+@
+Eine feritge \texttt{R}-Funktion bietet das Paket \texttt{vcd}.
+<<fig=FALSE,echo=TRUE>>=
+library(vcd)
+stat<-assocstats(kont.tafel)
+(round(stat$contingency,3))
+@
+Dieser Koeffizient muss noch normiert werden, um Vergleichbarkeit
+im Falle unterschiedlich gro"ser Kontingenztafeln herzustellen.
+Hierf"ur wird die maximal m"ogliche St"arke der Kontingenz definiert:
+\begin{equation}
+C_{\mbox{max}} = \sqrt {\frac{m - 1}{m} }
+\end{equation}
+wobei $m$ das Minimum aus der Anzahl der m"oglichen Merkmalsauspr"agungen  ist.
+In unserem Fall ist also $m = 3$, da es sich um drei unterschiedliche Augenfarben
+und vier unterschiedliche Haarfarben handelt.
+Dieser Wert w"urde erreicht werden, wenn {\it alle} Tr"ager einer
+bestimmten Augenfarbe {\it eine} bestimmte Haarfarbe h"atten.
+Der korrigierte Kontingenzkoeffizient ist dann definiert als:
+\begin{equation}
+C_{\mbox{korr}} = C * C_{\mbox{max}} 
+\end{equation}
+Er liegt nun zwischen 0 und 1, so dass unterschiedlich dimensionierte
+Kontingenztafeln verglichen werden k"onnen. In unserem Fall ergibt sich $C_{\mbox{korr}} = 0.55$.
+<<fig=FALSE,echo=TRUE>>=
+m<-min( nrow(kont.tafel), ncol(kont.tafel))
+(Cm <- round(C*sqrt((m-1)/m),3))
+@
+
+Es liegt also ein recht starker Zusammenhang zwischen Augen- und Haarfarbe vor,
+der jedoch aufgrund der geringen
+Fallzahl von $N = 10$ nicht als statis\-tisch signifikant eingestuft werden kann.
+Durch h"ohere Fallzahlen w"are eine bessere statistische Absicherung m"oglich, falls
+ein tats"achlicher Zusammenhang zwischen diesen beiden Variablen vorliegt.
+
+Der Begriff der statistischen Signifikanz wird uns sp"ater noch 
+begegnen. Hier sei trotzdem schon auf den folgenden Sachverhalt hingewiesen:
+Man differenziere sehr pr"azise zwischen statistischer Signifikanz, die 
+die Wahrscheinlichkeit einer Zufallsbeobachtung betrifft, und St"arke eines
+Zusammenhangs. Es gibt alle m"oglichen Kombinationen: Ein Zusammenhang kann
+\begin{itemize}
+\item
+stark und statistisch signifikant
+\item
+stark, aber statistisch nicht signifikant
+\item
+schwach, aber statistisch signifikant
+\item
+schwach und statistisch nicht signifikant
+\end{itemize}
+sein.
+Anders als bei der statistischen Signifkanz mit den traditionelle p-Wert Schwellen
+0.05, 0.01 und 0.001, gibt es eine solche Entsprechung nicht
+f"ur die St"arke des Zusammenhangs.
+
+
+\subsection*{Vierfeldertafeln}
+Vierfeldertafeln, auch 2 $\times 2$-Kontingenztafeln genannt, sind ein
+Spezialfall der allgemeinen $r \times c$-Kontingenztafeln. Sie spielen
+in der medizinischen Forschung eine gro"se Rolle, die hier an einigen
+Beispielen verdeutlicht werden soll. Im ersten Beispiel geht es darum,
+die Wirksamkeit einer medizinischen Behandlungsmethode zu beurteilen.
+Die zwei Variablen sind: Krankheitszustand (mit den Auspr"agungen krank
+oder gesund) und Behandlung (ja oder nein). Die Gruppe ohne
+Behandlung wird als Kontroll-Gruppe bezeichnet. Die Probandenzahlen eines Versuchs
+lassen sich also in folgender Tafel darstellen, wobei $a, b, c, d$ die 
+Anzahlen f"ur die jeweiligen Kombinationen darstellen. 
+
+\begin{table}[ht]
+%\centering
+\begin{tabular}{cccc}
+Gruppe & krank & gesund & Summe \\\hline
+Kontrolle & a & b & a + b \\
+Behandlung & c & d & c + d \\
+Summe & a + c & b + d & N \\
+\hline
+\end{tabular}
+\end{table}
+In der Medizin werden Wahrscheinlichkeiten f"ur negative Ereignisse
+h"aufig {\it Risiko} genannt. Das Risiko, krank zu sein, ist also in
+der Kontroll-Gruppe $a/(a + b)$ und in der Behandlungsgruppe $c/(c + d)$.
+
+In der Medizin werden Wahrscheinlichkeiten gerne auch mit dem Begriff
+{\it Chance} (englisch: {\it odds}) formuliert. Der Begriff Chance
+ist in der Umgangssprache positiv, in der Medizin auch neutral
+oder negativ belegt. Im allgemeinen ist die Chance f"ur ein Ereignis
+seine Wahrscheinlichkeit dividiert durch die Wahrscheinlichkeit seines
+Nicht-Eintretens. \emph{odds} = $p /( 1 - p)$. Chancen und Wahrscheinlichkeiten
+sind ineinander ohne Informationsverlust transformierbar.
+$p = \hbox{Chance} / (1 + \hbox{Chance})$. Die Chance, krank zu sein,
+ist also in der Kontroll-Gruppe $a/b$ und in der Behandlungsgruppe $c/d$. Die Chance wird meist als
+Zahlenverh"altnis (mit gerundeten ganzen Zahlen)
+formuliert, also $1 : 5$ (anstatt 0,2).
+Das Verh"altnis der beiden Chancen (Chancenverh"altnis, {\it odds ratio}) gibt an, wieviel
+mal h"oher die Chance krank zu sein in der Kontrollgruppe ist im Vergleich zur Behandlungsgruppe. $\hbox{OR} = (a/b) / (c/d)$.
+
+Unser zweites Beispiel stammt aus dem Bereich der Diagnostik. Wenn ein neuer Test
+eingef"uhrt werden soll, werden seine Ergebnisse mit den Ergebnissen verglichen, die
+mit einer etablierten (aber vielleicht sehr aufw"andigen und teuren) Methode erzielt wurden.
+Ein neuer Test hat die Aufgabe, einen Befund auf einfachere und/odere billigere Art
+und Weise zu liefern, der idealerweise identisch ist mit einem Befund, der mit einer
+etablierten Methode erzielt wird.
+Die Ergebnisse, die mit der etablierten Methode erzielt wurden, gelten als die wahren Ergebnisse.
+Man spricht von einer etablierten Methode auch als {\it Goldstandard}.\\
+
+Die Vierfeldertafel sieht dann so aus:
+
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{cccc}
+Test & krank & gesund & Summe \\\hline
+positiv & a & b & a + b \\
+negativ & c & d & c + d \\
+Summe & a + c & b + d & N \\
+\hline
+\end{tabular}
+\end{table}
+
+$a, b, c, d$ k"onnen nun als {\it echt positive}, {\it falsch positive}, {\it falsch negative}
+und {\it echt negative} interpretiert werden.
+
+Jetzt werden v"ollig andere Fragestellungen als im ersten Beispiel interessant.
+Die Eigenschaften eines Tests lassen sich durch die vier folgenden Gr"o"sen charakterisieren:
+\begin{itemize}
+\item
+Die Sensitivit"at eines Tests gibt den Anteil der positiven
+Testergebnisse unter den Kranken an: $a / (a + c)$.
+\item
+Die Spezifit"at
+gibt den Anteil der negativen Testergebnisse unter den Gesunden an: $d/(b + d)$.
+\item
+Anteil der positiv Getesteten, die krank sind (positiver pr"adiktiver Wert, PPV): $a / (a + b)$
+\item
+Anteil der negativ Getesteten, die gesund sind (negativer pr"adiktiver Wert, NPV): $d / (c + d)$.
+\end{itemize}
+Im Idealfall sollen alle vier hier vorgestellten Kennzahlen eines
+diagnostischen Tests 1,0 sein, was in der Realit"at nat"urlich nicht
+erreicht wird. Welcher Kennzahl man nun die gr"o"ste Bedeutung beimi"st,
+kann nicht verallgemeinert werden und h"angt von vielen Umst"anden ab.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\section{Graphische Darstellung bivariater, nominal-skalierter
+Daten}
+
+Die \texttt{barplot} Funktion akzeptiert neben einem Vektor-Objekt auch Daten in Matrix-Form, wie z.B. Kontingenz-Tafeln.
+Mit dem Aufruf 
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+barplot(kont.tafel, xlab = "Haarfarbe")
+@
+\end{center}
+
+wird ein sogenanntes Komponenten-Stabdiagramm (auch: gestapeltes Balkendiagramm oder S"aulendiagramm ({\em stacked
+representation}) erzeugt. Bei diesr Art der Darstellung werden die
+Balken f"ur jede Haarfarbe im Verh"altnis der dazugeh"origen Augenfarben
+unterteilt.\\[0.5cm]
+
+Mit dem Parameter \texttt{beside = TRUE} werden statt einem gro"sen
+Balken f"ur jede Haarfarbe mehrere kleine Balken, deren H"ohe die Anzahl
+der entsprechenden Augenfarben widerspiegeln, erzeugt (geschachtelte Darstellung, engl. nested representation):
+
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+barplot(kont.tafel, beside = TRUE, xlab = "Haarfarbe", legend.text = c("blau",
+"braun", "gruen"))
+@
+\end{center}
+
+Mit dem Parameter \texttt{legend.text} kann eine Legende in den Plot
+eingef"ugt werden, was insbesondere dann n"otig ist, wenn man keine
+Farb-Darstellung zur Verf"ugung hat.
+
+Man beachte, dass wir die Funktion \texttt{barplot()} schon
+kennengelernt haben, als es um die Erstellung von einfachen (d.~h. basierend
+auf
+nur {\em einer}  nominal skalierten Variable) Balkendiagrammen
+ging. Die Funktion \texttt{barplot} erkennt also, ob sie als Input
+eine einfache H"aufigkeitstabelle oder eine Kontingenztafel bekommt
+und erstellt entsprechend ein Balkendiagramm oder ein Komponenten-Balkendiagramm.
+
+Haar- und Augenfarbe sind in der Kontingenztafel absolut gleich\-rangig
+ver\-treten. Durch das Erstellen eines Komponenten- oder geschachtelten
+Balkendiagramms 
+wird diese Symmetrie in gewisser Weise gebrochen, da nun die Spalten
+(``Haarfarbe'') auf der X-Achse aufgetragen werden. Traditionellerweise
+suggeriert die Variable auf der X-Achse die ``freie'' Variable, die Variable
+auf der Y-Achse die Antwort-Variable. Diese Interpretation ist jedoch
+im vorliegenden Fall sachlich nicht gerechtfertigt. 
+Falls die Rollen von Augen- und Haarfarben vertauscht werden sollen,
+muss die Kontingenztabelle transponiert (d.~h., Spalten und Zeilen werden
+vertauscht) werden. Dies wird mit der Funktion \texttt{t} bewerkstelligt:
+
+\begin{center}
+\singlespacing
+<<fig=FALSE,echo=TRUE>>=
+kont.tafel
+kont.tafel.t <- t(kont.tafel)
+kont.tafel.t
+@
+\end{center}
+
+Und die entsprechenden
+zusammengesetzten Balkendiagramme sehen so aus:
+
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+barplot(kont.tafel.t, xlab = "Augenfarbe", legend.text = c("blond",
+"braun", "rot", "schwarz"))
+@
+\end{center}
+
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+barplot(kont.tafel.t, beside = TRUE, xlab = "Augenfarbe", legend.text = c("blond",
+"braun", "rot", "schwarz"))
+@
+\end{center}
+
+Falls einfache Balkendiagramme ausgehend von einer Kontingenztafel erstellt
+werden sollen (etwa weil die urspr"ungliche Datenmatrix nicht mehr vorhanden ist),
+kann dies basierend auf den Marginalsummen gemacht werden. Sie werden mit der
+Funktion
+\texttt{margin.table()} berechnet. Hier wird ähnlich zu \texttt{prop.table()} mit dem parameter \texttt{margin} (1 oder 2)
+die Summierung "uber die Zeilen bzw. Spalten erreicht.
+
+\begin{center}
+\singlespacing
+\setkeys{Gin}{width=1.0\textwidth}
+<<fig=TRUE,echo=TRUE, height=4>>=
+par(mfrow=c(1,2), cex.axis=0.75)
+barplot(margin.table(kont.tafel, 1), xlab = "Augenfarbe")
+barplot(margin.table(kont.tafel, 2), xlab = "Haarfarbe")
+@
+\end{center}
+
+%\begin{center}
+%\singlespacing
+%<<fig=TRUE,echo=TRUE>>=
+%@
+%\end{center}
+\newpage
+
+Eine weitere graphische Darstellung ist der sogenannte Cohen-Friendly-Plot,
+der mit der Funktion \texttt{assocplot()} hergestellt wird. Hier werden "Uber- oder Unterrepr"asentation einer Kombination dargestellt, d.h. der Plot nimmt Abweichungen von der Unabhängigkeitsannahme beider Variablen in den Fokus. 
+
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+assocplot(kont.tafel)
+@
+\end{center}
+
+
+Kombinationen, die h"aufiger als erwartet vorkommen (blond und blau"augig),
+werden als schwarze Rechtecke oberhalb einer gestrichelten Nulllinie (f"ur jede Haarfarbe eine) dargestellt,
+solche, die seltener (schwarzhaarig und blau"augig) sind, als rote Rechtecke unterhalb dieser Nulllinien.
+Für das Verständnis des Plots muss man sich die Berechnung der $\chi^2$ Prüfgröße ins Gedächtnis rufen:
+\begin{equation}
+\chi^2 = \sum_{i,j} \frac{ B_{ij} - E_{ij} } {\sqrt{E_{ij} } } }
+\end{equation}
+Die Fl"ache der Rechtecke ist proportional zum Ausma"s der "Uber- oder Unterrepr"asentation, wobei Höhe und Breite der Rechtecke dem Zähler und Nenner entsprechen. Abweichungen über der Basislinie bedeuten demnach $B_{ij} > E_{ij}$, d.h. das Merkmal liegt häufiger als erwarte vor.\\[0.25cm]
+
+Zwei weitere Darstellungen sind die sogenannten Spine- und Mosaikplots, die 
+als normierte S"aulendiagramme interpretiert werden k"onnen. Die Breite einer S"aule
+ist proportional zur H"aufigkeit des entsprechenden Merkmals.
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+spineplot(kont.tafel, main = "Spine-Plot")
+@
+\end{center}
+
+\begin{center}
+\singlespacing
+<<fig=TRUE,echo=TRUE>>=
+mosaicplot(kont.tafel, main = "Mosaik-Plot")
+@
+\end{center}
+
+Die Zuordnung der Fl"achen zu den Auspr"agungen der Variable auf der y-Achse 
+ist im Spine-Plot nicht ganz optimal, insbesondere wenn nicht alle Auspr"agungen vorkommen.
+Beim Mosaik-Plot werden nicht vorkommende Auspr"agungen durch eine gestrichelte
+Linie gekennzeichnet.
+
+
+%\section{Layout von Abbildungen}
+
+\end{document}

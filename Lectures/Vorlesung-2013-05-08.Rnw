@@ -1,0 +1,313 @@
+\documentclass[a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{a4paper,left=30mm, right=30mm, top=2.5cm, bottom=2.5cm} 
+\usepackage[onehalfspacing]{setspace}
+
+\title{Datenanalyse mit dem Statistik-Paket R}
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+
+\date{8.~Mai 2013}
+
+\usepackage{Sweave}
+\setkeys{Gin}{width=.7\textwidth}
+\begin{document}
+
+\maketitle
+
+\section{Graphische Darstellung metrisch skalierter Daten}
+\subsection{Histogramme}
+Neben den schon behandelten Boxplots k"onnen metrisch skalierte Daten 
+auch als Histogramme dargestellt werden. Sie erlauben eine detailliertere Darstellung der \textbf{Verteilung} der Daten als z.B. Boxplots
+Wichtige Informationen, die mittel eines Histogramms dargestellt werden können sind:
+\begin{itemize}
+	\item Lage der Zentralwerte (Mittelwert, Median, Modus) der Verteilung
+	\item Streuung (\textit{spread}) der Messwerte, d.h. die beobachtete Variation in den Daten
+	\item Form der Verteilung (\textit{shape}) bewertet durch Schiefe (\textit{Skewness}), Steilheit (\textit{Kurtosis}) - d.h. in welcher Form streuen die Daten um die Zentralwerte
+\end{itemize}	
+
+Um ein Histogramm zu erstellen, m"ussen die Messwerte erst in 
+nicht-"uberlappende (``disjunkte'') Klassen ({\it bins, intervals}) eingeteilt werden. Auf der y-Achse
+wird dann die Anzahl der Elemente in den verschiedenen Klassen
+aufgetragen und als S"aule dargestellt. Beim Aufruf der Funktion \texttt{hist()}
+wird die Anzahl der Klassen nach einem speziellen Algorithmus
+automatisch erzeugt. Auch die Klassengrenzen werden so festgelegt, da"s
+das entstehende Histogramm f"ur den Menschen gut interpretierbar ist.
+Die Klassengrenzen werden also z.~B.\ bei 1 cm, 2 cm, 3 cm etc. festgesetzt
+und nicht bei 1,1 cm, 2,2 cm, 3,3 cm etc. \texttt{Hist()} legt standardmässig \textit{linksoffene} Intervalle an, d.h. der Form (\textit{n,m}], wobei der linke Endpunkt \textit{n} des Intervalls nicht mehr zur Klasse gehört.\\[0.25cm]
+
+In den meisten F"allen ist die von R gew"ahlte Intervallstruktur
+akzeptabel; die Anzahl der Klassen kann jedoch mit dem Parameter
+\texttt{breaks} selbst festgelegt werden. Übergibt man dem Argument \texttt{breaks} eine Zahl \emph{n} mit der angestrebten 
+Klassenzahl, so ruft die Funktion \texttt{hist()} intern die Funktion \texttt{pretty()} für die darzustellenden Daten auf. 
+Diese berechnet eine Zahlenfolge von mindestens \emph{n+1} äquidistanten gerundeten Werten, welche die Spannbreite der Daten abdecken.
+D.h. die Spezifikation von \texttt{breaks} wird von \texttt{R} als \underline{Richtwert} interpretiert. Man kann sich die von \texttt{R} festgelegten Klassen beim speichern des Funktionsaufrufes in eine Objektvariable z.B. {\texttt{h<-hist(...)}} auch wieder mit \texttt{h\$breaks} anzeigen lassen.\\[0.25cm]
+
+Wenn man die Anzahl der Klassen selbst festlegen m"ochte, ist darauf
+zu achten, dass sie nicht zu klein ist, da dann die Datenstruktur
+nicht sichtbar wird. Andererseits darf die Anzahl nicht so gro"s
+werden, dass sich in vielen Klassen nur ein einziger Me"swert befindet.
+\clearpage
+Unsere Petalenl"angen w"urden als Histogramm so aussehen:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+hist(iris$Petal.Length, 
+	breaks=10,
+	ylab = "Anzahl",
+	xlab = "Petalenlaenge [cm]", 
+	main = "Schwertlilien Histogramm")
+@
+\end{center}
+
+\clearpage
+Wenn man den Aufruf der Histogramm-Funktion in seine Bestandteile zerlegt, so müsste man zuerst die Messdaten in festgelegte Intervalle einordnen. Bei metrischen Daten spricht man von der \textit{Diskretisierung einer kontinuierlichen Variable}, welches in \texttt{R} mit der Funktion \texttt{cut()} vorgenommen werden kann. \texttt{cut} erzeugt einen Vektor mit Intervallgrenzen, den man mit der Funktion \texttt{table()} auszählen kann. Anschließend reicht ein einfaches Balkendiagramm, um die klassenweise ausgezählten Messwerte darzustellen.
+<<echo=FALSE>>=
+source("E:/R_Kurs_SoSe2013/Uebungen/Funktionen.R")
+@
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+d <- rnorm(100) # Zufallswerte aus Normalverteilung mit mean = 0, sd = 1
+(info <- summary.extended(d)) # Lage und Streumaße
+(b<-pretty(d, n=ceiling(info["RNG",1]))) # Klassengrenzen
+d.cuts<-cut(d,breaks=b) # default = links offene Intervalle
+t<-table(d.cuts) # table = "named vector"
+t.data<-as.vector(t) # numeric elements of the table
+
+# Plot
+y.max<-ceiling(max(t.data)/10)*10
+a<-barplot(t.data, names.arg=names(t), xlab="Intervalle", ylim=c(0,y.max), ylab="Anzahl") 
+text(a, t.data+1, labels=t.data) # ergänze Intervallbesetzung im Plot
+@
+\end{center}
+<<fig=FALSE,echo=TRUE>>=
+print(t) # 
+(d.bin<-d[d > -2 & d <= -1]) # extrahiere Daten in bestimmten Intervall
+@
+\clearpage
+Um Wahrscheinlichkeitsdichten zu erhalten, "ubergibt man der Funktion \texttt{hist()} den Parameter \texttt{freq = FALSE}.
+In diesem Fall gibt die Fl"ache einer S"aule die Wahrscheinlichkeit an, mit der
+ein Messwert in die entsprechende Klasse f"allt. Die Fläche des Histogramms beträgt dann genau 1 
+(man spricht in dem Fall auch von der ``Normierung des Histogramms auf 1''). Nur in dieser Form ist die Darstellung 
+unabhängig von der Anzahl der Messwerte, so dass man Histogramme verschiedener Messreihen direkt miteinander vergleichen kann.
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+h<-hist(iris$Petal.Length, 
+	breaks=10,
+	ylab = "Anzahl",
+	xlab = "Petalenlaenge [cm]", 
+	main = "Schwertlilien Histogramm",
+	freq=FALSE)
+
+h$density
+@
+\end{center}
+\textbf{Achtung}: die Summe der Dichten (= Summe des Wahrscheinlichkeitsvektors) ergibt nur 1, wenn die Elemente des Wahrscheinlichkeitsvektors mit der Intervallbreite multipliziert werden. 
+<<fig=FALSE,echo=TRUE>>=
+sum(h$density)*diff(h$breaks)[1]
+@
+
+Eine feinere Strukur wird z.~B. durch einen grö"seren Wert für das Argument \texttt{breaks} erreicht:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+hist(iris$Petal.Length, breaks = 30, 
+	ylab = "Anzahl",
+	xlab = "Petalenlaenge [cm]", 
+	main = "Schwertlilien Histogramm")
+@
+\end{center}
+
+Eine gr"obere Darstellung entsprechend durch einen kleineren Wert für \texttt{breaks}, wobei die Besetzung der Klassen mit Messwerten grösser
+wird. Es ist also angebracht den Bereich der y-Achse anzupassen. Dies erfolgt mit dem allgmeinen Plot-Argument \texttt{ylim}.
+Ein Histogramm-Objekt speichert sämtliche berechnteten Informationen, die zur Darstellung des Histogramms benötigt werden. Das hat den Vorteil, dass auf diese Daten direkt zugegriffen werden kann. Durch Aufruf des Objektnamens können die Objekt-Variablen angezeigt werden:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+h<-hist(iris$Petal.Length, breaks = 3, 
+	ylab = "Anzahl",
+	ylim=c(0,80),
+	xlab = "Petalenlaenge [cm]", 
+	main = "Schwertlilien Histogramm")
+
+print(h)
+@
+\end{center}  
+
+Ersetzt man den Vektor der \texttt{counts} mit den kumulativen Summen der Vektorelemente, lässt sich das Histrogramm-Objket
+als \texttt{kumulatives} Histogramm darstellen - in Approximation einer kumulativen Häufigkeitsverteilung.
+Kumulative Häufigkeitsanalysen verwendet man zur Untersuchung der Häufigkeit eines Phänomens unterhalb einer bestimmten Schranke z.B. bei zeit -und raumabhängigen Prozessen.\\
+Obwohl ein Histogramm eine zwei-dimensionale Darstellung ist, handelt es sich
+nicht um eine \textit{bivariate} Analyse-Methode. Die zweite Dimension des Histogramms wird von
+der H"aufigkeit des einen untersuchten Merkmals in den verschiedenen Regionen des
+Wertebereichs eingenommen.\\[0.25cm]
+\clearpage
+
+\subsection{Dichtefunktionen (``gegl"attete Histogramme'')}
+Beim Histogramm wurde der gesamte Datenbereich in Klassen
+eingeteilt, wobei zwei benachbarte Klassen keinen "Uberlapp miteinander
+haben. Um einen Dichteplot zu erzeugen, wird der gesamte Datenbereich
+nun mit "uberlappenden Klassen abgedeckt (gleitende ``Fenster''; {\it sliding
+windows}). F"ur jedes Fenster wird
+die Anzahl der in ihm enthaltenen Datenpunkte ermittelt. Zwei benachbarte
+Fenster sind nur wenig gegeneinander verschoben. 
+
+Das Aussehen eines Dichteplots wird im wesentlichen davon
+bestimmt, wie stark die Daten gegl"attet werden. ``Gro"se Fenster''
+f"uhren zu starker Gl"attung. Der Grad der Gl"attung kann beim
+Aufruf der Funktion \texttt{density()} durch die Wahl des Parameters
+\texttt{adjust} selbst bestimmt werden. Der Wert dieses Parameters bestimmt einen Faktor mit dem die \emph{Bandbreite} (\emph{bandwidth})
+der Verteilung mulitpliziert wird. \texttt{adjust = 1} entspricht also $1*bw$ und ist die
+Standardeinstellung, Werte gr"o"ser als 1 f"uhren zu st"arkerer
+Gl"attung, Werte zwischen 0 und 1 zu schw"acherer Gl"attung.
+Die Bandbreite ist ein Begfriff der \textit{nicht-parametrischen} Statistik und spielt bei Verfahren
+zur Ermittlung von Wahrscheinlichkeitsverteilungen eine Rolle, wozu auch das Histogramm gehört. Nachteil ist jedoch die \emph{diskrete} Darstellung 
+von in der Natur oftmals \emph{stetigen} Prozessen. Daher versucht man mit sogenannten Kernschätzverfahren (\emph{kernel density estimation})
+aus der Realisation einer Stichprobe eine stetige Schätzung der zu Grunde liegenden Verteilung vor zu nehmen. Man schätzt also die Dichte eines unbekannten Wahrscheinlichkeitsma{\ss}es, weshalb Dichtefunktionen als Wahrscheinlichkeitsverteilungen
+interpretiert werden k"onnen. Dadurch ist die Fl"ache unter ihrer Kurve auch wieder auf 1 normiert. Die Maximumstelle der Dichtefunktion (einer eingipfeligen Verteilung) ist der Modalwert (auch Modus, engl. \textit{mode}) der Verteilung, die man auch \textit{uni-modal} nennt. Bei mehreren Extremwerten spricht man von \textit{multimodalen} Verteilungen.\\[0.25cm]
+
+Der Dichteplot f"ur die Petalenl"angen ist hier zur besseren
+Vergleichbarkeit zusammen mit dem entsprechenden Histogramm
+gegeben. Vier  Gl"attungsst"arken (Werte für das Argument \texttt{adjust}) werden mit
+verschiedenen Farben gekennzeichnet. Farben werden an Plots
+mit dem Parameter \texttt{col} (f"ur ``colour'') "ubergeben.
+\texttt{R} versteht Klartext auf Englisch.
+
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+hist(iris$Petal.Length, 
+	ylab = "Relative Anzahl bzw. Dichte",
+	xlab = "Petalenlaenge [cm]", 
+  ylim=c(0,1), col="lightgray",
+	main = "Schwertlilien Histogramm bzw.\ Dichtefunktion",
+	freq = FALSE)	
+cv <- c("red","blue","green","purple")
+av <- c(0.5,1,5,0.2)
+for(i in seq(along=cv)){
+	lines(density(iris$Petal.Length, adjust = av[i]), col = cv[i])
+}
+legend("topright", legend=paste("adjust =",av), bty="n", col=cv, lty=1)
+@
+\end{center}
+
+Es ist klar erkennbar, dass die Parametereinstellungen von 0.2 zu schwach und von 5 zu stark
+gl"atten.
+
+Folgende technische Punkte sind wichtig:
+\begin{itemize}
+\item
+Das Histogramm wurde f"ur Wahrscheinlichkeitsdichten (\texttt{freq = FALSE}) erzeugt, damit es, wie
+die Dichtefunktion auf 1 normiert ist.
+\item
+Die Funktion \texttt{density()} erzeugt noch keinen Plot, sondern ein Objekt
+vom Typ ``Density'', das neben den Funktionswerten (also Z"ahlungen, wieviele
+Me"swerte in den einzelnen Fenstern liegen) weitere Informationen ent\-h"alt.
+Die Kurve wird erst durch den zus"atzlichen Aufruf von \texttt{lines()}
+in einen vorhanden Plot gezeichnet.
+\item
+Beim Aufruf von \texttt{lines(density(...))} handelt es sich um einen
+verschachtelten Funktionsaufruf. Die innere Funktion, also \texttt{density()},
+wird zuerst von R ausgef"uhrt, dann wird das Ergebnis dieses Aufrufs 
+an die "au"sere Funktion \texttt{lines()} weitergegeben, die dann wiederum
+unmittelbar danach ausgef"uhrt wird.
+\item
+Man kann verschachtelte Funktionsaufrufe ``entschachteln'', indem man
+zuerst die innere Funktion ausf"uhrt und das Ergebnis in eine Variable
+schreibt. Dann "ubergibt man diese Variable in einem weiteren Funktionsaufruf
+an die "au"sere Funktion.
+
+Im obigen Beispiel w"urde das also (nur f"ur \texttt{adjust = 1}) so aussehen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+hist(iris$Petal.Length, 
+	ylab = "Relative Anzahl bzw. Dichte",
+	xlab = "Petalenlänge [cm]", 
+	main = "Schwertlilien Histogramm bzw. Dichtefunktion",
+	freq = FALSE)
+Dens <- density(iris$Petal.Length, adjust = 1)
+lines(Dens, col = "blue")
+@
+\end{center}
+\item
+Man w"urde sich aus Gr"unden der "Ubersichtlichkeit f"ur diese Variante entscheiden
+oder auch, wenn man zu einem sp"ateren Zeitpunkt nochmals mit derselben Dichtefunktion
+arbeiten m"ochte. Dann muss man sie nicht mehrfach erzeugen, was insbesondere
+bei gro"sen Datens"atzen von Vorteil ist, da es Rechenzeit spart.
+\end{itemize}
+
+Mit dem Ergebnis des Aufrufs \texttt{density()} begegnet uns ein weiteres Mal ein
+Objekt, dessen Inhalt durch den Aufruf seines Namens (in unserem Falle also {\texttt
+Dens}) in Form einer Liste von Datenstrukturen auf dem Bildschirm angezeigt wird:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+Dens
+@
+\end{center}
+Gezeigt wird hier eine Zusammenfassung der wichtigsten Ergebnisse
+des Aufrufs {\texttt density}, n"amlich aus wievielen Datenpunkten
+die Dichtefunktion berechnet wurde ({\texttt 150 obs}), welche Bandbreite
+gew"ahlt wurde ({\texttt bw}) und einige wichtige Lage- und Streuma"se
+der x- und y-Werte der Dichtefunktion selbst.
+
+Der Aufruf 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+str(Dens)
+@
+\end{center}
+erlaubt einen vollst"andigen Einblick in die gesamte Information, die
+in {\texttt Dens} steckt. {\texttt str()} steht f"ur {\it structure}.
+Mit dieser Funktion kann der Aufbau eines jeden R-Objekts genauer
+analysiert werden.
+Es handelt sich also bei {\texttt Dens} um eine sogenannte Liste mit sieben Elementen.
+Eine Liste ist "ahnlich zu einem Vektor. Im Gegensatz zu einem Vektor, dessen
+Komponenten
+nur einem einzigen Datentyp (numerisch, Zeichenkette, logischer Wert)
+angeh"oren d"urfen, k"onnen die Elemente einer Liste nun ganz
+unterschiedlichen
+Charakter haben. In unserem Falle bestehen die Elemente also aus numerischen
+Vektoren (z.~B. {\texttt x}), einer Zahl ({\texttt bw}) oder einem 
+logischen Wert ({\texttt has.na}).
+Falls man auf eines dieser 7 Elemente direkt zugreifen m"ochte, so kann man
+dies genau auf die selbe Weise tun, wie man auf einzelne Spalten einer
+Datenmatrix zugreift, n"amlich mit dem \$-Zeichen oder dem [[\ldots]] Operator (unter Angabe des Listen-Index).
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+Dens$n
+Dens[[4]]
+@
+\end{center}
+
+
+%% TODO weiter oben => siehe cut() einarbeiten!
+%\section{Diskretisierung numerischer Vektoren}
+%
+%Für eine zusammenfassende Darstellung numerischer Daten kann man mittels Diskretisierung eine Tansformation in
+%eine kategorielle Skala vornehmen. Dies sollte immer nur im Rahmen einer Voruntersuchung geschehen, da diese Transformation
+%eine Vergröberung der Datenstruktur bewirkt. Ein numerischer Vektor kann mit der Funktion \texttt{cut()} in ein \emph{factor}-Objekt umgewandelt werden, wobei ähnlich zur Funktion \texttt{hist()} das Argument \texttt{breaks} dazu dient die Klassengrenzen fest zu legen. Standardmässig bildet  \texttt{cut()} dabei links-offene Intervalle, nach denen auch die Faktor-Stufen (\emph{levels}) benannt werden. Auf dem \emph{factor}-Objekt kann anschliessend wieder mit der Funktion \texttt{table()} die Häufigkeit des Auftretens der verschiedenen Faktor-Stufen gezählt werden.
+%
+%\begin{center}
+%\singlespacing
+%<<fig=FALSE,echo=TRUE>>=
+%x <- c(9.9, 6.1, 0.4, 10.2, 0.8, 7.6, 7.5, 9.1, 4.7, 5.0, 7.5, 6.8, 5.8, 5.9, 8.3,
+%9.0, 8.6, 0.5, 11.9, 7.9) # numerischer Vektor
+%(extremes<-c(floor(min(x)), ceiling(max(x)))) # gerundete Extremwerte der Verteilung
+%(cl<-c(seq(0,10,2), extremes[2]))  # Festlegung von Intervallgrenzen
+%x.iv <- cut(x, breaks=cl) # Faktorisierung
+%(levels(x.iv))  #  Faktorstufen
+%(xt<-table(x.iv)) # Auszählung der Klassen
+%@
+%\end{center}
+%
+%\setkeys{Gin}{width=0.5\textwidth}
+%\begin{center}
+%\singlespacing
+%<<fig=TRUE,echo=TRUE>>=
+%hist(x, breaks=cl, xlab="", col="lightgrey", font.axis=2, font.lab=2)
+%@
+%\end{center}
+
+
+
+\end{document}

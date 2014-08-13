@@ -1,0 +1,382 @@
+\documentclass[a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc} 
+\usepackage{geometry}
+\geometry{a4paper,left=3cm, right=3cm, top=2.5cm, bottom=2.5cm} 
+\usepackage[onehalfspacing]{setspace}
+
+\title{Datenanalyse mit dem Statistik-Paket R}
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+
+\date{15.~Mai 2013}
+
+
+\begin{document}
+
+\maketitle
+
+
+\section{Univariate Analyse von nominal skalierten Daten}
+
+\subsection{Numerische Analyse}
+
+Die M"oglichkeiten f"ur eine numerische Analyse sind sehr begrenzt.
+Die einzig sinnvolle M"oglichkeit besteht darin, die H"aufigkeiten
+zu tabellieren oder nach dem Modalwert (die am h"aufigsten vorkommende
+Auspr"agung) zu fragen $\rightarrow$ vgl. VL2 \emph{Univariate Analysemethoden}.
+
+Wir betrachten eine Stichprobe vom Umfang $N = 10$ von Passanten in Berlin
+und stellen ihre Augenfarbe fest. Es ergaben sich folgende Ergebnisse, f"ur die
+wir den Zeichenkettenvektor \texttt{Augenfarbe} in \texttt{R} anlegen:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+Augenfarbe <- c("braun", "gruen", "braun", "blau", "braun", "blau", 
+"blau", "braun", "braun", "grau", "braun", "blau", "blau", "grau", "braun")
+@
+\end{center}
+
+Die zugehörige H"aufigkeitstabelle wird mit \texttt{table()} erzeugt:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(TabelleAugenFarben <- table(Augenfarbe))
+@
+\end{center}
+
+
+Die relativen H"aufigkeiten bekommt man mit der Funktion \texttt{prop.table()}:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(RelAnzahlAugenfarben <- round(prop.table(TabelleAugenFarben),digits=2))
+@
+\end{center}
+\textbf{Man beachte}, dass \texttt{prop.table()} nicht direkt auf den Zeichenkettenvektor
+angewendet wird, sondern auf die bereits erstellte H"aufigkeitstabelle!
+
+Um die Kategorien später gleich als Vektor mit Farbnamen für Abbildungen verwenden zu können, müssen diese in Englisch angegeben werden.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+names(TabelleAugenFarben)<-names(RelAnzahlAugenfarben)<-c("blue","brown","grey","green")
+@
+\end{center}
+
+\clearpage
+\subsection{Graphische Analyse}
+Als graphische Darstellungen von nominal skalierten Daten kommen vor allem folgende M"oglichkeiten in Betracht:
+\begin{itemize}
+\item \textbf{Tortendiagramm}:
+\begin{center}
+<<fig=TRUE, echo=TRUE>>=
+clrs<-names(TabelleAugenFarben)
+Percentage <- RelAnzahlAugenfarben*100
+Beschriftung<-paste(clrs, ": ", Percentage ,"%", sep="")
+
+pie(TabelleAugenFarben, 
+col = clrs, 
+main = "Augenfarbe Tortendiagramm",
+labels = Beschriftung )
+@
+\end{center}
+In diesem Beispiel wurden den Tortenst"ucken suggestivere Farben als die standardm"a"sigen
+Pastell-Farben zugewiesen. Man beachte die Parameter"ubergabe
+von mehreren Farben als Zeichenkettenvektor (hier unter dem Variablennamen \textit{clrs} gespeichert)), der mittels der Funktion \texttt{names()} aus dem Tabellenobjekt gewonnen wurde. Die Farben müssen den
+Tortenst"ucken in der Reihenfolge zugewiesen, wie in der Ausgabe der Funktion
+{\texttt table()}, um eine konsistente Beschriftung zu gewährleisten.
+Oft ist es hilfreich die Häufigkeit der Klassen noch mit anzugeben. Hierfür erzeugt man einen Zeichenkettenvektor mit Beschriftungen
+den man entweder direkt in der \texttt{pie()} Funktion dem Argument \texttt{labels} übergibt oder in einem nachfolgenden
+\texttt{legend()} Aufruf angibt. 
+Die Labels können eine beliebige Verkettung ($\rightarrow$ Funktion \texttt{paste()} )
+von Wörtern und Zahlen sein, müssen jedoch in gleicher Anzahl wie die dargestellten Klassen vorliegen.
+
+\clearpage
+\item \textbf{S"aulendiagramm}:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+(sortierteAugenfarben<- sort(TabelleAugenFarben , decreasing=TRUE))
+clrs.sort<-names(sortierteAugenfarben)
+bp <- barplot( sortierteAugenfarben, 
+col = clrs.sort, 
+main = "Augenfarbe Saeulendiagramm", 
+xlab = "Augenfarbe", ylab = "Anzahl", ylim=c(0,10), space=1)
+text(bp, sortierteAugenfarben+0.25, labels=sortierteAugenfarben, cex=1.0)
+@
+\end{center}
+
+Ein S"aulendiagramm "ahnelt offensichtlich einem Histogramm. Der wesentliche Unterschied ist, dass beim
+S"aulendiagrammm die Klassen auf der x-Achse beliebig angeordnet werden k"onnen. 
+Aber obwohl sich nominal skalierte Daten, d.h. die Kategorien  nicht der Gr"o"se nach ordnen lassen, kann man das Balkendiagramm
+nach der Häufigkeit ihres Vorkommens sortiert aufbauen. Dabei hilft die Funktion \texttt{sort()}, mit der man ein Tabellenobjekt ordnen kann, d.h. \texttt{sort()} gibt einen sortierten Vektor zurück.
+Im Gegensatz zum Histogramm werden die S"aulen klar voneinander getrennt dargestellt, um deutlich zu machen, dass es keine ``Zwischenwerte'' zwischen den Klassen gibt. Der Abstand kann mit dem Argument \texttt{space}
+kontrolliert werden. Bei Säuelendiagrammen mit vielen Kategorien könnte man die Werte direkt an die Säulen schreiben, was mit der 
+Funktion \texttt{text()} möglich ist. Die ersten zwei Argumente der \texttt{text()} Funktion sind die x- und y Koordinaten der Labels. 
+
+Oft nimmt man Messdaten für verscheidene Gruppen auf. Nominale Daten lassen sich auch hier gut mit einem Säulendiagramm in den einzelnen Katergorien und zwischen den Gruppen vergleichen. In solche Fälle muss das Säulendagramm etwas anders konstruiert werden
+im folgenden Beispiel wird zunächst ein fiktiver Datensatz erstellt - eine mögliche Erhebung von Augenfarben in einer Stichprobe von 50 Afrikaner und 50 Eurpäern. Nach Berechnung der relativen Häufikeiten der Katergorien werden diese in einer Matrix \textit{m} zusammengefasst.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+augenfarben<-c("brown", "blue", "gray", "green")
+Afrikaner <- sample(augenfarben, 50, prob=c(0.8, 0.05, 0.1, 0.05), replace=T)
+Europaeer <- sample(augenfarben, 50, prob=c(0.5, 0.25, 0.2, 0.05), replace=T)
+tab.afri <- table(Afrikaner)
+tab.euro <- table(Europaeer)
+(rel.afri <- round(prop.table(tab.afri),digits=2))
+rel.euro <- round(prop.table(tab.euro),digits=2)
+(m <- cbind(Afrikaner=rel.afri, Europaer=rel.euro))
+(m <- m[order(m[,1], decreasing=T),])
+@
+\end{center}
+
+Man beachte, dass für die Sortierung einer Matrix anhand eines bestimmten Attributs, die Funktion \texttt{order()} genommen werden muss, da diese die Indizes der sortierten Vektorelemente zurück gibt.
+Die erzeugte Matrix muss nun für den \texttt{barplot()} Aufruf noch mittels der Funktion \texttt{t()}} transponiert werden,damit in jeder Spalte eine Kategorie (Augenfarbe) über die untersuchten Gruppen (Ethnie) steht.
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+bp <- barplot(t(m), beside=T,
+col =  c("black", "white"),
+names.arg=rownames(m),
+main = "Augenfarbe Saeulendiagramm", 
+xlab = "Augenfarbe", ylab = "Anzahl", ylim=c(0,1), cex.names=1.0)
+text(bp[1,], m[,1]+0.03, labels=m[,1], cex=1.0)
+text(bp[2,], m[,2]+0.03, labels=m[,2], cex=1.0)
+legend("topright", pch=22, pt.cex=2, pt.bg=c("black", "white"), 
+legend=c("Afrikaner","Europäer"), bty="n")
+@
+\end{center}
+
+Im Wesentlichen funktioniert das beschriften des Säulendiagramms wie schon oben beschrieben. Bei der Ermittlung der x-Achsenposition der 
+Säulenlabels, muss man jedoch beachten, dass von \texttt{barplot()} - wenn eine Matrix übergeben wurde - eine Matrix mit den Positionen der Säulen auf der x-Achse zurück gegeben wird. Die x-AchsenBeschriftung der Säulengruppen erfolgt wieder über den Parameter \texttt{names.arg}, dem hier ein Zeichenkettenvektor mit den Augenfarben als Wert zugewiesen wird. Diesen Zeichenkettenvektor muss man \textbf{nach Sortierung} der Matrix anlegen, damit die Reihenfolge der Labels konsistent zu den reltativen Häufigkeiten bleibt. In disem Fall kann man die Funktion \texttt{rownames()} anwenden, da die Zeilenlabels der Matrix die Kategorien der Augenfarben sind.
+
+\clearpage
+\item \textbf{Dotchart}:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+dotchart(as.numeric(TabelleAugenFarben), col = clrs, 
+main = "Augenfarbe Dotchart", 
+xlab = "Anzahl", ylab = "Augenfarbe", labels = clrs,
+pch = c(7,8,9,10)
+)
+@
+\end{center}
+Mit dem Argument \texttt{pch} (f"ur \emph{point character}) kann man die standardm"a"sig
+offenen Punkte durch beliebige gefüllte Symbole ersetzen. \texttt{pt.bg} (für \emph{point background}) und \texttt{pt.cex} für (\emph{point character expansion}) kann man die Hintergrundfarbe der Symbole sowie die Symbolgröße anpassen.
+\end{itemize}
+
+Die Auswahl der graphischen Darstellung ist sicherlich zu einem gro"sen Teil
+Geschmackssache. Das S"aulendiagramm scheint jedoch in den meisten F"allen die gr"o"ste
+Klarheit zu bieten.
+
+\clearpage
+\section{Grafiken in Dateien speichern}
+Das Speichern von Abbildungen die mit \texttt{R} Code erzeugt wurden kann prinzipiell auf zwei Wegen erfolgen: Umleiten der Grafikausgabe in eine Datei ohne - oder mit Darstellung der Abbildung in einem GUI-Fenster. Dies hängt von der Wahl der aktiven Graphikausgabe (\textit{graphics device}) ab. Graphikausgaben werden durch Funktionen realisiert, welche ein jeweils spezifisches Grafikformat definieren. Dabei unterscheidet man Vektor- und Bitmap-Grapfikformate.
+
+\begin{itemize}
+\item Vektorgrafiken können beliebig skaliert werden, d.h. ein Vergrößern der Grafik verringert nicht deren Qualität.
+Vektorgrafikformate sind z.B. WMF (\textit(windows meta file), PDF (\textit{portable document format}) und PS (\textit{Postscript}). 
+Die entsprechenden \texttt{R-Funktionen} zur Erzeugung von Grafikdateien mit diesen Formaten sind: \texttt{win.metafile()}, \texttt{pdf()} und \texttt{ps()}.
+
+\item Bitmapgrafiken dagegen werden mit einer bestimmten Auflösung (Pixelanzahl) erzeugt, welche nur bei eine bestimmten Abbildungsgröße eine optimale Darstellung gewährleistet. Bitmapgrafikformate sind z.B. BMP (\textit{bitmap}), PNG (\textit{portable network graphics}), TIFF (\textit{tagged image file format}), JPEG (joint photographic expert group). Letzteres ist ein Kompressions-Bildformat. 
+Die entsprechenden \texttt{R-Funktionen} zur Erzeugung von Grafikdateien mit diesen Formaten sind: \texttt{bmp()}, \texttt{png()}, \texttt{tiff()} und \texttt{jpeg()}.
+\end{itemize}
+ Wichtig ist, dass diese Funktionen vor dem eigentlich Plot-Kommando ausgeführt werden, da zuerst die Grafikausgabe initialisiert werden muss, an welche dann das Ergebnis des Plot-Kommandos weitergeleitet wird. Das \textit{graphics device} muss nach dem Plot-Kommando wieder durch Aufruf von \texttt{dev.off()} geschlossen werden. Erst damit wird der Speichervorgang beendet.
+Der Vorteil der Graphikausgabe ohne GUI liegt in der Verwendung in Batch-Skripten, also R-code der nicht in der graphischen R-Oberfläche ausgeführt wird und damit in eine größere Programmstruktur eingebunden werden kann.
+
+
+Im folgenden Beispiel wird der obige Dotchart in eine pdf-Datei ausgegeben
+\begin{center}
+<<fig=FALSE, echo=TRUE, eval=FALSE>>=
+pdf(file = "Augenfarbe.pdf")
+dotchart(as.numeric(TabelleAugenFarben), col = clrs, 
+main = "Augenfarbe Dotchart", 
+xlab = "Anzahl", ylab = "Augenfarbe", labels = clrs,
+pch = c(7,8,9,10))
+dev.off()
+@
+<<fig=FALSE, echo=FALSE, eval=TRUE>>=
+pdf(file = "Augenfarbe.pdf")
+dotchart(as.numeric(TabelleAugenFarben), col = clrs, 
+main = "Augenfarbe Dotchart", 
+xlab = "Anzahl", ylab = "Augenfarbe", labels = clrs,
+pch = c(7,8,9,10))
+dev.off()
+@
+\end{center}
+
+Der Datei-Name, auf die die Grafik ausgegeben werden soll,
+wird mit \texttt{file} spezifiziert. Die Dateinamen-Endung (pdf)
+sollte explizit angegeben werden, um die \"Ubersicht \"uber 
+die produzierten Plots nicht zu verlieren.
+Nach dem \texttt{pdf()}-Aufruf werden alle Plots solange
+in die angegebene Datei geschrieben, bis mit einem
+erneuten \texttt{pdf()}-Aufruf eine andere Datei spezifiziert
+wird. Der Aufruf \texttt{dev.off()} sorgt daf\"ur, dass
+die Graphiken wieder auf den Bildschirm ausgegeben werden.
+
+Wenn man sowohl mehr als einen Plot in eine Abbildungsfläche darstellen als auch
+dieses Bild in eine Datei schreiben m\"ochte, dann ist diese Reihenfolge
+der Befehle einzuhalten: 
+\begin{enumerate}
+\item Grafikausgabe öffnen (z.B. \texttt{pdf(...)})
+\item Anzahl der Plot-Bereiche festlegen (z.B. \texttt{par(mfrow=c(1,3))})
+\item n Plot-Funktionen aufrufen, wobei n = Anzahl der definierten Plotbereiche
+\item Grafikausgabe schließen (\texttt{dev.off()})
+\end{enumerate}
+
+Zusätzlich gibt es für die Verwendung im \texttt{R-GUI} die Funktion \texttt{savePlot()},
+welches die aktuell angezeigte Grafik (im Grafikfenster) in eine Datei speichert.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE, eval=FALSE>>=
+savePlot(file="Augenfarbe", type="pdf", device=dev.cur()) 
+@
+\end{center}
+
+Dieser Aufruf entspricht dem "`\emph{save as}"' Menüaufruf zum Speichern einer Abbildung im \texttt{R-GUI}.
+Als \texttt{type} können die o.g. anderen Grafik-Formate spezifiziert werden. Das \texttt{device} spezifiziert das Grafikfenster, dess Darstellung in die Datei gespeichert werden soll.\\[0.25cm] 
+
+
+%\clearpage
+\section{Bedingte Anweisungen und Schleifen}
+
+Bedingte Anweisungen und Schleifen (\emph{Konstrukte}) dienen der Steuerung des Programmablaufs und 
+zur Verringerung von Programm-Code bei sich wiederholenden Programmabläufen.
+
+\begin{itemize}
+	\item \textit{if}-Anweisungen, dienen zur Behandlung von Fallunterscheidungen. Dabei werden Bedingungen zu einem \emph{logischen Wert}
+ ausgewertet, d.h. abhängig davon, ob die Bedingung \texttt{WAHR (TRUE)} oder \texttt{FALSCH (FALSE)} ist, ein jeweils anderes Programmsegment ausgeführt.
+ Diese Programmsegmente, auch Blöcke genannt, werden durch geschweifte Klammerr (\texttt{\{\ldots\}}) abgegrenzt.
+ 
+ Das bekannteste Konstrukt einer bedingten Anweisung ist die \textbf{if\ldots else} Anweisung:\\
+ \texttt{if(Bedingung)\{ Ausdruck1 \} else \{ Ausdruck2 \}}
+ 
+ Beispiel:
+<<fig=FALSE,echo=TRUE>>=	
+x<-4
+if( is.numeric(x)){
+	print("x is a numeric variable")
+} else {
+	print("x is not a numeric variable")
+}
+@ 
+
+ 	\item \texttt{for}-Schleifen finden häufig bei iterativen Algorithmen, wobei die Iteration auf einem Vektor erfolgt, dessen Elemente nacheinander einer \emph{Iterator-Variable} zugewiesen werden. Diese ist nur für den Schleifen-Block definiert.\\
+ 			In der Schleife \texttt{ for(i in v)\{ Ausdruck \} } nimmt die \textit{Iterator-Variable} \texttt{i} beginnend mit dem ersten Element nacheinander die Werte der Elemente des Vektors \texttt{v} an. 
+ 	 		
+<<fig=FALSE,echo=TRUE>>=	
+(v <- seq(10,16,1))
+for(i in v){
+	print(i^2)
+}
+@ 
+
+Oft ist es hilfreich einen Lauf-Index in der Schleife zu verwenden, um gezielt auf Elemente des Vektors zu zu greifen. Die \emph{Iterator-Variable} ist in dem Fall der Index der Elemente des iterierten Vektors, über den man wie gewohnt mit den eckigen Klammern \texttt{[\ldots]} auf die Vektorelemente zugreifen kann.
+Die Index-Variable bietet den Vorteil, dass man in Verbindung mit einer bedingten Anweisung und den Kontrollbefehlen \texttt{next} und  \texttt{break}
+Elemente des iterierten Vektors überspringen oder die Schleife bei Eintreten einer bestimmten Bedingung abbrechen kann.
+Hier ein Beispiel bei dem eine Bedingung durch den Modulo-Operator abgefragt wird, d.h. der Code-Block der if-Anweisung wird nur ausgeführt, wenn der ganzzahlige Rest der Division der iterierten Vektorelemente durch die Zahl 2, Null ist:
+<<fig=FALSE,echo=TRUE>>=	
+for(i in seq(along = v)){
+	if(i%%2==0){	# überspringt alle geradzahligen Index-Variablen
+		next	# d.h. Schleifenblock wird nur für jedes zweite 
+	}			# Vektorelement ausgführt
+	print(v[i]^2)
+}
+@ 
+ 
+Da \texttt{R} eine vektor-optimierte Programmiersprache ist, gibt es einige Funktionen, welche die Anwendung von selbst-programmierten Schleifen 
+überflüssig machen. Die Funktion \texttt{sapply()} (für \emph{simple apply}) kann zur schnellen Anwendung von Funktionen auf Vektoren eingesetzt werden.
+Dabei wird der Funktion \texttt{sapply()} neben dem zu bearbeitenden Vektor \texttt{v} eine sogenannte \emph{anonyme} Funktion übergeben, die nur innerhalb 
+des Aufrufes von \texttt{sapply} bekannt ist und auf jedes Element in \texttt{v} angewendet wird.
+
+<<fig=FALSE,echo=TRUE>>=
+(quadrate <- sapply(v, function(x) x^2))
+@ 
+Diese Form der Berechnung ist für sehr grosse Vektoren, um ein Vielfaches schneller als eine \texttt{for}-Schleife. Allerdings kann man bei dieser Form der Iteration keine
+Kontrollbefehle wie \texttt{next} und \texttt{break} oder bedingte Anweisungen einbauen.
+
+\end{itemize} 
+
+
+\clearpage
+\noindent
+\section{Einlesen von Daten}
+
+Man kann eine Datenmatrix f"ur zwei oder mehrere Merkmale
+direkt in \texttt{R} erzeugen, indem man zun"achst die Einzelvektoren f"ur diese Merkmale anlegt, 
+diese dann mit der Funktion \texttt{cbind()} zu einer Matrix
+zusammengef"ugt und anschlie"send mit der Funktion \texttt{as.data.frame()} in eine
+Datenmatrix umwandelt. 
+Oft liegen Daten jedoch in externen Dateien aus denen sie in den R-workspace importiert werden müssen. Das einfachste Format für den Datenimport nach R sind Tabulator oder Komma-spariere Textdateien. Die Variablen in solchen Dateien sind beim Export durch ein einheitliches Trennzeichen ({\itdelimiter}) separiert. \emph{Character}-Werte (Zeichenkettenvariablen) sollten durch Hochkommata eingeschlossen werden.
+Eine solche Tabelle kann mit dem Befehl \texttt{read.table()} eingelesen werden. Mit der Option \texttt{header} wird angegeben,
+ob die Tabelle Spalten"uberschriften hat. 
+  
+\noindent
+Beispielaufruf für die Funktion \texttt{read.table()}:  
+\begin{center}
+<<fig=FALSE, echo=TRUE, eval=FALSE>>=
+setwd("E:/R_Kurs_SoSe2013/Uebungen")
+data <- read.table(file = "Mausdaten.txt", header = TRUE)
+@
+\end{center}
+  
+Werden Daten in einem Tabellekalkulationsprogramm wie MS Excel
+gesammelt gibt es Spezialmethoden in \texttt{R} mit denen man direkt auf solche Dateien zugreifen kann, jedoch ist der sicherste Weg der, dass man auch hier die relevanten Daten zuvor in eine separate Text-Datei exportiert und diese dann in \texttt{R} einliest.
+Wenn es man diesen Exportschritt nicht vornehmen kann - z.B. im Batchmodus - ist das \texttt{R} Paket \texttt{xlsx} hilfreich. Es erlaubt das direkte Einlesen von Daten aus Excel mit Hilfe der Funktion \texttt{read.xlsx()}. 
+\texttt{xlsx} ist nicht Bestandteil der Basisinstallation von \texttt{R}, muss also separat installiert werden bevor es mit \texttt{library(xlsx)} eingebunden werden kann:
+\noindent
+Beispielaufruf für die Funktion \texttt{read.xlsx()}:
+<<fig=FALSE,echo=TRUE>>=
+library(xlsx)
+ccl<-rep("numeric",4)
+infile<-"E:/R_Kurs_SoSe2013/Uebungen/Uebung-2013-05-15_Bullendaten_simple.xlsx"
+(sn<-names(getSheets(loadWorkbook(infile)))) # listet Tabellenblattnamen auf
+data<-read.xlsx2(infile, sheetIndex=1, startRow=2, 
+colClasses=ccl, colIndex=1:4, header=TRUE, as.data.frame=TRUE)
+(head(data))
+(nrow(data))
+@
+
+Hierbei ist es wichtig den Aufbau der Excel-Tabelle zu kennen, um die richtigen Argumente mit den entsprechenden Werten beim Funktionsaufruf anzugeben. Die Vektorvariable \texttt{ccl} dient der Festlegung der Datentypen, welchen die Variablen des einzulesenden Datensatzes angehören. Dieser Vektor wird dem Argument \texttt{colClasses} übergeben. Die Argumente \texttt{sheetIndex} und \texttt{startRow} geben an, welches Tabellenblatt und ab welcher Zeile eingelesen werden soll.
+
+An dem Beispiel sehen wir allerdings auch das Problem, dass eine rein numerische Identifikationsnummer durch die Funktion \texttt{read.xlsx()} in Exponentialschreibweise formatiert wird, was für die Auffindung einzelner Individuen von Nachteil ist. In solchen Fällen sollte man den eingelesenen \texttt{data.frame} nach bearbeiten - hier z.B. mit der Funktion \texttt{format()}:
+<<fig=FALSE,echo=TRUE>>=
+data$IID <- format(data$IID, scientific = FALSE)
+(head(data))
+@
+Die 15-stellige ID wir nun in voller Länge angezeigt.
+
+Des weiteren sind hier die Daten so kodiert, dass fehlende Messwerte mit dem Wert ''-999`` gekennzeichnet sind. 
+<<fig=FALSE,echo=TRUE>>=
+data[which(data$FKG1==-999 | data$FKG2==-999 | data$FKG3==-999),]
+@
+Um die original-Exceltabelle zu erhalten und weil die Funktion \texttt{read.xlsx()} kein Argument \texttt{na.strings} hat, muss man die Umkodierung der fehlenden Messwerte in das \texttt{R}-kompatible Zeichen \texttt{NA} nach dem Einlesen manuell vornehmen:
+<<fig=FALSE,echo=TRUE>>=
+data[data==-999.0]<-NA
+data[which(is.na(data$FKG1) | is.na(data$FKG2) | is.na(data$FKG3)),]
+@
+% ALTERNATIVE TEXT:
+% library(XLConnect)
+% data <- readWorksheetFromFile(infile, sheet = 1, header = TRUE, startCol = 1, 
+%                                startRow = 2, endCol = 4, colTypes="numeric", scientific=FALSE)
+% (head(data))
+% data$IID <- format(data$IID, scientific = FALSE)
+
+%\clearpage
+\subsection{\texttt{R}-Befehle von einer Datei aus starten}
+Eine Reihe von logisch zusammenh"angenden Befehlen wie z.B. eigene Funktionen kann man bequemerweise
+in eine separate Datei (z.B. \texttt{Funktionen.R}) auslagern und dann durch einmaligen Aufruf in einem
+neuen Skript einbinden. Dazu bedient man sich der \texttt{R}-Funktion \texttt{source()}, welche als Argument den
+vollständigen Pfadund Dateinamen der Zieldatei nimmt.
+
+Beispiel:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+source("E:/R_Kurs_SoSe2013/Uebungen/Funktionen.R")
+@
+\end{center}
+
+Der Aufruf dieser Zeile am Anfang eines R-Skriptes ermöglicht es nun alle Funktionen und Variablen, die in \texttt{Funktionen.R}
+vereinbart wurden im aktuellen Skript zu verwenden.
+
+
+\end{document}

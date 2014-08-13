@@ -1,0 +1,422 @@
+\documentclass[a4paper]{article}
+\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc} 
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{soul} % underline text mit \ul{text}
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+ 
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Dr. Ralf Bortfeldt}
+\date{19. Juni 2013}
+\begin{document}
+\maketitle
+
+
+\section*{Statistische Tests}
+Ein statistischer Test kann allgemein als mathematisches Verfahren angesehen
+werden, mit dem man feststellen kann, ob eine Beobachtung (empirische
+Me{\ss}\-werte)
+durch Zufall erkl{\"a}rt werden kann, oder ob es sich um einen echten Effekt
+handelt.
+
+F{\"u}r jeden Test ist eine Null-Hypothese ($H_{0}$) aufzustellen, gegen die getestet
+wird. Meistens wird die Null-Hypothese so formuliert, dass
+sie einen Zustand der Welt beschreibt, den wir gerne widerlegen w{\"u}rden.
+Ferner wird noch eine Alternativ-Hypothese ($H_{1}$) formuliert, die dann als
+wahr angesehen wird, wenn wir die Null-Hypothese ablehnen. Die 
+Alternativ-Hypothese wird in der Regel so formuliert, dass
+sie den Zustand beschreibt, den wir gerne beweisen m{\"o}chten.
+
+
+Als Beispiel kann man sich vorstellen, dass ein Bauer 100 K{\"u}he aus 
+einer Population kauft, von der bekannt ist, dass ihre durchschnittliche
+Jahresmilchleistung
+bei 10000 kg liegt. Der Bauer behandelt seine K{\"u}he besonders gut und
+beobachtet nach einem Jahr eine durchschnittliche Jahresmilchleistung von
+10500 kg
+mit einer Standardabweichung von 1000 kg.
+Dies bedeutet, dass, Normalverteilung vorausgesetzt, etwa zwei Drittel
+der K{\"u}he eine Leistung zwischen 9500 und 11500 kg aufweisen.
+Selbstverst{\"a}ndlich f{\"u}hrt der Bauer die Mehrleistung von 500 kg auf
+seine besonders gute Behandlung zur{\"u}ck. Als kritische Wissenschaftler
+m{\"u}ssen wir uns jedoch fragen, inwieweit der Bauer dies zu Recht tut.
+Hierbei hilft uns ein statistischer Test.
+
+\subsection*{Ein-Stichproben \textit{t}-Test ({\em One sample \textit{t}-Test})}
+Mit einem Ein-Stichproben t-Test kann man
+{\"u}berpr{\"u}fen, ob der Mittelwert einer Stichprobe vereinbar mit einem
+theoretischen Wert ist oder ob er davon abweicht. Der theoretische
+Wert kann z.~B.\ aus der Literatur stammen. 
+
+Als Nullhypothese wird man formulieren, dass die beiden
+Mittelwerte (Popu\-la\-tions- und Herdenmittelwert) identisch sind (also
+das, was der Bauer nicht wahr haben m{\"o}chte), und als Alternativ-Hypothese
+wird man formulieren, dass der Herdenmittelwert h{\"o}her als der
+Populationsmittelwert ist.
+Wie bei allen Tests, m\"ussen die Daten auf eine einzige Zahl, den Pr\"ufwert $t$, reduziert
+werden, die 
+im wesentlichen aus dem Verh\"altnis zwischen der Differenz aus empirischem Mittelwert und theoretischem Wert
+und der empirischen Standardabweichung $s$ besteht:
+\begin{equation}
+t = \frac{ | \bar{X} - \mu | }{s} \sqrt{n}
+\end{equation}
+wobei $\bar{X}$ das Stichprobenmittel, $\mu$ der theoretische Wert und $n$ die Stichprobengr\"o{\ss}e
+sind.
+
+
+Realisiert wird der \textit{t}-Test in \texttt{R} durch den Aufruf \texttt{t.test()}.
+{\"U}bergeben werden die Jahresleistungen f{\"u}r die 100 K{\"u}he der Herde als Zahlenvektor
+und der theoretische Wert (10000 kg/a).
+
+Da Datens{\"a}tze mit echten Daten nicht zur Verf{\"u}gung stehen, k{\"o}nnen wir
+dieses Beispiel mit simulierten (d.~h.\ mit einem Zufallsgenerator erzeugte)
+Daten durchf{\"u}hren.
+Eine Ziehung einer Stichprobe vom Umfang 100 aus einer normal-verteilten (``Gau{\ss}-Glockenkurve'') Grundgesamtheit
+mit Mittelwert 10500 und Standardabweichung 1000 wird so realisiert:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+MilchMengeHerde <- rnorm(100, 10500, 1000)
+head(MilchMengeHerde)
+@
+\end{center}
+Zur Erinnerung: mit \texttt{head()} werden die ersten sechs Elemente eines
+Daten-Objekts angezeigt. 
+Ferner ist noch wichtig zu wissen, dass Sie bei einem weiteren Aufruf von
+\texttt{rnorm()} andere Zufallszahlen bekommen. Sie werden also
+in {\"U}bungen mit simulierten Datens{\"a}tzen in der Regel anderen Ergebnisse
+erhalten als ihre Kommilitonen.
+
+Kommen wir zur{\"u}ck zum \textit{t}-Test.
+In seiner Variante als Ein-Stichprobentest wird er so ausgef{\"u}hrt:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+t.test(MilchMengeHerde, mu = 10000, alternative = "greater")
+@
+\end{center}
+Zun{\"a}chst ist festzustellen, dass bei Ausf{\"u}hrung eines \textit{t}-Tests alle
+relevanten Ergebnisse sichtbar produziert werden. Man muss also 
+nicht, wie bei der Regressionsanalyse, ein erzeugtes Modell-Objekt
+mit der Funktion (\texttt{summary()}) sichtbar machen.
+
+
+\setkeys{Gin}{width=1.0\textwidth}
+\begin{center}
+\begin{figure}
+\subfigure[a]{\includegraphics[width=0.5\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Einseitiger_Test_didaktisch.pdf}}
+\subfigure[b]{\includegraphics[width=0.5\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Zweiseitiger_Test_didaktisch.pdf}}
+\caption{Das Treffen einer statistischen Test-Entscheidung ist die Auswahl eines Grenzwerts auf einer eindimensionalen Skala - der x-Achse des Wahrscheinlichkeitsdichte-Diagramms. Daher muss man zwischen zwei Fällen unterscheiden: a) liegt die Eigenschaft über oder unter dem vorgegebenen Grenzwert wird ein \textbf{einseitiger Test} angewendet. b) liegt die Eigenschaft innerhalb eines Intervalls muss man zwei Grenzen setzen und nach der Wahrscheinlichkeit fragen, mit der ein Ereignis innerhalb oder außerhalb dieser Grenzen liegt,was einem \textbf{zweiseitigen Test} entspricht.}
+\end{figure}
+\end{center}
+
+Standardm{\"a}{\ss}ig wird ein zwei-seitiger Test durchgef{\"u}hrt
+(\texttt{alternative = `two.sided'}). Es w{\"u}rde also getestet werden,
+ob Populations- und Herdenmittel {\em unterschiedlich} sind. Wir interessieren
+uns jedoch nur f{\"u}r die Frage, ob der Herdenmittelwert {\em gr{\"o}{\ss}er} als der
+Populationsmittelwert ist. Durch die Spezi\-fikation eines einseitigen
+Tests erreicht man eine Halbierung des P-Werts, wie das folgende
+Beispiel zeigt:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+t.test(MilchMengeHerde, mu = 10000, alternative = "two.sided")
+@
+\end{center}
+
+Man sollte also immer, wenn man sicher ist, dass nur die {\em eine} Richtung
+des Unterschieds (und nicht der Unterschied an sich) interessant ist, sich
+stets f{\"u}r die einseitige Variante entscheiden.
+
+Das wichtigste Ergebnis des Tests ist die Angabe des P-Werts.
+Er ist zu interpretieren als die Wahrscheinlichkeit, einen Unterschied von
+500 kg in der Milchleistung oder mehr zu beobachten, wenn die Null-Hypothese
+korrekt w{\"a}re (wenn also in Wirklichkeit kein Unterschied zwischen Herde
+und Population best{\"u}nde).
+Dann h{\"a}tte man die bessere Milchleistung also nur der zuf{\"a}lligen
+Auswahl der Stichprobe zu verdanken.
+
+Da der P-Wert nahe bei 0 liegt, kann man die Null-Hypothese also ge\-trost
+verwerfen zugunsten der Alternativ-Hypothese: Das Herdenmittel ist h{\"o}her als das
+Populationsmittel. Ferner wird die Pr\"ufgr\"o{\ss}e $t$ ausgegeben.
+Danach wird die Alternativ-Hypothese formuliert,
+die bei einem vorher spezifizierten p-Wert (von beispielsweise kleiner als 0,01)
+anzunehmen ist. Das 95-Prozent-Konfidenz-Intervall gibt an, in welchem Bereich
+der Mittelwert der Stichprobe mit 95-prozentiger Wahrscheinlichkeit liegt.
+%In unserem Beispiel liegt er zwischen einem Wert unter 10500
+%und unendlich (\texttt{Inf}, Infinity), was
+%nichts anderes bedeutet, als dass er mit 95-prozentiger Wahrscheinlichkeit gr\"o{\ss}er
+%als 10319,69 ist.
+Bei einem zweiseitigen Test (s.~u.~) werden zwei endliche Werte ausgegeben.
+Zum Schluss wird noch das empirische Stichprobenmittel (Absch\"atzung) angegeben.
+Bei einem Zwei-Stichproben-Test w\"urden die Mittelwerte f\"ur beide Stichproben
+angegeben werden.
+
+\subsection*{Zwei-Stichproben t-Test ({\em Two sample t-Test})}
+H{\"a}ufiger als der Ein-Stichproben-Fall kommt es vor, dass man zwei
+Stichproben
+direkt miteinander vergleichen will. Die eine Stichprobe wird h{\"a}ufig als
+{\em behandelt} bezeichnet ({\em treatment}), die andere als Kontrolle ({\em
+control}).
+Bevor wir diese Variante des Tests durchf{\"u}hren, m{\"u}ssen wir noch eine zweite
+Stichprobe simulieren. Diesmal wollen wir eine Stichprobe von K{\"u}hen simulieren, die
+``normal'' gehalten wird. Sie soll also einen Mittelwert von 10000 kg/a haben,
+aber
+auch eine Standardabweichung von 1000 kg/a.
+Wir w{\"a}hlen eine gleich gro{\ss}e Stichprobe ($N = 100$), obwohl dies
+nicht unbedingt der Fall sein muss.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+MilchMengePop <- rnorm(100, 10000, 1000)
+t.test(MilchMengeHerde, MilchMengePop, alternative = "greater", var.equal = TRUE)
+@
+\end{center}
+
+
+Der Aufruf {\"a}hnelt sehr stark dem beim Ein-Stichproben-Fall. Als zweiten
+Parameter
+{\"u}bergibt man jetzt jedoch den Vektor mit den Leistungen f{\"u}r die
+Kontroll-Gruppe.
+Ein weiterer Unterschied ist, dass wir explizit spezifizieren, dass
+die Varianzen in den beiden Gruppen gleich gro{\ss} sind: \texttt{var.equal =
+TRUE}.
+
+%Hierdurch verbessert sich der p-Wert.
+%\begin{center}
+%<<fig=FALSE,echo=TRUE>>=
+%MilchMengePop <- rnorm(100, 10000, 1000)
+%t.test(MilchMengeHerde, MilchMengePop, alternative = "greater")
+%@
+%\end{center}
+
+
+W{\"u}rde diese Angabe fehlen, w{\"u}rde \texttt{t.test} annehmen, sie sind
+verschieden
+gro{\ss} und w{\"u}rde dann den sogenannten Welch-Test durchf{\"u}hren.
+Dieser ist eine Variante des t-Tests, setzt aber keine gleichen Varianzen voraus.
+Man beachte, dass \texttt{var.equal =
+FALSE} die Standard-Einstellung ist.
+
+\subsection*{Tests auf Normalit{\"a}t und Gleichheit von Varianzen}
+M{\"o}chte man {\"u}berpr{\"u}fen, ob die Voraussetzungen f{\"u}r das Durchf{\"u}hren
+von t-Tests, n\"amlich Normal-Verteilung und gleiche Varianz der Stichproben,
+gegeben sind, kann man dies mit zwei weiteren Tests tun.
+
+Mit dem Shapiro-Wilk-Test kann {\"u}berpr{\"u}ft werden, ob eine Stichprobe
+normal verteilt ist. 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+shapiro.test(MilchMengeHerde)
+@
+\end{center}
+Man beachte, dass hier die Null-Hypothese lautet: Die Daten sind
+normalverteilt. Ein P-Wert nahe 0 w{\"u}rde zum Zur{\"u}ckweisen dieser
+Null-Hypothese f{\"u}hren, ein hoher P-Wert (z.~B. > 0,1) w{\"u}rde dazu
+f{\"u}hren, dass man sie beibeh{\"a}lt. Wir haben hier also einen Fall
+vorliegen, wo man in der Regel eher hohe P-Werte w{\"u}nscht.
+Dies verdeutlicht, dass die korrekte Interpretation eines P-Werts
+nur im Zusammenhang mit der Null-Hypothese gelingen kann.
+
+Mit dem F-Test {\"u}berpr{\"u}ft man die Gleichheit von Varianzen von
+zwei Stichproben.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+var.test(MilchMengeHerde, MilchMengePop)
+@
+\end{center}
+F{\"u}r den P-Wert gilt das oben gesagte, da die Null-Hypothese
+lautet: ``Die beiden Varianzen sind gleich''.
+
+\subsection*{Gepaarte Tests}
+Um unkontrollierbare Einflu{\ss}faktoren weitestgehend
+auszuschlie{\ss}en, wird man oft versuchen, die Daten f{\"u}r
+die behandelte und die Kontroll-Gruppe von ein und demselben
+Untersuchungsgegenstand zu erhalten.
+
+Ein Beispiel mag dies
+verdeutlichen: Es soll untersucht werden, ob die Expression
+eines Gens in Gewebe mit Hautkrebs h{\"o}her als in gesundem
+Gewebe ist. Um Schwankungen in der Gen-Expression, die durch
+die Individuen bedingt sind, auszuschalten, kann man
+beide Proben, krank und gesund (``Kontrolle''), 
+von ein und derselben Person gewinnen, und zwar an
+der befallenen Hautpartie und an der benachbarten gesunden
+Haut.
+
+In Ermangelung wissenschaftlich interessanter Daten soll hier der gepaarte t-Test
+am Datensatz \texttt{iris} f{\"r} die Species Setosa demonstriert
+werden. Es soll anhand eines Datensatzes mit sechs Werten getestet werden,
+ob die Sepalenl\"angen gr\"o{\ss}er als die Sepalenbreiten sind.
+Der erste Aufruf f\"uhrt einen ungepaarten Test durch, der zweite
+einen gepaarten. Die Paarung der Proben wird mit \texttt{paired = TRUE} spezifiziert.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+setosa <- subset(iris, Species == "setosa")
+t.test(setosa$Sepal.Length[1 : 6], setosa$Sepal.Width[1 : 6], alternative = "greater")
+t.test(setosa$Sepal.Length[1 : 6], setosa$Sepal.Width[1 : 6], alternative = "greater", paired = TRUE)
+
+#ExpressionNormal  <- rnorm(n = 50, mean = 1000, sd = 500)
+#Differenzen <- rnorm(n = 50, mean = 100, sd = 100)
+#ExpressionKrebs <- ExpressionNormal + Differenzen
+#t.test(ExpressionKrebs, ExpressionNormal, alternative = "greater", paired =
+#TRUE, var.equal = FALSE)
+@
+\end{center}
+
+Wie man sieht, kann durch die Paarung der ohnehin schon sehr signifikante 
+p-Wert nochmals verbessert werden. 
+
+%Die Expression in Normal-Gewebe wird in willk{\"u}rlichen Einheiten mit Mittelwert
+%1000 und Standardabweichung 500 simuliert.
+%Die Expression in Krebsgewebe kann nicht direkt simuliert werden, sondern
+%in Abh{\"a}ngigkeit vom Normalgewebe. Dies kann durch Simulation von Differenzen
+%erreicht werden (hier mit Mittelwert 100 und Standardabweichung 100), die
+%zu der Expression in Normal-Gewebe addiert werden. Die Genexpression
+%in Krebs-Gewebe liegt somit {\it per definitionem} durchschnittlich um 100 Einheiten {\"u}ber
+%der Expression in Normalgewebe.
+%Ein Vergleich mit ungepaarten Stichproben zeigt, da{\ss} f{\"u}r gepaarte
+%Stichproben h{\"o}here Signifikanz erzielt werden kann.
+%\begin{center}
+%<<fig=FALSE,echo=TRUE>>=
+%t.test(ExpressionKrebs, ExpressionNormal, alternative = "greater", paired =
+%FALSE, var.equal = FALSE)
+%@
+%\end{center}
+Leider ist die Erhebung von gepaarten Stichproben h{\"a}ufig nicht m{\"o}glich.
+
+\section*{Der Wilcoxon-Rangsummen-Test}
+Wenn die Gr\"o{\ss}e, f\"ur die man sich interessiert, nicht normal-verteilt ist,
+oder wenn die Gefahr besteht, dass sich unter den Messwerten Ausreisser befinden,
+gibt es die M\"oglichkeit, einen rangbasierten Test durchzuf\"uhren.
+Er tr{\"a}gt den Namen Wilcoxon-Test oder Mann-Whitney-U-Test und wird oft als
+verteilungsunabh{\"a}ngiger (oder auch nicht-parametrischer oder
+parameterfreier Test) bezeichnet. Diese Bezeichnungen sind
+nicht sehr gl{\"u}cklich gew{\"a}hlt, sollten aber dennoch
+hier aufgef{\"u}hrt werden, weil sie gebr{\"a}uchlich sind.
+Wie der Name ``Rangsummentest'' schon andeutet, werden alle Messwerte
+in R{\"a}nge transformiert, mit denen dann eine Test-Statistik erstellt wird.
+Im Wesentlichen werden f\"ur die Test-Statistik
+die R\"ange in den beiden zu vergleichenden
+Gruppen aufsummiert und mit der Verteilung verglichen, die man
+bei G\"ultigkeit der Null-Hypothese erwarten w\"urde.
+Die Messwerte als solche gehen nicht in die Berechnung der Test-Statistik ein.
+Es liegt daher eine {\"a}hnliche Philosophie zu Grunde wie beim
+Spearman-Korrelationskoeffizient oder der Charakterisierung einer
+Verteilung durch den Median.
+
+Der Aufruf lautet \texttt{wilcox.test()},
+und die Parameter sind {\"a}quivalent zum t-Test.
+Sie m{\"u}ssen also die selben Entscheidungen wie im Falle eines t-Tests treffen:
+Ein/Zwei-Stichproben-Test, ein-/zweiseitig, gepaart/ungepaart.
+Eine Gleichheit der Varianzen kann allerdings nicht spezifiziert
+werden, da dies f{\"u}r R{\"a}nge keinen Sinn hat.
+Ferner lautet die Nullhypothese: Die beiden Stichproben haben
+den gleichen {\em Median}. Beim t-Test wird auf Gleichheit von Mittelwerten getestet.
+
+Ein Beispiel f{\"u}r den Einsatz des Wilcoxon-Tests w{\"a}re ein Test auf Gleichheit
+der Mediane zweier Poisson-verteilter Zufallsgr{\"o}{\ss}en. Die
+Poisson-Verteilung
+\begin{equation}
+P_{\lambda}(k) = \frac{\lambda^k}{k!} e^{-\lambda}
+\end{equation}
+beschreibt die Wahrscheinlichkeit f{\"u}r das Auftreten von seltenen Ereignissen (z.B. radioaktiver Zerfall, Blitzeinschläge, WM-Tore).
+$k$ ist die Anzahl des Vorkommens eines Ereignisses und $\lambda$ ist \ul{sowohl}
+Mittelwert als auch Varianz der Verteilung. Dies kann man sich veranschaulichen, wenn man
+sich die Poisson-Ereignisse als große Anzahl wiederholter Bernoulli-Experimente vorstellt:
+\[
+	X_{1}, \ldots, X_{n}}
+\]
+	
+mit \textit{n} unabhängigen bernoulliverteilten Zufallsvariablen mit $p = \frac{\lambda}{n}$
+und $X := X_{1}+ \ldots + X_{n}$.
+Dann gilt für $n \rightarrow \infty$ die Näherung $X \sim Pois(\lambda)$ und für den Erwartungswert:
+\[
+E(X) = E(X_{1}) + \ldots + E(X_{n}) = \underbrace{\frac{\lambda}{n} + \ldots +  \frac{\lambda}{n}}_{n \textnormal{ mal}} = \lambda
+\]
+In ähnlicher Weise lässt sich die Varianz des Poissonverteilung als Summe vieler Einzelvarianzen verstehen:
+\[
+Var(X) = Var(X_{1}) + \ldots + Var(X_{n}) = \underbrace{\frac{\lambda}{n} (1-\frac{\lambda}{n}) + \ldots +  \frac{\lambda}{n} (1-\frac{\lambda}{n})}_{n \textnormal{ mal}} = \lambda  (1-\frac{\lambda}{n}) \rightarrow \lambda
+\]
+$P_{2}(4)$ ist beispielsweise die Wahrscheinlichkeit, ein Ereignis viermal zu
+sehen bei einem Erwartungswert von 2.
+Die Anzahl von Kindern pro Frau kann z.~B.\ als Poisson-verteilt
+angenommen werden.
+Poisson-verteilte simulierte Stichproben werden mit der Funktion \texttt{rpois} gezogen.
+Die Kinderzahlen einer Stichprobe von 100 Frauen aus einer Gesellschaft
+mit 2,0 Kindern pro Frau k{\"o}nnte also so aussehen:
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+Kind2 <-  rpois(100, lambda = 2.0)
+head(Kind2)
+#median(Kind2)
+plot(table(Kind2), xlab = "Anzahl Kinder", ylab = "Anzahl Frauen")
+@
+\end{center}
+%Etwa 15 Prozent der Frauen haben in dieser Stichprobe also keine Kinder, ca.\ 30 Prozent haben
+%ein Kind, ca.\ 25 Prozent zwei Kinder etc.
+Unterscheidet sich diese Stichprobe signifikant von einer weiteren Stichprobe
+vom Umfang 100 aus einer Gesellschaft mit einem Durchschnittswert von 3,0
+Kindern
+pro Frau?
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+Kind3 <-  rpois(100, lambda = 3.0)
+wilcox.test(Kind3, Kind2, alternative = "greater")
+@
+\end{center}
+Es kann also mit diesen Stichproben ein signifikanter Unterschied in der Anzahl der Kinder pro Frau
+zwischen den beiden Gesellschaften nachgewiesen werden.
+Wichtig ist, sich klarzumachen, dass Verteilung\-en mit einem kleinen
+Mittel\-wert
+nicht normal verteilt sein k{\"o}nnen, wenn nur positive Werte oder 0
+m{\"o}glich sind (wie eben Anzahl von Kindern pro Frau). 
+Die Normalverteilung w{\"u}rde, da sie symmetrisch um
+den Mittelwert herum liegt, n{\"a}mlich in den negativen Bereich
+hineinragen, was nat{\"u}rlich nicht sein darf.
+F{\"u}r unsere beiden Stichproben kann die Nicht-Normalit{\"a}t {\"u}brigens sehr sch{\"o}n
+mit dem Shapiro-Wilk-Test nachgewiesen werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+shapiro.test(Kind2)
+shapiro.test(Kind3)
+@
+\end{center}
+
+\section*{Aggregation von Daten}
+
+Oftmals ist es notwendig viele Daten zusammen zu fassen, z.B. deskriptive Kenngrössen für ein metrisches Merkmal innerhalb verschiedener Katergorien eines anderen Merkmals zu berechnen.
+So könnte man für jedes der metrischen Merkmale des Iris-Datensatzes den Mittelwert innerhalb der Spezies
+berechnen. Dafür eignet sich die Funktion \texttt{aggregate()}.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(iris)
+head(iris)
+aggregate(x=list(Mean=iris$Sepal.Length), by=list(Species=iris$Species), mean, na.rm=TRUE)
+@
+\end{center}
+
+Diese Funktion ermöglicht Berechnungen auf gruppierten Daten zu vollziehen. Diese Funktionalität ist
+dem SQL-Bereich entlehnt, wo es in atomarisierten Datenbanktabellen oft nötig ist Daten wieder zu verdichten. Man gruppiert dann auf den Leveln (Faktorstufen) einer Faktorvariable und fasst für diese Level bestimmte Informationen zusammen.
+Als Ergebnis der Gruppierung entsteht eine Spalte mit einmalig vorkommenden Leveln und einer (oder mehreren) Spalte(n) mit zusammengefassten Daten für jedes dieser Level.
+ 
+Wendet man \texttt{aggregate()} wiederholt an, so bietet sich der Befehl \texttt{merge()} an, um die Ergebnisse in einem \texttt{data.frame} zu verbinden. 
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+merge(
+aggregate(x=list(Mean=iris$Sepal.Length), by=list(Species=iris$Species), mean, na.rm=TRUE),
+aggregate(x=list(Stdev=iris$Sepal.Length), by=list(Species=iris$Species), sd, na.rm=TRUE),
+by="Species"
+)
+@
+\end{center}
+
+
+
+\end{document}

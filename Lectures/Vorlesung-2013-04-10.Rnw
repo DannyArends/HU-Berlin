@@ -1,0 +1,358 @@
+\documentclass[a4paper]{article}
+\usepackage[ansinew]{inputenc}
+\usepackage{hyperref}
+\usepackage{parskip} 
+
+\title{Datenanalyse mit dem Statistik-Paket \texttt{R}}
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+
+\date{10.~April 2013}
+
+\begin{document}
+
+\maketitle
+
+\section{Allgemeine Bemerkungen zum Kurs}
+Ziel des Kurses ist es, Probleml{\"o}sungskompetenzen
+f{\"u}r die wesentlichen, w{\"a}hrend des Studiums eines wissenschaftlichen
+Faches auftauchenden statistischen und analytischen Fragestellungen zu vermitteln.
+Damit verbunden ist auch die Planung und Durchf{\"u}hrung einer sinnvollen und effizienten Datenbearbeitung f{\"u}r die 
+Auswertung von Versuchsdaten.\\
+Dies bedeutet im einzelnen:
+\begin{itemize}
+\item zu erkennen, an welchen Punkten der Arbeit zeitraubende Datenverarbeitungsschritte
+durch den Einsatz einer Skriptsprache vereinfacht werden k{\"o}nnen
+\item
+zu erkennen, dass in einem bestimmten Stadium einer wissenschaftlichen
+Arbeit ein statistisch-analytisches Problem vorliegt
+\item
+bef{\"a}higt zu sein, einen angemessenen programmatischen bzw. statistischen L{\"o}sungsansatz
+zu finden und 
+\item
+das Problem konkret mit Hilfe der Skriptsprache \texttt{R} zu l{\"o}sen.
+\end{itemize}
+
+Der Ablauf jeder Unterrichtseinheit ist dreigeteilt, wobei die beiden ersten
+beiden Teile ungef{\"a}hr die H{\"a}lfte der Unterrichtszeit in Anspruch nehmen.
+
+\begin{itemize}
+	\renewcommand{\labelitemi}{$\Rightarrow$}
+	\item Im ersten Teil wird die Theorie von statistischen oder programmatischen Konzepten und Verfahren wiederholt bzw. neu eingef{\"u}hrt
+	\item Im zweiten Teil werden die entsprechenden Methoden, die das Paket \texttt{R} bereit h{\"a}lt, vorgestellt
+	\item Im dritten Teil wird das gelernte am PC in die Praxis umgesetzt
+\end{itemize}
+
+\vspace{0.5cm}
+
+Es wird versucht, alle statistischen Konzepte so praxis-orientiert
+wie m{\"o}glich einzuf{\"u}hren. Idealerweise stellt dieser Kurs Hilfe
+zur Selbsthilfe dar. Das bedeutet, dass nach einer Weile gen{\"u}gend
+Kompetenz angeeignet sein soll, um sich die f{\"u}r die L{\"o}sung eines
+Problems erforderlichen Methoden, die \texttt{R} bietet, selbst zu erarbeiten.
+
+In diesem Kurs werden wir es mit drei unterschiedlichen Sprachebenen
+zu tun haben. Statistische Probleme tauchen in konkreten Situationen
+der {\it Wissenschaft} auf, m{\"u}ssen dann in der Sprache der {\it
+Statistik} pr{\"a}zise formuliert werden und dann mit Hilfe einer
+{\it Programmiersprache} gel{\"o}st werden. Dies hat zur Folge, dass
+wir f{\"u}r ein und den selben Sachverhalt verschiedene Begriffe einf{\"u}hren
+und verwenden m{\"u}ssen, die letztendlich das gleiche bedeuten.
+So w{\"u}rde man eine Sammlung von Daten in der Biologie als {\it Tabelle}
+bezeichnen, in der Statistik als {\it Datenmatrix} und in der 
+Programmiersprache \texttt{R} als {\it data frame}. Bei Verwechslungsgefahr 
+wird auf diese Problematik soweit wie m{\"o}glich hingewiesen. Desweiteren
+wird zu jedem Fachterminus auch die englische Bezeichnung daf{\"u}r eingef{\"u}hrt.  
+
+\section{Allgemeines zu Daten}
+Der Begriff ist die Pluralform von {\it datum}. Dies stammt aus dem
+lateinischen und bedeutet {\it das Gegebene}. Dies ist zu interpretieren
+als Messwerte oder auch Beobachtungen, die uns die Natur gegeben hat.
+In der Datenanalyse haben wir es also mit vorgegebenen Werten zu tun.
+Im Idealfall spielen statistische Analysen jedoch schon vor der
+eigentlichen Datenerhebung eine Rolle. In statistischen Versuchspl{\"a}nen
+kann n{\"a}mlich das Experimentdesign dahingehend optimiert werden, dass
+man die Anzahl von ben{\"o}tigten Untersuchungsobjekten pr{\"a}zise berechnen
+kann. Unterbleibt eine sogenannte Fallzahl-Absch{\"a}tzung, so besteht die
+Gefahr, dass Datens{\"a}tze entweder zu klein oder zu gro{\ss} gew{\"a}hlt werden.
+Im ersten Fall wird man den erhofften Effekt nicht mit der ausreichenden
+statistischen Sicherheit nachweisen k{\"o}nnen, im zweiten Fall hat man
+ mehr Daten gesammelt, als ben{\"o}tigt gewesen w{\"a}ren und damit eventuell unn{\"o}tige 
+Versuchskosten verursacht.
+Das Thema Experimentdesign w{\"u}rde jedoch den Rahmen dieser Vorlesung
+sprengen und wird deshalb nicht behandelt.
+
+\section{Verschiedene Datenskalen}
+Die folgende Tabelle zeigt einen f{\"u}r biologische Versuche
+typischen Datensatz.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccl}
+\hline 
+MausID & Fett [g] & Futter & Hierarchie & Fellfarbe \\
+\hline
+1	&	2.3	&	NF	&	2	&	schwarz \\
+2	&	3.6	&	NF	&	4	&	weiss	\\
+3	&	1.3	&	FF	&	1	&	schwarz \\
+.	&	.	&	.	&	.	&	.	\\
+$n$	&	5.6	&	FF	&	7	&	schwarz	\\
+\hline
+\end{tabular}
+\label{Beispieltabelle}
+\end{table}
+Die Spalten dieser Tabelle bezeichen die Attribute. Andere gleichwertige
+Bezeichnungen f{\"u}r Attribute sind: Merkmale ({\it traits}), Variablen.
+Die Zeilen beeinhalten die F{\"a}lle ({\it cases}), auch Individuen oder Eintr{\"a}ge ({\it
+entries, records}) genannt. Die einzelnen Zellen stellen die Me{\ss}werte ({\it
+measurements}) dar, auch Werte ({\it values}),
+Merkmalsauspr{\"a}gungen oder 
+Realisierungen ({\it realizations}) genannt.
+Die Attribute in dieser Tabelle nehmen Werte an, die von unterschiedlicher
+Natur sind; man spricht von unterschiedlichen Datenskalen. 
+Die wichtigsten Datenskalen sind in steigender Komplexit{\"a}t:
+\begin{itemize}
+\item
+Nominal skalierte Daten oder  Kategorien. Beispiel: Fellfarbe. Es gibt
+nur feste "Schubladen", keine Zwischenwerte zwischen den Farben. In der
+Praxis ist dies zugegebnerma{\ss}en nicht immer so ein einfach zu sehen. 
+Falls es nur zwei Werte gibt, handelt es sich um einen Spezialfall, den man
+bin{\"a}r oder dichotom nennt. Man kann mit nominal skalierten Daten weder
+mathematische Operationen durchf{\"u}hren noch sie eindeutig in eine sinnvolle
+Reihenfolge bringen.
+\item
+Ordinal skalierte Daten oder rangskalierte Daten. Beispiel: die
+Hierarchie\-stufe
+in einer Tiergruppe. Rangskalierte Daten lassen
+sich eindeutig in eine Reihenfolge bringen. Laut oben stehender Tabelle ist Maus Nummer 3 der Chef im Stall,
+Maus Nummer 1 ist die Maus an zweiter Position auf der Hierarchieleiter etc.
+Weitere mathematische Operationen sind mit Vorsicht zu genie{\ss}en. Z.B. ist 
+der Abstand zwischen Rang 1 und 2 nicht unbedingt identisch mit dem
+zwischen Rang 2 und 3, abgesehen davon, dass \emph{a priori} nicht klar ist,
+wie man einen solchen Abstand bestimmen soll.
+\item
+Metrisch skalierte Daten. Jeder numerische Wert kann im Prinzip angenommen
+werden. Man muss unterscheiden zwischen der Intervallskala, wo man
+Differenzen bilden kann, aber keine Divisionen sinnvoll sind (Beispiel:
+Temperatur in Grad Celsius oder in Fahrenheit) und der Verh{\"a}ltnisskala,
+wo die {\"u}blichen mathematischen Operationen durchgef{\"u}hrt werden k{\"o}nnen
+(Beispiel: die meisten biologischen Me{\ss}werte, Geld).
+\end{itemize}
+Die Zugeh{\"o}rigkeit zu einer bestimmten Skala muss f{\"u}r jede Variable
+eines Datensatzes ermittelt werden. Diese Zugeh{\"o}rigkeit determiniert
+in hohem Ausma{\ss} bereits das statistische Verfahren, mit dem die Daten
+analysiert werden.
+Eine Transformation in Richtung Vergr{\"o}berung (z.B. von metrisch skalierten
+Daten zu rangskalierten Daten) ist immer m{\"o}glich. Sie ist jedoch irreversibel
+und sollte wohl {\"u}berlegt sein. Es gibt F{\"a}lle, auf die wir noch zu sprechen
+kommen, wo solche Transformationen sinnvoll sein k{\"o}nnen.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Das statistische Programm-Paket \texttt{R}}
+Die Entwicklung von \texttt{R} begann 1993 als eine kostenfreie
+Kopie des kommerziellen Pakets S-Plus. \texttt{R} wird konstant weiterentwickelt
+und insbesondere um viele Spezial-Pakete, auch im Bereich Biologie,
+erweitert. \texttt{R} kann unter
+http://cran.r-project.org heruntergeladen und
+leicht unter Linux oder Windows installiert werden.
+Gestartet wird \texttt{R} in Linux und Windows durch Eingabe von "\texttt{R}" in einer Konsole (auch \emph{Shell} oder Kommandozeile genannt).
+Unter Windows kann zus{\"a}tzlich durch Aufruf der Datei \texttt{Rgui.exe} eine grafische Benutzeroberfl{\"a}che
+gestartet werden, die eine eigene Konsole und einen integrierten Editor bereit h{\"a}lt.
+Mit dem {\"O}ffnen des \texttt{R}-Arbeitsbereich befindet man sich in der \texttt{R}-Welt, wo Linux- oder Windows Shell-Befehle 
+nicht mehr funktionieren. Jedoch gibt es in \texttt{R} f{\"u}r viele Kommandozeilenbefehle ein Pendant mit {\"a}hnlicher Funktion. Man verl{\"a}{\ss}t \texttt{R} wieder durch
+die Eingabe von \texttt{q()}; dies bedeutet den {\"U}bergang in die Linux-Welt;
+\texttt{R}-Befehle sind nun sinnlos.
+\texttt{q} steht f{\"u}r {\it quit}; die meisten \texttt{R}-Befehle lehnen sich an die
+eng\-lische Bezeichnung f{\"u}r das, was sie tun, an. Eine Besonderheit in \texttt{R} ist,
+dass alle Befehle und Funktionen mit runden Klammern abgeschlossen werden
+m{\"u}ssen. In den runden Klammern k{\"o}nnen normalerweise Werte und Paramter
+an eine Funktion {\"u}bergeben werden. Aber auch wenn eine Werte{\"u}bergabe
+f{\"u}r Funktionen nicht n{\"o}tig ist, werden in \texttt{R} die runden Klammern
+geschrieben.
+Durch den Aufruf von \texttt{?q} wird das integrierte Hilfesystem von \texttt{R} aufgerufen, d.h. eine Beschreibung der Funktion 
+\texttt{q} angezeigt werden. Der Aufruf mit ? geht nat{\"u}rlich f{\"u}r alle
+anderen \texttt{R}-Funktionen entsprechend. Der Vollst{\"a}ndigkeit halber soll
+erw{\"a}hnt werden, dass eine Eingabe des Funktions\-namens ohne \texttt{?} und ohne 
+\texttt{()} den sogenannten Quell-Text ({\it source code})  einer Funktion anzeigt, also die interne
+Abfolge von Funktionen, die nacheinander aufgerufen werden, um den
+gew{\"u}nschten Befehl auszuf{\"u}hren. Dies ist unter Umst{\"a}nden in einem
+fortgeschrittenen Stadium des \texttt{R}-Lernens sinnvoll, wenn man alle Einzelheiten verstehen m{\"o}chte.
+Mit der Funktion \texttt{options()} und dem Parameter \texttt{help\_type}, der die Werte \texttt{"text"} oder \texttt{"HTML"} annehmen kann, 
+l{\"a}sst sich f{\"u}r die \texttt{R}-Ritzung festlegen, ob eine Hilfeseite als formatierter Text in einem \texttt{R}-Fenster 
+oder als eine HTML-Seite im Standardbrowser angezeigt wird. Letztere bietet den Vorteil, dass Verkn{\"u}pfungen (Links) zu anderen Hilfeseiten 
+angeboten werden, was die vertiefende Arbeit mit der \textttt{R}-Hilfe erleichtert.
+
+Wenn man den exakten Namen f{\"u}r einen Befehl nicht kennt, kann man vesuchen,
+ihn {\"u}ber die Suchfunktion \texttt{help.search(<Begriff>)} zu ermittlen, wobei
+\texttt{<Begriff>} f{\"u}r ein englisches Schl{\"u}sselwort steht.
+
+
+\subsection{Links}
+N{\"u}tzliche Links f{\"u}r den Einstieg in \texttt{R}
+\begin{itemize}
+		\item Download der Basisinstallationsdatei f{\"u}r Windows:\\
+			\href{http://cran.r-project.org/bin/windows/base/}{http://cran.r-project.org/bin/windows/base/}
+		\item Umfangreiche Sammlung von Hilfeseiten und Dokumenten:\\
+			\href{http://cran.r-project.org/other-docs.html}{http://cran.r-project.org/other-docs.html} 
+		\item {\"U}bersicht der wichtigsten \texttt{R}-Funktionen auf einer Befehlsreferenzkarte:\\ \href{http://cran.r-project.org/doc/contrib/Short-refcard.pdf}{http://cran.r-project.org/doc/contrib/Short-refcard.pdf} 
+		\item Grafische Benutzeroberfl{\"a}chen:
+			\begin{itemize}
+%				\renewcommand{\labelitemi}{$\rightarrow$}
+				\item RStudio: \href{http://www.rstudio.com}{http://www.rstudio.com}
+				\item R Commander : \href{http://cran.r-project.org/web/packages/Rcmdr/}{http://cran.r-project.org/web/packages/Rcmdr}
+				\item JGR: \href{http://rforge.net/JGR/}{http://rforge.net/JGR/}
+				\item und weitere ... \href{http://www.sciviews.org/_rgui/}{http://www.sciviews.org/_rgui/}
+			\end{itemize}
+		\item 
+\end{itemize}
+
+\section{Wichtige Konzepte in \texttt{R}}
+\subsection{Zuweisungen ({\it assignments}) und Variablen}
+\texttt{R} kann wie ein Taschenrechner benutzt werden. Die Symbole f{\"u}r
+Addition, Subtraktion, Multiplikation, Division und Exponenten-Bildung
+sind \texttt{+, -, *, /, \^}. Um das Zeichen \texttt{\^} zu bekommen,
+muss die entsprechende Taste zweimal hintereinander gedr{\"u}ckt werden oder einmal gefolgt
+von der Leerzeichentaste. Das Zeichen \texttt{\%} dient nicht der Prozentrechnung,
+sondern es wird f{\"u}r die Modulorechnung (\texttt{\%\%}) oder f{\"u}r die ganzzahlige
+Division benutzt (\texttt{\%/\%}).
+
+\texttt{R} schreibt das Ergebnis einer Rechnung in die n{\"a}chste Zeile, wenn es nicht
+in eine Variable gespeichert wurde:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+4 * 7
+@
+\end{center}
+F{\"u}r viele Zwecke ist es sinnvoll, nicht mit konkreten Zahlen zu rechnen,
+sondern
+mit Variablen (nun im mathematischen Sinne, nicht als Merkmal). Variablen
+haben einen Variablennamen, der aus Buchstaben und Zahlen besteht. Er muss
+mit einem Buchstaben anfangen. Sonderzeichen, Umlaute, Leerzeichen und
+{\"a}hnliches
+sind nicht erlaubt. Zwischen Gro{\ss}- und Kleinschreibung wird in \texttt{R} (wie in fast alle anderen Programmiersprachen auch) generell
+unterschieden. 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+pi <- 3.14159
+@
+\end{center}
+Hier wird der Variable mit dem Namen \texttt{pi} mit Hilfe des
+Zuweisungoperators \texttt{<-} der Wert \texttt{3.14159}
+zugewiesen. 
+Achten Sie auf die Reihenfolge: die zu belegende Variable soll links
+vom Zuweisungsoperator stehen, der Wert rechts davon.
+Nach einer Zuweisung erscheint zun{\"a}chst nichts auf der Konsole. 
+Mit der Eingabe des Variablennamens kann man den Variablenwert anzeigen
+lassen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+pi
+@
+\end{center}
+Mit Variablen kann man genauso rechnen wie mit "normalen" Zahlen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+2 * pi
+@
+\end{center}
+Einer Variablen kann man nicht nur numerische Werte zuordnen, sondern
+auch Zeichenketten ({\it strings}). 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+string <- "Hallo"
+@
+\end{center}
+Mit \texttt{ls()} lassen sich alle in einer \texttt{R}-Sitzung erzeugten 
+Variablen (man spricht auch von Objekten) anzeigen.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+ls()
+@
+\end{center}
+Achtung: es werden die Variablennamen aufgelistet, nicht ihre Werte.
+Um die Werte anzuzeigen, m{\"u}ssen die Variablennamen als Befehl eingegeben
+werden.
+\subsection{Vergleichsoperatoren}
+In der Programmierung spielen Vergleichsoperatoren eine gro{\ss}e Rolle.
+Mit ihnen kann man feststellen, ob zwei Objekte (allgemeiner Ausdruck
+f{\"u}r Dinge, die in einer \texttt{R}-Umgebung "leben") identisch oder verschieden oder
+gr{\"o}{\ss}er etc. sind.
+Die wichtigsten sind: \texttt{$ ==, !=, >, <, >=, <=$} f{\"u}r \texttt{$=,\neq, >, <, \geq, \leq$}. 
+Zum Beispiel w{\"u}rde der Vergleich von \texttt{pi} mit \texttt{string}, wie
+erwartet, ein negatives Ergebnis liefern.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+pi == string
+@
+\end{center}
+Das Ergebnis \texttt {FALSE} (Gegenteil: \texttt{TRUE}) ist ein Beispiel f{\"u}r einen weiteren Datentypen,
+n{\"a}mlich f{\"u}r eine logische Variable. 
+Mit den Funktionen \texttt{is.numeric(), is.character(), is.logical()} kann
+der Datentyp von Variablen {\"u}berpr{\"u}ft werden.
+\subsection{Vektoren}
+Vektoren kann man als geordnete Zahlen-Tupel auffassen, d.~h.\ die Reihenfolge
+der Zahlen (Komponenten) ist wichtig. Also (2,4,5) ist nicht das gleiche wie
+(5,2,4). Eine Spalte einer Datenmatrix kann als Vektor aufgefasst werden.
+Eine entscheidende Eigenschaft von Vektoren in \texttt{R} ist, dass ihre Komponenten
+nur einem Datentyp angeh{\"o}ren, dass sie also entweder numerisch oder
+Zeichenketten
+oder logisch sind.
+Vektoren werden in \texttt{R} mit der Funktion \texttt{c()} gebildet, z.B.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+vec1 <- c(2,3,6)
+@
+\end{center}
+Eine weitere Besonderheit von \texttt{R} ist, dass man mit Vektoren auf einfache Weise mathematische
+Operationen ausf{\"u}hren kann, die in anderen Programmiersprachen viel
+aufwendiger gestaltet werden m{\"u}ssen.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+vec2 <- c(2,-2,6)
+vec1 + vec2
+@
+\end{center}
+\subsection{Warnungen und Fehler}
+In \texttt{R} sind einige mathematische Operationen erlaubt, die eigentlich verboten sind.
+Z.B. kann man Vektoren verschiedener L{\"a}nge (d.h. mit verschiedenen Anzahlen
+von Komponenten) addieren oder subtrahieren.
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+vec3 <- c(4,1)
+vec1 + vec3
+@
+\end{center}
+Hier werden also der zwei-komponentige Vektor \texttt{vec3} und der
+drei-komponentige
+Vektor \texttt{vec1} addiert, allerdings gibt \texttt{R} eine Warnung heraus.
+
+Warning message: \\
+L{\"a}nge des l{\"a}ngeren Objektes \\
+        ist kein Vielfaches der L{\"a}nge des k{\"u}rzeren Objektes in: \texttt{vec1 + vec3}
+
+Am Ergebnis k{\"o}nnen wir sehen, dass \texttt{vec3} durch eine dritte Komponente 4
+ verl{\"a}ngert worden ist. Dies ist die erste Komponente von \texttt{vec3}.
+\texttt{R} f{\"a}ngt also in einem solchen Falle an, die noch fehlenden Komponenten wieder
+mit den Komponenten aufzuf{\"u}llen, die schon da sind. 
+Auch wenn \texttt{R} diese Art von riskanten Man{\"o}vern erlaubt,
+ist Anf{\"a}ngern dringend davon abzuraten. In jedem Fall sind Warnungen erst zu
+nehmen. Bei einigen Versionen von \texttt{R} gilt die Addition von Vektoren mit
+unterschiedlicher Anzahl von Komponenten auch als Fehler. 
+Echte Fehler werden nat{\"u}rlich auch angezeigt. Z.~B.\ 
+\texttt{pi > = string} w{\"u}rde die Fehlermeldung \texttt{"Fehler: Syntaxfehler in Zeile
+ "pi > =""}
+produzieren. Der Fehler bestand im Leerzeichen zwischen ">" und "=".
+
+\subsection{Effizientes Programmieren}
+\texttt{R} speichert alle ausgef{\"u}hrten Kommandos in einer Historie, die in der Datei \texttt{.Rhistory}
+abgelegt werden. Auf der \texttt{R}-Konsole k{\"o}nnen alle ausgef{\"u}hrten Befehle mit den Pfeiltasten ($\uparrow,\downarrow$)
+schnell wieder aufgerufen werden. Sehr komfortabel ist auch die Funktionalit{\"a}t \emph{Autovervollst{\"a}ndigung}, die in Anlehnung an 
+die Linux-Konsole, nach Eingabe der ersten Buchstaben eines Befehls, durch dr{\"u}cken der \texttt{Tab}-Taste eine Auswahl passender Befehle
+mit diesen Anfangsbuchstaben auflistet. Allgemein ist es empfehlenswert, alle Befehle in eine Skriptdatei des integrierten Editors 
+zu schreiben in welcher Befehle (soweit nicht mit einem vorangestellten Kommentarzeichen "\#" deaktiviert)
+durch dr{\"u}cken der Taste \texttt{F5} ausgef{\"u}hrt werden. Dabei bewirkt das markieren mehrerer Zeilen, dass durch \texttt{F5}
+alle markierten Zeilen ausgef{\"u}hrt werden. Ebenso kann auch nur ein Teil eines verschachtelten Befehls markiert und 
+mittels \texttt{F5} ausgef{\"u}hrt werden.
+
+\end{document}

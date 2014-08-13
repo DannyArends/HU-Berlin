@@ -1,0 +1,268 @@
+\documentclass[a4paper]{article}
+\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc} 
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm} 
+\usepackage[onehalfspacing]{setspace}
+ 
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{05. Juni 2013}
+\begin{document}
+
+\maketitle
+\section{Lineare Regression}
+Besteht die begr\"undete Hypothese, dass zwei metrisch skalierte Merkmale
+nicht nur korrelieren, sondern dass eines dieser Merkmale das andere
+beeinflu{\ss}t, kann man durch die Methode der Regression versuchen,
+einen funktionalen Zusammenhang zu etablieren. Falls ein Blick auf 
+die Lage der Messpunkte zeigt, dass der Zusammenhang ungef\"ahr durch eine
+gerade Linie wiedergegeben werden kann, kann man den einfachsten Fall,
+die lineare Regression, in Erw\"agung ziehen.
+Die sogenannte Regressionsgerade ist diejenige lineare Funktion, die 
+am besten die Abh\"angigkeit der Y-Werte von den X-Werten beschreibt.
+Sie wird nach der Methode der kleinsten Quadrate (eng.: least squares)
+bestimmt. 
+Die lineare Regression wird mit dem Aufruf \texttt{lm()} (f\"ur {\it linear model)} erreicht.
+Am Beispiel des Datensatzes \texttt{airquality} soll ermittelt
+werden, ob der Ozon-Gehalt der Luft linear mit dem Ansteigen
+der Temperatur w\"achst.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(airquality)
+lm.air <- lm(Ozone ~ Temp, data = airquality)
+lm.air
+@
+\end{center}
+Der blo{\ss}e Aufruf von \texttt{lm()} stellt im wesentlichen nur das wichtigste
+Ergebnis dar: die zwei Parameter der Regressionsgerade, n\"amlich
+Achsenabschnitt (intercept) und Steigung (slope).
+Allerdings enth\"alt das Modell-Objekt \texttt{lm.air}, \"ahnlich wie das Objekt, das
+mit der Funktion \texttt{chisq.test} zum Berechnen von $\chi^2$ erzeugt wurde, viel mehr
+an Information. Diese Informationen k\"onnen wiederum mit \texttt{str()} betrachtet
+werden und mit der bekannten \$-Methode extrahiert werden.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+str(lm.air)
+@
+\end{center}
+Auf die wichtigsten dieser Angaben werden wir zu sprechen kommen, wenn wir die numerischen
+Aspekte der Regression behandeln.
+
+Es stehen ferner zus\"atzliche Extractor-Funktionen zur Verf\"ugung, z.B. \texttt{fitted.values()}
+oder \texttt{residuals()}.
+Mit der ersten Funktion bekommt man die gefitteten Y-Werte, also die Y-Werte, die auf 
+der Regressionsgerade an den Stellen der X-Werte liegen. Mit der zweiten
+die Differenz zwischen den originalen Y-Werten und den gefitteten. Diese Differenz
+wird Residuum (Plural: Residuen) genannt, da sie die Rest-Varianz darstellt, die durch
+das angesetzte Modell (hier: linearer Zusammenhang) nicht erkl\"art werden kann.
+
+Streudiagramme sind auch f\"ur Regressionsanalysen sinnvoll. Man muss jetzt aber aufpassen, dass
+die freie Variable (die verursachende Variable, independent variable) auf der X-Achse aufgetragen
+wird und die abh\"angige Variable 
+(Antwort-Variable, response) auf der Y-Achse. Mit dem Befehl \texttt{abline()}
+wird die Regressionsgerade in den Plot gezeichnet.
+\begin{center}
+<<fig=TRUE, echo=TRUE>>=
+data(airquality)
+plot(airquality$Temp, airquality$Ozone)
+abline(lm.air)
+@
+\end{center}
+Es hat den Anschein, als ob die Gerade den Zusammenhang zwischen Ozon und Temperatur
+nur m\"a{\ss}ig gut beschreibt.
+
+Dieser Verdacht wird durch einen Plot der Residuen gegen die gefitteten Werte best\"atigt.
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(fitted.values(lm.air), residuals(lm.air) )
+@
+\end{center}
+Ein gutes Modell zeichnet sich dadurch aus, dass in einem solchen Plot die Punkte
+eng und gleichm\"a{\ss}ig um die Null-Linie herumliegen.
+Dieser Plot k\"onnte, zusammen mit einigen weiteren Plots, die der Qualit\"atskontrolle dienen,
+auch durch den Aufruf \texttt{plot(lm.air)} erzeugt werden.
+%\end{document}
+
+
+\section{Numerische Analyse einer Regression}
+Bisher hatten wir uns auf die visuelle Beurteilung der Ergebnisse einer
+Regressionsanalyse beschr\"ankt (Regressionsgerade in Streudiagramm,
+Residuen gegen gefittete Y-Werte). Der Funktionsaufruf
+\texttt{lm()} erzeugt, wie bereits erw\"ahnt, komplexe Modell-Objekte, deren
+gr\"o{\ss}ter Teil ``versteckt'' ist. Mit dem Befehl \texttt{summary()} kann man
+einen Bericht der Regressionsanalyse erzeugen, der einige Gr\"o{\ss}en
+enth\"alt, mit denen man die G\"ute einer Regressionsanalyse bestimmen
+kann. Mit ``G\"ute'' meint man nicht die technische Durchf\"uhrung der Analyse,
+sondern die G\"ute der Wahl des Modells. Im Falle eines linearen Modells,
+den wir bisher betrachtet haben, als wir die Ozon-Abh\"angigkeit von
+der Temperatur im Datensatz \texttt{airquality} analysiert haben,
+w\"urden wir also objektive Hinweise bekommen, ob dieses Modell
+angemessen gew\"ahlt ist oder ob wir besser nach neuen funktionalen
+Zusammenh\"angen suchen sollten. Au{\ss}erdem k\"onnen verschiedene
+Modelle leicht miteinander verglichen werden.
+Das Ziel ist also, den umfangreichen Bericht, den
+\texttt{lm()} erzeugt, zu verstehen und die wichtigsten Gr\"o{\ss}en
+zu identifizieren, mit denen die G\"ute beurteilt werden kann.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+data(airquality)
+lm.temp <- lm(Ozone ~ Temp, data = airquality)
+summary(lm.temp)
+@
+\end{center}
+Unter \texttt{Call:} steht nochmals der Funktionsaufruf, damit
+man sich schneller daran erinnert, was man eigentlich gemacht hat.
+Unter \texttt{Residuals:} wird die Verteilung der Residuen mit 
+Minimum, erstem Quartil, Median, drittem Quartil und Maximum
+charakterisiert. Wenn das Minimum etwa gleich dem Maximum ist und
+das erste ungef\"ahr gleich dem dritten Quartil ist (bis auf das
+Vorzeichen), dann deutet das auf eine Normalverteilung der Residuen hin.
+Dies scheint hier nicht unbedingt der Fall zu sein.
+Unter \texttt{Coefficients} werden die Regressions-Koeffizienten 
+Achsenabschnitt \texttt{(Intercept)} und Steigung \texttt{Temp}
+mit ihrer Standardabweichung (\texttt{Std.\ Error}) aufgelistet.
+Bei der Regressionsanalyse werden automatisch einige Tests
+ausgef\"uhrt. Mit einem t-Test wird getestet, ob die Regressionskoeffizienten
+von 0 verschieden sind. Dies ist insbesondere wichtig f\"ur die
+Steigung, denn nur eine von 0 verschiedenen Steigung bedeutet, dass
+die unabh\"angige Variable die abh\"angige Variable beeinflusst.
+Unter der Spalte \texttt{Pr(>|t|)} wird der P-Wert des Tests
+angegeben. Die Nullhypothesen lauten: ``Die Regressionskoeffizienten
+sind 0''. Der P-Wert ist (im Fall der Steigung) zu interpretieren als 
+die Wahrscheinlichkeit,
+eine so gro{\ss}e  Steigung (oder noch gr\"ossere Steigung) zu erhalten, wenn die 
+Null-Hypothese richtig w\"are. Ein kleiner P-Wert (nahe bei 0) bedeutet also,
+dass die Null-Hypothese wahrscheinlich falsch ist, dass also die beobachtete 
+Steigung durchaus nicht auf Zufall beruht, sondern einen echten Effekt darstellt.
+Zur Erleichterung des Lesens werden die P-Werte mit Sternchen gekennzeichnet
+(siehe
+\texttt{Signif.\ codes:}). 
+Der Begriff \texttt{Residual standard error} bedeutet die Standarabweichung
+der Residuen. Diese sollte m\"oglichst nahe bei 0 sein.
+Unter der Spalte \texttt{t value} wird der Wert der Pr\"ufstatistik angegeben.
+Er ist nicht direkt verwertbar, sondern man kann ihn, zusammen mit der Angabe
+\"uber die Freiheitsgrade (\texttt{degrees of freedom, DF}) benutzen, um 
+in einer statistischen Tabelle nachzuschlagen. Dies wird heute jedoch
+kaum noch so gemacht. 
+Die F-Statistik beruht auf der Nullhypothese, \emph{das Bestimmtheitsmass der Regression ist 0}. Wird diese Hypothese abgelehnt vermutet man, dass das Regressionsmodell einen Erklärungswert für die Zielvariable hat.
+Dabei kann es vorkommen, dass der t-Test keinen signifikanten Einfluss der einzelnen erklärenden Variablen (Regressionskoeffizienten) festgestellt hat, der F-Test jedoch das Gesamtmodell als signifikant bewertet. Die Chance, dass F-Test und t-Test gegensätzliche Ergebnisse liefern, steigt mit zunehmender Zahl an Freiheitsgraden.
+Weiterhin wird angegeben, wieviele Beobachtungen (Zeilen in der Datenmatrix)
+eliminiert wurden, weil mindestens ein Wert gefehlt hat (\texttt{NA}).
+
+Die wichtigste Kennzahl zur Beurteilung der G\"ute einer Regression
+ist $R^2$. Im deutschen wird auch der Begriff {\em Bestimmtheitsma{\ss}
+B}
+benutzt. Es gibt (mit 100 multipliziert) an, wieviel Prozent
+der Varianz der Zielgr\"o{\ss}e (Y-Wert) durch die
+Einflussgr\"o{\ss}e (X-Wert) erkl\"art werden kann (``Erkl\"arungskraft'').
+Das angepa{\ss}te $R^2$ (\texttt{Adjusted R-squared}) ber\"ucksichtigt die
+Anzahl
+der Variablen, die im Modell benutzt werden: Viele Variablen werden durch
+Verminderung von $R^2$ ``bestraft''.
+Der Gedanke hinter dieser
+Gr\"o{\ss}e ist der, dass
+es leicht ist, mit vielen Variablen eine hohe G\"ute zu erreichen. 
+Es ist jedoch im Sinne der wissenschaftlichen  Klarheit w\"unschenswert,
+eher wenige Variablen zu benutzen. Von zwei Modellen mit ann\"ahernd gleicher
+Erkl\"arungskraft ist dasjenige vorzuziehen, das mit weniger Variablen
+auskommt. Dies ist \"ubrigens auch die Idee von Ockhams Rasiermesser
+(Occam's Razor, Sparsamkeitsprinzip, parsimony). Wilhelm von Ockham hat bereits
+im 14.\ Jahrhundert gefordert, dass alle Erscheinungen so einfach wie m\"oglich
+erkl\"art werden sollen und damit eine der Grundlagen der modernen Wissenschaft
+gelegt.
+
+Die letzte Zeile schlie{\ss}lich gibt den P-Wert f\"ur das Modell als ganzes
+an (neben Werten f\"ur Pr\"ufgr\"o{\ss}e und Freiheitsgraden). Im Falle einer
+Variablen ist der P-Wert identisch mit dem f\"ur die Steigung. 
+Im Falle mehrere Variablen ist dieser Wert durchaus interessant.
+Es kann z.~B.\ vorkommen, da{\ss} jede einzelne Variable nur marginal (oder
+gar nicht!) signifikant ist, die Gesamtheit der Variablen hingegen schon.
+
+
+\section{Mathematische Beschriftung}
+Oftmals ist es notwendig oder hilfreich Formeln wie z.B. eine Regressionsgleichung in Abbildungen mit einzutragen.
+Auch Achsenbeschriftungen verlangen manchmal hch- oder tiefgestellte Zeichen. Sonderzeichen bzw. 
+Solche mathematischen Beschriftungen muss man in \texttt{R} mittels einer separaten Funktion ''konstruieren``. 
+Mit Hilfe der Funktion \texttt{expression} kann man mathematische Notationen in Form von nicht-ausgewerteten \texttt{R}-Ausdrücken angeben. Die Funktion gibt
+einen Vektor vom Typ ''expression`` mit den nicht-ausgewerteten \texttt{R}-Ausdrücken zurück.
+Die Formel wird dazu in \texttt{R}-Syntax spezifiziert und dann beim Aufruf des Grafiksystem ausgewertet und als Zeichenfolge dargestellt. 
+Griechische Buchstaben schreibt man in lateinischer Schrift unter Beachtung von Groß- und Kleinscheibung (ähnlich zu LaTeX).
+Gleichheitszeichen müssen wie bein einem Vergleich (==) und Indizes in eckigen Klammern angegeben werden.
+
+Hier ein Beispiel
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+formel <- expression(y[i] == beta * x[i] + alpha)
+y.lab <- expression(bold(-log[10]~"Y"))
+plot(1:10, type="l", xlab="X", ylab=y.lab)
+text(6,5,formel)
+@
+\end{center}
+
+Grafikformatierungen wie Fettdruck funktionieren für solche Ausdrücke nicht über den Parameter \texttt{font} sondern müssen innerhalb von \texttt{expression}
+mit separaten Funktionen wie z.B. \texttt{bold()} formatiert werden. Einen guten Überblick über Formatierung von mathematischen Ausdrücken in R gibt die Hilfe zu \texttt{plotmath()} und der Aufruf \texttt{demo(plotmath)}.
+
+Will man Variablen in Formeln durch Werte ersetzen  hilft die Funktion \texttt{substitute()}. Sie ersetzt Variablen in mathematischen Ausdrücken mit Werten, die in einer Liste als Argument übergeben werden. 
+Beispiel:
+\begin{center}
+<<fig=FALSE, echo=TRUE>>=
+wert<-0.7
+(ausdruck<-substitute( sigma == r, list(r=wert)))
+
+@
+\end{center}
+
+Auf diese Weise kann man auch bestimmte statistische Größen in Legenden korrekt darstellen. Im folgenden Plot, wird der Ausdruck $R^2 == r$ als Formel erzeugt aber erst beim Aufruf in der Funktion \texttt{legend()} wird der Ausdruck ausgewertet und die Variable \texttt{r} durch den berechneten Wert (\texttt{r2}) ersetzt.
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(airquality$Temp, airquality$Ozone)
+abline(lm.air)
+s<-summary(lm.air)
+r2<-round(s$r.squared,2)
+legend("topleft", legend=substitute("R"^{2} == r, list(r=r2)), bty="n")
+@
+\end{center}
+
+\section{Formatierte Ausgabe von Zeichenketten}
+Möchte man ein einheitliches Layout von Beschriftungen in Tabellen und Abbildungen realisieren bietet sich die Funktion \texttt{sprintf()} an, die in ähnlicher Weise in anderen Programmiersprachen funktioniert. Das Prinzip dieser Funktion ist:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE, eval=FALSE>>=
+sprintf("Formatstring", Zeichenkette1, Zeichenkett2, usw.)
+@
+\end{center}
+
+d.h. der \emph{Formatstring} spezifiziert wie der angegebene Zeichenkettenvektor formatiert werden soll.
+Ein Beispiel:
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+sprintf("%.3f", pi)
+sprintf("%.3f   %s", pi, "Pi mit 3 Leerzeichen bevor der Text beginnt...")
+@
+\end{center}
+
+\texttt{f} steht für \emph{float} d.h. eine Zahl mit Nachkommastellen - angegeben durch den Wert nach dem Punkt. \texttt{s} steht für \emph{string}.
+Alle Formatierungselement müssen mit \% eingeleitet werden und der ganze Formatstring muss in Anführungszeichen stehen. Die Anzahl der Elemente des
+Formatstrings muss gleich der Anzahl der zu formatierenden Zeichenketten sein, die mit Komma separariert nach dem Formatstring aufgeführt werden.
+
+Mit \texttt{sprintf()} lassen sich leicht Zahlen in jedem gewünschten Format darstellen; z.können durch Voranstellen einer 0 im Formatstring IDs mit führenden Nullen auf eine einheitliche Feldlänge gebracht werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+df<-data.frame(ID=c(
+sprintf("%015.0f", 167245938452345),
+sprintf("%015.0f", 13456845456))
+)
+print(df)
+@
+\end{center}
+
+\end{document}

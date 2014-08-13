@@ -1,0 +1,274 @@
+\documentclass[a4paper]{article}
+\usepackage{amsmath,amssymb}
+\usepackage[small,bf]{caption}
+\captionsetup{format=plain, margin=5pt, font=small, labelfont=bf, justification=raggedleft, position=top}
+%\usepackage{german}
+
+
+\title{Datenanalyse mit dem Statistik-Paket R}
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{17.~April 2012}
+
+\begin{document}
+
+\maketitle
+
+\section{Arten der Analyse}
+Eine Datenmatrix wie in Tabelle \ref{Beispieltabelle} mit verschiedener Datentypen und Skalenniveaus
+kann man auf unterschiedliche Weise analysieren.
+
+Die {\bf beschreibende (deskriptive)} Statistik befasst sich mit der Untersuchung und Beschreibung 
+von erhobenen Daten mit dem Ziel diese durch Tabellen, Ma{\ss}zahlen und Grafiken {\"u}bersichtlich dar zu stellen und zu ordnen. Oft reichen schon einfache Ma{\ss}e und grafische Methoden aus, um unerwartete Sachverhalte in den Versuchsergebnissen deutlich machen. Die deskriptve Statistik ist meist der erste Schritt, wenn f{\"u}r die Daten noch kein Modell vorliegt, wobei das Fehlen stochastischer Modelle und Hypothesentests bedingt, dass durch beschreibende Methoden getroffene Aussagen nicht durch Fehlerwahrscheinlichkeiten abgesichert sind.
+
+{\"A}hnlich zur deskriptiven Statistik versucht die {\bf erkundende (explorative)} Statistik unbekannte Strukturen und Zusammenh{\"a}nge in den Daten zu finden und damit neue Hypothesen zu generieren. Die explorative Statistik hat durch die immer mehr in Massendurchsatzverfahren gewonnenen Daten in den Lebenswissenschaften immer mehr an Bedeutung gewonnen. Charakteristisch f{\"u}r den Einsatz explorativer Methoden sind sind z.B. unklare Fragestellungen, unbekannte Grundgesamtheiten, ungeplante Datenerhebungen oder Unklarheit {\"u}ber die Wahl geeigneter Modelle.
+
+Demgegen{\"u}ber untersucht die {\bf schlie{\ss}ende (induktive)} Statistik nur einen kleinen - m{\"o}glichst repr{\"a}sentativen - Teil der Daten, um aus ihm auf die Eigenschaften der Grundgesamtheit zu schlie{\ss}en. Entscheidend hierf{\"u}r ist, dass eine zuf{\"a}llige Stichrobe aus der Grundgesamtheit vorliegt.
+
+\begin{itemize}
+\item
+Die einfachste Form der deskriptiven Statistik ist die {\it univariate} Analyse. Wie der Name -\emph{uni-variate = eine Variable} - schon nahe legt, wird nur eine einzige Variable (d.h. eine einzige Spalte) eines Datensatzes betrachtet. Dies ist zu Beginn einer umfassenden Daten-Analyse auch empfehlenswert, um ein Gef{\"u}hl f{\"u}r die Daten zu entwickeln und um die Daten auf Plausibilit{\"a}t zu {\"u}berpr{\"u}fen.
+
+\item
+In einer {\it bivariaten} Analyse w{\"u}rde man versuchen, Zusammenh{\"a}nge
+zwischen zwei der Variablen herzustellen. Dabei k{\"o}nnen sowohl Methoden der deskriptiven als auch der induktiven Statistik zun Einsatz kommen. Z.~B.\ k{\"o}nnte man versuchen, einen Zusammenhang zwischen der Art des Futters und dem Fettgewicht
+zu finden (Tabelle \ref{Beispieltabelle}).
+
+\item
+Mit Hilfe von {\it multivariaten} Analysen versucht man einen
+Zusammenhang zwischen einer Variablen einerseits und zwei oder mehreren
+Variablen andererseits herzustellen. Z.~B.\ k{\"o}nnte man sich vorstellen,
+dass das Fettgewicht beeinflu{\ss}t wird durch sowohl Futter als auch 
+Hierarchie. 
+\end{itemize}
+Bei bivariaten und multivariaten Analysen kann man versuchen,
+kausale Beziehungen herzustellen. Dies muss jedoch durch {\"U}berlegungen
+innerhalb des Wissenschaftsgebiets geschehen. Die Statistik kann dies nicht leisten.
+Man nennt die Variable, die erkl{\"a}rt werden soll, auch
+{\it abh{\"a}ngige} Variable, Zielvariable, erkl{\"a}rte Variable oder
+zu erkl{\"a}rende Variable ({\it dependent variable, 
+target variable, response}). Die Variablen, mit der die Zielvariable
+erkl{\"a}rt werden soll, nennt man unabh{\"a}ngige Variablen (erkl{\"a}rende Variable, Pr{\"a}diktor) ({\it independent
+variable}). 
+Um herauszufinden, ob nun eine Variable eine unabh{\"a}ngige
+Variable ist, kann man sich die Frage stellen, ob der Experimentator
+den Wert der Variablen {\it direkt} beeinflussen kann. Alle anderen Variablen sind abh{\"a}ngige
+Variablen. In unserer Tabelle w{\"a}re dies die Variable Futter, da der Experimentator
+entscheidet, welche Maus welches Futter bekommt. Im Versuch wird also die unabh{\"a}ngige Variable gezielt ver{\"a}ndert und die Auswirkungen
+dieser Manipulation auf eine messbare Gr{\"o}sse - die abh{\"a}ngige Variable - untersucht.
+Dies bedeutet jedoch nicht, dass \emph{jede} abh{\"a}ngige Variable
+durch die unabh{\"a}ngige Variable erkl{\"a}rt werden kann. Dies d{\"u}rfte bei
+Fellfarbe wahrscheinlich nicht gelingen. 
+
+\begin{table}[h]
+\centering
+\caption{\small Datensatz eines fiktiven Mausf{\"u}tterungsversuches}
+\begin{tabular}{ccccl}
+\hline 
+MausID & Fett [g] & Futter & Hierarchie & Fellfarbe \\
+\hline
+1	&	2.3	&	NF	&	2	&	schwarz \\
+2	&	3.6	&	NF	&	4	&	weiss	\\
+3	&	1.3	&	FF	&	1	&	schwarz \\
+.	&	.	&	.	&	.	&	.	\\
+$n$	&	5.6	&	FF	&	7	&	schwarz	\\
+\hline
+\end{tabular}
+\label{Beispieltabelle}
+\end{table}
+
+
+\section{Univariate Analysemethoden}
+\subsection{Lagema{\ss}e ({\it measures of location})}
+\subsubsection{Mittelwert}
+Das wohl bekannteste Lagema{\ss} ist der Mittelwert (arithmetisches Mittel, {\it
+mean,average}).
+Er ist definiert durch
+\begin{equation}
+\langle x \rangle = \bar{x}  = \frac{1}{n} \sum_{i = 1}^{n} x_i,
+\end{equation}
+
+Der Ausdruck \emph{$\langle x \rangle$} (lies "\emph{Erwartungswert von x}"), beschreibt die Zahl, die die Zufallsvariable im Mittel annimmt. Diese Zahl h{\"a}ngt nur von der zugrunde liegende Wahrscheinlichkeitsverteilung der untersuchten Zufallsvariable x ab.  Der Erwartungswert entspricht dem empirischen Mittelwert einer H{\"a}ufigkeitsverteilung d.~h.\, man summiert alle $n$ Me{\ss}werte auf und dividiert dann durch die
+Anzahl der Me{\ss}werte.\\
+
+{\bf Beispiel:}
+Es wurden 5 Messwerte aufgenommen deren Auftreten gleich wahrscheinlich ist: 6, 5, 3, 7, 5, 8, 10
+\begin{equation}
+	 \bar{x} = \frac{1}{7}\cdot 6 + \frac{1}{7}\cdot 5 + \frac{1}{7}\cdot 3 + \frac{1}{7}\cdot 7 + \frac{1}{7}\cdot 5 \frac{1}{7}\cdot 8 \frac{1}{7}\cdot 10 = 6.28
+\end{equation}	 
+\begin{equation}	 
+	 \bar{x} = (6 + 5 + 3 + 7 + 5 + 8 + 10) \cdot \frac{1}{7} = 44\cdot\frac{1}{7} = 44 \div 5 = 6.28
+\end{equation}
+\vspace{0.5cm}
+
+Auf direkte, jedoch etwas umst{\"a}ndliche Art k{\"o}nnte man in gleicher Weise den Mittelwert in \texttt{R} berechnen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+v <- c(6, 5, 3, 7, 5, 8, 10)
+x <- sum(v) / 7
+x
+@
+\end{center}
+Gl{\"u}cklicherweise gibt es daf{\"u}r aber auch eine fertige Funktion
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+x <- mean(v)
+x
+@
+\end{center}
+\subsubsection{Median (Zentralwert)}
+Der Median ist der Wert, f{\"u}r den gilt: die Anzahl der Me{\ss}werte, die kleiner
+sind als der Median ist gleich der Anzahl der Me{\ss}werte, die gr{\"o}{\ss}er sind als
+der Median.
+Man m{\"u}{\ss}te also, um den Median zu ermitteln, die Daten der Gr{\"o}{\ss}e nach
+sortieren. Mit den Werten aus dem Beispiel oben w{\"a}re dies also: 3, 5, 5, 6, 7, 8, 10. 
+Man beachte, dass die Werte, die doppelt vorkommen (hier 5), auch
+doppelt im sortierten Vektor auftauchen m{\"ussen}. Der Median ist dann der Wert in der
+mittleren Position des sortierten Vektors, also 6. Drei Me{\ss}werte sind kleiner
+als 6, drei sind gr{\"o}{\ss}er. Bei einer geraden Anzahl von Me{\ss}werten werden
+die beiden in der Mitte genommen und dann daraus der Mittelwert gebildet.\\
+
+Formal kann man dies so zusammenfassen:
+\begin{align*}
+\widetilde{x}=\begin{cases}
+  x_{ \frac{n+1}{2} },  																 & \text{wenn n ungerade,}\\
+  \frac{1}{2}(x_{ \frac{n}{2} } + x_{ \frac{n}{2}+1 }),  & \text{wenn n gerade.}
+\end{cases}
+\end{align*}
+
+
+In \texttt{R}:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+median(v)
+@
+\end{center}
+
+Der gro{\ss}e Vorteil des Medians gegen{\"u}ber dem Mittelwert ist seine Robustheit
+gegen Ausrei{\ss}er. Das bedeutet, dass fehlerhafte Werte (etwa durch falsche
+Messungen oder durch falsche manuelle Eintragung in eine Tabelle) den Median
+kaum oder gar nicht beeinflussen. Wir ersetzen die 10 im obigen Vektor durch den fehlerhaften
+Wert 100
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+v <- c(6, 5, 3, 7, 5, 8, 100)
+mean(v)
+@
+\end{center}
+und sehen, dass der Mittelwert stark verzerrt wird. Der Median hingegen gar nicht:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+v <- c(6, 5, 3, 7, 5, 8, 100)
+median(v)
+@
+\end{center}
+
+\subsubsection{Modalwert}
+W{\"a}hrend Mittelwerte und Mediane f{\"u}r metrische Daten gebildet werden k{\"o}nnen,
+kann
+f{\"u}r nominale Daten nur der sogenannte Modalwert bestimmt werden. Dies ist
+die Kategorie, die am h{\"a}ufigsten vorkommt. F{\"u}r die Fellfarbe aus der Tabelle
+w{\"a}re dies die Farbe schwarz (wenn man nur die Werte ber{\"u}cksichtigt, die in
+der Tabelle gezeigt werden). Modalwerte k{\"o}nnen im Prinzip auch f{\"u}r metrische
+Daten bestimmt werden. Wenn jedoch viele Nachkommastellen angegeben werden,
+ist es eher unwahrscheinlich, dass zwei Werte exakt identisch sind. Die
+Angabe eines Modalwertes f{\"u}r metrische Daten ist also bedingt sinnvoll. 
+F{\"u}r ranggeordnete Daten ist die Angabe des Modalwertes jedoch sinnlos,
+da {\it per definitionem} jeder Rang nur einmal vergeben werden soll. Eine direkte
+Funktion zur Ermittlung des Modalwerts steht in \texttt{R} zwar nicht zur Verf{\"u}gung, jedoch kann 
+durch die Kombination der Funktionen \texttt{table()} und \texttt{which.max()} die h{\"a}ufigste Kategorie
+eines nominalen Vektors bestimmt werden.
+
+<<fig=FALSE,echo=TRUE>>=
+(ff <- sample(c("weiss","grau","schwarz"), 20, replace=T))
+(tab.ff <- table(ff))
+names(which.max(tab.ff))
+@
+
+\subsubsection{Quantile}
+Quantile k{\"o}nnen als Verallgemeinerung des Medians gesehen werden. Das
+$p$-Prozent-Quantil ist derjenige Me{\ss}wert, f{\"u}r den gilt: $p$ Prozent
+aller Me{\ss}werte sind kleiner als das $p$-Prozent-Quantil. Das
+10-Prozent-Quantil einer Me{\ss}reihe M1 von 100 Me{\ss}werten w{\"a}re also der
+Wert an Position Nummer 11, wenn man die Me{\ss}werte in aufsteigender
+Reihenfolge sortieren w{\"u}rde. In einer Me{\ss}reihe M2 mit 200 Me{\ss}werten w{\"a}re
+es der Wert an Position 21. 
+In \texttt{R} kann man daf{\"u}r die Funktion \texttt{quantile()} nutzen
+
+<<fig=FALSE,echo=TRUE>>=
+(round(quantile(1:100,c(0.1,0.2))))
+(round(quantile(1:200,c(0.1,0.2))))
+@
+
+Von besonderer Bedeutung sind die 25-Prozent,
+50-Prozent und 75-Prozent Quantile, die man auch 1. Quartil, Median
+und 3. Quartil nennt. Durch Quantile kann man Einzelwerte, die aus
+verschieden gro{\ss}en Stichproben stammen oder die mit verschiedenen Methoden
+erfasst wurden, besser vergleichen. Im obigen Beispiel w{\"u}rde der Me{\ss}wert 15 also
+im 20\%-Quantil der Me{\ss}reihe M1 und im 10\%-Quantil Me{\ss}reihe M2 liegen.
+
+
+
+\subsubsection{Weitere Mittelwerte}
+Von gewisser Bedeutung sind noch das sogenannte geometrische Mittel, mit dem
+man Mittelwerte bei Wachstumsprozessen (also z.~B.\ Verzinsung von Guthaben,
+Bev{\"o}lkerungswachstum, Gewichtszunahme) berechnet, und das harmonische Mittel, mit dem man
+beispielsweise den Mittelwert von Geschwindigkeiten berechnet.
+
+
+
+\section{Funktionen in \texttt{R}}
+\texttt{R} ist eine \emph{funktionale Sprache}, d.h. prinzipiell werden alle Operationen (z.B. "+", "*", Zuweisungen mit "<-" oder die Ausgabe von Werten zur Konsole) durch interne Funktionen bearbeitet. Es ist daher wichtig das Prinzip einer Funktion
+zu verstehen. Funktionsaufrufe in \texttt{R} folgen der Syntax:
+
+\vspace{0.5cm}
+\texttt{funktionsname(Argument1 = Wert1, Argument2 = Wert2, ...)}
+
+\vspace{0.5cm}
+Dem Funktionsnamen folgen in runden Klammern, kein, ein oder mehrere Argumente, die durch Kommata getrennt sind und benannt oder unbenannt spezifiziert werden k{\"o}nnen. 
+Eigene Funktionen sind immer dann sinnvoll, wenn eine Folge von anderen Fuktionsaufrufen zusammengefasst werden soll, z.B. f{\"u}r mehrmaliges Ausf{\"u}hren mit verschiedenen Parametern. Da Funktionen meist aus mehreren bis vielen Zeilen Code bestehen, sollte man zum Schreiben einen Editor verwenden.
+Funktionen m{\"u}ssen vor ihrer Verwendung eingelesen , d.h. der Funktionsk{\"o}rper einmal ausgef{\"u}hrt werden. Das kann auch automatisch mit dem Befehl \texttt{source()} geschehen. Funktionen werden in \texttt{R} mit der Funktion \texttt{function()} definiert, was formal so aussieht:
+
+\vspace{0.5cm}
+\texttt{meineFunktion <- function(Argumente)\{\\
+	\indent\# Befehlsfolge / "body" der Funktion\\
+	\indent\}\\
+}
+\vspace{0.5cm}
+
+
+\subsection{N{\"u}tzliche Funktionen}
+
+In der letzten Vorlesung und {\"U}bung haben wir die ersten Funktionen kennen gelernt
+\begin{enumerate}
+	\item \texttt{is.numeric()}, \texttt{is.character()}, \texttt{is.logical()} - zur Abfrage des Objekt-Typs einer Variable
+	\item \texttt{data.frame()} - Erzeugung einer Datenmatrix
+	\item \texttt{c()} - Erzeugung eines Vektors
+	\item \texttt{length()} - zur Abfrage der L{\"a}nge eines Vektors
+	\item \texttt{seq()} - Erzeugung eines numerischen Vektors mit einer Zahlenabfolge (vereinfacht auch mit dem Operator ":"\ darstellbar)
+	\item \texttt{rep()} - Erzeugung eines Vektors mit sich beliebig wiederholenden Elementen.
+\end{enumerate}
+
+Hilfreiche Funktionen um Informationen zu Objekten zu gewinnen sind: \texttt{summary()}, \texttt{str()},\texttt{typeof()}, \texttt{class()}.\\
+\begin{enumerate}
+	\item \texttt{summary()} - Zusammenfassung der Ergebnisse eines \texttt{R}-Objektes
+	\item \texttt{str()} - kompakte Darstellung der internen Struktur eines \texttt{R}-Objektes
+	\item \texttt{typeof()} - Abfrage des internen Speichermodus eines \texttt{R}-Objektes
+	\item \texttt{class()} - Abfrage des Klassenattributs eines \texttt{R}-Objektes
+\end{enumerate}
+Die Kenntnis {\"u}ber den Typ bzw. Aufbau eines R-Objektes ist wichtig f{\"u}r das Verst{\"a}ndnis der Skriptsprache und zur Fehleranalyse beim Programmieren!
+ 
+Beispiel:\\
+<<fig=FALSE,echo=FALSE>>= 
+v1<-c(0.17, 0.33, 2.66, 4.89, 5.34)
+v2<-c("rot","gruen","blau")
+@	
+\begin{center}
+<<fig=FALSE,echo=TRUE>>= 
+(df <- data.frame(Zahlen=v1[1:3],Woerter=v2))
+(summary(df))
+(class(df))
+(typeof(df[,1]))
+@	
+\end{center}
+
+\end{document}

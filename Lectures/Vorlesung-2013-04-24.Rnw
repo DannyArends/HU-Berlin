@@ -1,0 +1,357 @@
+\documentclass[a4paper]{article}
+\usepackage{amsmath,amssymb}
+\usepackage[small,bf]{caption}
+\captionsetup{format=plain, margin=5pt, font=small, labelfont=bf, justification=justified, position=top}
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+
+
+\title{Datenanalyse mit dem Statistik-Paket R}
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{24.~April 2013}
+\begin{document}
+
+\maketitle
+
+\section{Streuma{\ss}e ({\it measures of dispersion})}
+Lagema"se geben eine erste wichtige Information "uber eine Messwertreihe.
+Es ist jedoch offensichtlich, dass zwei Messwertreihen mit dem gleichen
+Mittelwert dennoch v"ollig unterschiedlich aussehen k"onnen. Insbesondere kann
+eine Me"swert\-reihe sehr stark um ihren Mittelwert streuen, die andere
+nicht, wie in dem Beispiel in Abbildung 1 zu sehen ist. 
+Diese Streuung kann mit diversen Streuma"sen erfasst werden.
+
+\begin{figure}[h]
+\label{Streuung}
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2013/Datenanalyse_mit_R/VL/Vorlesung-2013-04-24_R_Beispiel1_Streuung.pdf}
+\caption{Unterschiedliche Streuung von Messwerten um den gleichen Mittelwert herum.} 
+\end{figure}
+
+%\begin{center}
+%<<fig=TRUE,echo=FALSE>>=
+%sd1<-1
+%x=seq(-8,8,length=500)
+%y1<-dnorm(x, mean = 0, sd=sd1)
+%y2<-dnorm(x, mean = 0, sd=2*sd1)
+%plot( x,y1, type="l",lwd=2,col="red", xlab="x", ylab="y")
+%lines(x,y2,type="l", lwd=2,col="blue", lty="dashed")
+%legend("topleft",c("sd=1.0","sd=2.0"),lty=c(1,2),col=c("red","blue"), bty="n")
+%@
+%\end{center}
+
+
+\subsection{Spannweite ({\it range}) }
+Das einfachste Streuma\ss, die Spannweite, ist defniert als die Differenz zwischen gr"o"stem Messwert
+und kleinstem Messwert. In \texttt{R} l"asst sich die Spannweite leicht mit den Funktionen \texttt{min()} und \texttt{max()}
+berechnen.
+ 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+x <- c(13,7,5,12,9,15,6,11,9,7,12)
+(rng <- max(x)-min(x))
+@
+\end{center}
+Da bei der Spannweite nur der Absolutbetrag von Interesse ist, k"onnte man die Berechnung auch unabh"angig von der Reihenfolge der Terme in der Subtraktion machen:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(rng <- abs(min(x)-max(x)))
+@
+\end{center}
+
+Sehr h"aufig sieht man in Publikationen, dass der gr"o"ste und der
+kleinste Messwert direkt angegeben werden. Entgegen dem englischen Namen der Funktion
+gibt \texttt{range()} nicht die Differenz, sondern einen numerischen Vektor mit dem maximalen und minimalen Me"swert zur"uck.
+
+<<fig=FALSE,echo=TRUE>>=
+(range(x))
+@
+
+Alternativ lässt sich die Spannweite etwas kürzer mit den Funktionen \texttt{range()} und \texttt{diff()} berechnen, woraus man eine eigene kleine Funktion erstellen kann: 
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+spannweite <- function(data){  # Definition der eigenen Funktion ...
+	diff(range(data))               # ... spannweite()
+}
+(spannweite(x)) # Aufruf der neu definierten Funktion mit dem Vektor x
+@
+\end{center}
+Generell ist zu beachten, dass die Spannweite 
+zwar einen guten Überblick über den Raum gibt, den die Me"swerte eines Datensatzes ein nehmen, jedoch \emph{sehr anfällig gegen Ausreisser} oder Extremwerte ist.\\
+
+
+Bei den meisten \texttt{R}-Funktionen die Lage- und Streuma"se auf numerischen Vektoren berechnen, kann man mit dem Argument \texttt{na.rm=TRUE}
+bewirken, dass fehlende Werte ignoriert werden. Andernfalls geben diese Funktionen \texttt{NA} zur"uck.
+
+<<fig=FALSE,echo=TRUE>>=
+x <- c(13,7,5,12,NA,15,6,11,9,7,12,NA)
+(min(x))
+(min(x, na.rm=TRUE))
+@
+
+Um in grösseren Datensätzen das Vorhandensein von \texttt{NA}s zu prüfen gibt es die Funktion \texttt{is.na()}, welche genau wie \texttt{is.numeric()} etc. (Vgl. Vorlesung 1) einen boolschen Ausdruck zurück liefert bzw. - bei Anwendung auf einen Vektor - einen Vektor mit boolschen Ausdrücken. Deshalb ist es oft sinnvoll zusätzlich noch die Funktion \texttt{table()} einzubinden:
+zu tabellieren, um eine kompakte Zusammenfassung der NA-counts
+<<echo=TRUE>>=
+(table(is.na(x)))
+@
+
+\subsection{Quartilsabstand ({\it interquartile range})}
+Der Quartilsabstand ist definiert als die Differenz zwischen 3. Quartil und
+1. Quartil. Sie gibt den zentralen Bereich an, in dem sich die 50 Prozent
+mittleren Werte einer Messreihe befinden. Der Befehl in R lautet \texttt
+{IQR}. Er befindet sich auf dem Paket \texttt{stats}, das mit \texttt{library(stats)}
+geladen werden kann.
+
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+(sort(x))
+(qrt <- quantile(x, c(0.25, 0.5, 0.75), names=FALSE, na.rm=TRUE))
+(iqr <- abs(qrt[1]-qrt[3]))
+
+library(stats)
+IQR(x, na.rm=TRUE)
+@
+\end{center}
+
+
+
+
+\subsection{Die mittlere absolute Abweichung ({\it median absolute deviation})}
+Dieses Ma"s ist ein robuster Sch"atzer f"ur die Standardabweichung. 
+\begin{equation}
+MAD = median\left|x_{i}-\widetilde{x}\right|
+\end{equation}
+
+Um es zu berechnen, wird erst der Median bestimmt, dann
+alle absoluten Differenzen zwischen den Messwerten und dem Median.
+Von diesen Differenzen berechnet man erneut den Median. Wenn man sich f"ur einen robusten
+Mittelwert wie den Median entscheidet, dann ist das dazugeh"orige Streuma"s
+die mittlere absolute Abweichung. 
+
+<<fig=FALSE,echo=TRUE>>=
+(x <- sort(c(13,7,5,12,9,15,6,11,9,7,12)))
+(md <- median(x))
+(delta <- abs(md-x))
+(median(delta))
+@
+Der \texttt{R}-Befehl lautet \texttt{mad()} aus dem Paket \texttt{stats}.
+<<fig=FALSE,echo=TRUE>>=
+(mad(x, constant=1))
+@
+
+Die Funktion \texttt{mad()} kann über das Argument \texttt{constant} einen Skalierungsfaktor einbinden der sicher stellt, dass der MAD ein konsistenter Schätzer der Standardabweichung ist. Dieser Skalierungsfaktor hängt von der zugrundeliegenden Verteilung der Daten ab und kann für kleine Datensätze auf 1 gesetzt werden.
+
+
+\subsection{Standardabweichung ({\it Standard deviation})} 
+Sie ist das wahrscheinlich bekannteste Streuma"s. Sie wird meist mit $\sigma$
+bezeichnet und ist f"ur Stichproben so definiert:
+\begin{equation}
+\sigma = \sqrt { \frac{1}{n - 1}  \sum_{i = 1}^n (x_i - \bar{x})^2 }
+\end{equation}
+wobei $\bar{x}$ den arithmetischen Mittelwert darstellt.
+Wenn man sich f"ur das arithmetische Mittel (normaler Mittelwert)
+entscheidet,
+dann {\bf muss} die Streuung in Form der Standardabweichung (oder ihres Quadrats, der
+Varianz)
+angegeben werden. Die Varianz hat den Nachteil, dass sie nicht einfach
+zu interpretieren ist, da sie in Einheiten des Quadrats der urspr"unglichen
+Einheit angegeben wird.\\
+
+Ein Beispiel in \texttt{R}:
+<<fig=FALSE, echo=TRUE>>=
+n<-10
+x<-rnorm(n, mean=10, sd=1)  # Zufallsstichprobe
+m<-mean(x)
+(df<-data.frame(x, diff_m_x=m-x, ssq=(m-x)^2, check.names=FALSE))
+(x.sd<-sqrt(sum(df$ssq)/(n-1))) # Standardabweichung des Stichprobenmittels
+sd(x) # Überprüfung mit R-Funktion
+(x.var<-x.sd^2) # Varianz der Stichprobe 				    		
+var(x) # Überprüfung mit R-Funktion
+@
+
+Um die Größenordnung der Varianz, z.B. bei Verteilungen mit unterschiedlichen Mittelwerten besser einschätzen zu können, kann man den Variationskoeffizient (\textit{coefficient of variation} oder relative Standardabweichung) berechnen. 
+\begin{equation}
+varK = \frac{\sigma}{\bar{x}}  
+\end{equation}
+
+Dieser gibt die normierte Varianz an und ist als relatives Streumaß unabhängig von der Dimension des Mittelwertes. Mann muss sich aber anhand des Skalenniveaus der Messwerte genau überlegen, ob der Variationskoeffizient sinnvoll ist. Als Faustregel gilt, dass der Variationskoeffizient für Daten sinnvoll ist, die auf der Verhältnisskala gemessen wurden. Mit der Angabe in Prozent kann der Variationskoeefizient herangezogen werden, um die Variabilitäten unterschiedlicher Verteilungen zu beurteilen. 
+
+<<fig=FALSE, echo=TRUE>>=
+(varK1<-x.sd/m*100)
+x2<-rnorm(n, mean=10, sd=1)  # 2.(Zufalls)stichprobe
+(m2<-mean(x2))
+(x2.sd<-sd(x2))
+(x2.var<-var(x2))
+(varK2<-x2.sd/m2*100)
+@
+
+Generell kann man für Variabilit"atsma"se wie die Standardabweichung 
+und die Varianz sagen: je gr"osser sie sind, desto gr"osser die Unsicherheit
+der Parameter (z.B. Mittelwert, Median etc) die aus den zugrundeliegenden Me"sdaten gesch"atzt wurden
+und desto geringer die M"oglichkeit anhand der Daten zwischen zwei konkurrierenden Hypothesen zu unterscheiden.
+
+
+Sehr n"utzlich sind die folgenden Angaben: Im Fall der Normalverteilung
+liegen 68,3 \% der Messwerte innerhalb einer Standardabweichung um den
+Mittelwert, 95,4 \% der Messwerte innerhalb zweier Standardabweichungen
+um den Mittelwert und 99,7 \% innerhalb dreier Standardabweichungen.
+Bei 300 Messwerten erwartet man also im Mittel einen Messwert, der
+um mindestens drei Standardabweichungen vom Mittelwert abweicht.
+
+\textbf{Freiheitsgrade:} In der o.g. Formel wird nicht durch den Stichprobenumfang \emph{n}, sondern
+durch (n-1) dividiert. W"ortlich ausgedr"uckt w"are die Standardabweichung
+\begin{equation}
+\sigma = \sqrt { \frac{\textit{Summe der Quadrate}}{Freiheitsgrade}}
+\end{equation}
+was in diesem Fall bedeutet, dass wir einen Freiheitsgrad verloren haben, weil f"ur die Berechnung der Standardabweichung
+ein gesch"atzer Parameter (der Mittelwert) verwendet wurde.
+Die Freiheitsgrade sind also gleich dem Stichprobenumfang, \emph{n}, minus der Anzahl Parameter, \emh{p}, die aus den Daten
+gesch"atzt wurden.
+
+
+\subsection{Standardfehler des Mittelwerts ({\it Standard error of the mean})} 
+Der Standardfehler des Mittelwerts ist die \textbf{Standardabweichung der 
+Stichprobenmittelwerte}, die man erhielte, wenn man mehrmals
+unabh{\"a}ngige Stichproben ziehen w{\"u}rde. Die Interpretation lautet:
+Mit einer Wahrscheinlichkeit von 68,3\% liegt der Populationsmittelwert innerhalb
+eines Standardfehlers des Mittelwerts um den Stichprobenmittelwert herum.
+F{\"u}r die Interpretation von zwei oder drei Standardfehler siehe
+vorherigen Abschnitt. Die Definition des Standardfehlers des Mittelwerts
+lautet:
+\begin{equation}
+\sigma(\bar{x}) = \frac{\sigma}{\sqrt {n}}
+\end{equation}
+wobei $\sigma$ die Standardabweichung der Daten ist (vorheriger Abschnitt).
+Es gibt im Basispaket von \texttt{R} keine Funktion daf{\"u}r ($\Rightarrow$ library(plotrix), Funktion \texttt{std.error}), was jedoch
+nicht weiter schlimm ist, da der Standardfehler des Mittelwerts ggf. leicht selbst
+berechnet werden kann.
+Die beiden Standardabweichungen (der Daten und der Stichprobenmittelwerte)
+d{\"u}rfen nicht verwechselt werden. Insbesondere muss, wenn die Streuung von
+Daten dargestellt wird, genau angegeben werden, welches Streuma{\ss}
+verwendet wurde. Sehr beliebt ist die Verwendung des Standardfehlers
+des Mittelwerts in Publikationen, um die Streuung der Daten gering erscheinen zu lassen,
+da er stets kleiner ist als die Standardabweichung der Daten. Seien Sie 
+also auf der Hut, wenn Sie Originalpublikationen lesen, in denen die Streuung
+von Daten angegeben wird.
+
+
+\subsection{Konfidenzintervalle (Vertauensbereiche, {\it confidence intervals})} 
+%Der Nachteil des Standardfehler des Mittelwerts ist, dass seine Interpretation
+%zu recht ungew{\"o}hnlichen Wahrscheinlichkeiten (0.683, 0,954, 0,997) f{\"u}hrt.
+Gibt man die Wahrscheinlichkeit vor, mit der ein Populationsmittelwert
+in einem Intervall um den Stichprobenmittelwert enthalten sein soll, dann wird dies durch die Berechnung
+der Konfidenzintervalle erreicht. Das 95\%-Konfidenzintervall enth{\"a}lt
+{\it per definitionem} mit 95\%iger Wahrscheinlichkeit den Populationsmittelwert.\\
+%Leider ist seine Berechnung in \texttt{R} nur mit der Funktion \texttt{ci}
+%aus dem Paket \texttt{epicalc} m{\"o}glich.
+Beispiel.
+<<fig=FALSE, echo=TRUE>>=
+m<-10
+sd<-1
+n<-20
+error <- qnorm(0.975)*sd/sqrt(20)
+(l<- m-error)
+(r<- m+error)
+@
+Der wahre Mittelwert der Verteilung liegt also mit einer Wahrscheinlichkeit von 95\% zwischen 9.56 und 10.44.
+
+
+\section{Gestaltung aussagekr{\"a}ftiger Graphiken}
+Die Gestaltung guter Graphiken ist nicht einfach und eher eine
+Kunst als Wissenschaft. Ein wichtiger und einfach zu beherzigender
+Grundsatz ist jedoch, dass
+eine Graphik nichts enthalten soll, was keine Information vermittelt.
+Insbesondere soll eine drei-dimensionale Darstellung vermieden
+werden, wenn man sie genauso gut in zwei Dimensionen zeigen kann.
+
+Die Abbildungen 2-5 zeigen
+positive und negative Beispiele (Quelle: G. H"ormann, Fachabteilung Hydrologie
+und Wasserwirtschaft, Universit"at Kiel).
+
+\begin{figure}[htb]
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Vorlesung-2012-05-02_Baendergrafik.pdf}
+\caption{{\bf Eine sinnlose B"andergraphik.} Die Erweiterung der Kurven in die
+Tiefe hinein, so dass B"ander entstehen, bringt keinerlei zus"atzliche
+Information.
+Sie suggeriert aber einen Mehrgehalt an Information. Au"serdem ist die Graphik
+als Ganzes in den Raum hineingedreht, so dass die Null-Linie nicht waagerecht
+ist.} 
+\label{baendergraphik}
+\end{figure}
+
+
+\begin{figure}[htb]
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Vorlesung-2012-05-02_KurveOK.pdf}
+\caption{{\bf Kurven als Polygonz"uge.} Hier wird die gleiche Information wie in Abbildung 2 gezeigt. Zus"atzlich werden die
+einzelnen Messpunkte angezeigt und mit einem Polygonzug (Geraden-Abschnitte)
+verbunden. Diese Darstellung ist auf jeden Fall besser. Zu "uberlegen w"are hier gegebenenfalls, ob man die Kurven
+gl"atten sollte, da sich nat"urliche Messgr"o"sen meist auch glatt "andern. } 
+\label{kurveok}
+\end{figure}
+
+\begin{figure}[htb]
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Vorlesung-2012-05-02_BalkendiagrammUnuebersichtlich.pdf}
+\caption{{\bf Ein un"ubersichtliches Balkendiagramm.} Hier werden die
+Messwerte hintereinander als Balken dargestellt. Es kann passieren, dass hohe
+Werte der einen Variablen kleinere Werte einer anderen Variablen verdecken.
+Auch dieses Diagramm ist unn"otiger Weise in den Raum hinein gedreht. } 
+\label{unuebersichtlichesbalkendiagramm}
+\end{figure}
+
+\begin{figure}[htb]
+\includegraphics{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Vorlesung-2012-05-02_BalkendiagrammOK.pdf}
+\caption{{\bf Ein besseres Balkendiagramm.} Zu jedem Messtag werden die vier
+Messwerte, jeweils in der gleichen Reihenfolge, nebeneinander dargestellt. Im
+Fall
+von mehr Messwerten kann diese Darstellung auch un"ubersichtlich werden. } 
+\label{balkendiagramm}
+\end{figure}
+
+\clearpage
+\section{Graphische Darstellung metrisch skalierter Daten}
+\subsection{Boxplots}
+Wenn man metrisch skalierte Daten von nur einer Variable graphisch
+darstellen m"ochte, dann eignet sich hierf"ur ein sogenannter
+Box-Whisker-Plot. Die Daten zwischen dem 1. und dem 3. Quartil werden
+als Rechteck dargestellt, wobei die obere Kante dem 3. Quartil und die
+untere Kante dem 1. Quartil entspricht. Die Breite des Rechtecks hat
+keine Funktion; sie wird von \texttt{R} festgesetzt. Die Whiskers (Schnurrbarthaare) kennzeichnen die Extremwerte, die nicht als
+Ausrei"ser festgelegt werden. Eine g"angige Definition ist, die Enden der Whiskers bei dem 1,5-fachen
+Wert des Interquartilsabstandes (IQR) vom Median entfernt zu zeichnen. 
+Me"swerte ausserhalb dieses Intervals werden dann als potentielle Ausreisser behandelt und 
+als separate Punkte oberhalb bzw.\ unterhalb der Whiskers
+gezeichnet. Gibt es keine Werte au"serhalb der Grenze von 1,5$\times$IQR, wird die L"ange des Whiskers folglich durch 
+den maximalen und minimalen Wert festgelegt.\\
+
+Mit der Funktion \texttt{rug()} lassen sich die einzelnen Datenpunkte
+in einem Boxplot darstellen. Ein Boxplot von Schwertlilien-Petalenl{\"a}ngen
+w{\"u}rde also so aussehen:
+
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+data(iris)
+boxplot(iris$Petal.Length, 
+			   ylab = "Petalenlaenge [cm]", 
+			   main = "Schwertlilien Boxplot")
+rug(iris$Petal.Length, side = 2)
+@
+\end{center}
+
+Man erkennt nun, dass die Daten sich um zwei Zentren (um 1 bis 2 cm und um 3,5 bis 7 cm herum)
+konzentrieren. Dies wurde duch den Boxplot alleine nicht ersichtlich. Mit dem Argument \texttt{ylab}
+kann man die y-Achse beschriften. Bei der x-Achse funktioniert es analog.
+Mit \texttt{main} gibt man dem ganzen Plot eine {\"U}berschrift. 
+Mit \texttt{side} gibt man an, auf welcher Seite des Boxplots \texttt{rug()}
+die Datenwerte einzeichnen soll. Da dieser Parameter bei weiteren
+Funktionen eine Roll spielt, seien hier die anderen
+M"oglichkeiten genannt: 1 (unten), 2 (links) 3, (oben), 4 (rechts). 
+Es ist wichtig zu wissen, dass man mit der Funktion \texttt{rug()} nur in 
+bestehende Plots plotten kann, es kann damit kein eigenst{\"a}ndiger
+Plot erzeugt werden.\\
+\textbf{Anmerkung:} Die Suchfunktion
+\texttt{help.search()} funktioniert leider nicht f"ur Funktionsargumente (Parameter), wie \texttt{side}, \texttt{main}, oder \texttt{ylab} sondern nur für die zugeh"origen Funktionen. In der Dokumentation einer Funktion werden alle erlaubten Parameter näher beschrieben. 
+Wichtig ist sich an dieser Stelle zu merken, dass die Werte eines Funktionsargumentes immer mit einem einfachen Gleichheitszeichen
+"ubergeben werden. Für einen sauberen und lesbaren Programmierstil sollten alle Parameter, welche vom Standard abweichende Werte bekommen, explizit angegeben werden. Die alleinige Übergabe der Parameterwerte (ohne den Parameternamen) an die Funktion ist zwar möglich, macht es aber später schwer nachvollziehbar, was man mit der Parametrisierung bezweckt hat.
+
+
+
+\end{document}

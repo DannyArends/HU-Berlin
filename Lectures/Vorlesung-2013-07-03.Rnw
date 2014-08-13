@@ -1,0 +1,155 @@
+\documentclass[a4paper]{article}
+\usepackage{geometry}
+\usepackage{soul} % underline text mit \ul{text}
+\usepackage{paralist} % inparaenum
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+\usepackage{booktabs} 
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{03. Juli 2013}
+
+\begin{document}
+
+\maketitle
+
+\section{Mengenoperationen in \texttt{R}}
+Die Auswertung grösserer Datensätze erfordert oftmals die Evaluierung verschiedener Analysemethoden. Besondern im Bereich neuer Forschungszweige liegen oftmals noch keine etablierten Standardprogramme vor. Existieren mehrere Programme, die von Wissenschaftlern zur Bearbeitung spezieller Aufgabenstellungen entwickelt wurden, beruhen diese meist auf unterschiedliche Algorithmen oder Grundannahmen. 
+D.h. hier ist die Wiederholung einer Analyse der eigenen Daten mit verschiedenen Programmen eine wichtige Technik, um ein Gefühl für die Sicherheit der Ergebnisse zu bekommen. 
+Als Beispiel wollen wir noch einmal die Korrekturmethoden beim multiplen Testen heranziehen. Würde man seine Testergebnisse mit zwei ähnlichen Methoden (z.B. FDR nach Benjamini-Hochberg oder FDR nach Benjamini-Yekutieli) korrigieren, erhielte man zwei Mengen A und B von korrigierten p-Werten. Anhand der Anzahl übereinstimmmender Korrekturwerte - die Schnittmenge $A\capB$ der bei einem bestimmten p-Wert noch signifikanten  Ergebnisse - könnte man 
+\begin{inparaenum}[\itshape a\upshape)] 
+	\item die Unterschiedlichkeit der Methoden bewerten und 
+	\item  eine Vertrauensmenge bestimmen
+\end{inparaenum}, mit der man bevorzugt weiterarbeiten sollte.\\
+
+Überblick über die wichtigsten Mengenbeziehungen:
+\begin{table*}[htbp]
+	\centering
+		\begin{tabular}{cccc}
+				\toprule
+				Operator &  Definition & R-Befehl & Beispiel\\
+				\toprule
+				$ A \cap B $ & Schnittmenge (Durchschnitt) & \texttt{intersect(A,B)} & $c,d,e$\\
+														&																						&	\texttt{A[is.element(A,B)]} & $c,d,e$\\ 																
+				$ A \cup B $ & Vereinigungsmenge  & \texttt{union(A,B)} & $a,b,c,d,e,f,g,h,i$\\
+				$ A \setminus B $ & asymmetrische Differenzmenge & \texttt{setdiff(A,B)} & $a,b$\\	
+				$ B \Delta A $ & symmetrische Differenzmenge & \texttt{c(setdiff(A,B),setdiff(B,A))} & $a,b,f,g,h,i$\\		
+				$ C \subseteq A $ & echte Teilmenge & \texttt{A[match(C,A)]} & $b,c,d$
+							
+				\bottomrule				
+		\end{tabular}
+	\caption{Mengendefinitionen: $ A = \{a,b,c,d,e\}$, $ B = \{c,d,e,f,g,h,i\}$,  $ C = \{b,c,d\}$. \texttt{union(), intersect() } und \texttt{setdiff()} entfernen alle duplizierten Elemente in ihren Argmenten  und wenden intern \texttt{as.vector()}  auf die Argumente an so dass z.B. die Umwandlung von Faktoren zu Character-Vektoren erzwungen wird. *\textit{sprich: ``A ohne B'' vereinigt mit ``B ohne A''}}
+ 	\label{tab:Mengendefinitionen}
+\end{table*}
+
+Mit der Funktion \texttt{match()} können zwei Vektoren (Mengen) miteinander vergleichen werden. Dabei gibt \texttt{match(A,B)}, den Index der ersten matchenden Elemente von A in B zurück.
+
+Weitere Situationen in denen man Ergebnismengen vergleichen möchte:
+\begin{itemize}
+	\item bei Verwendung einer statistischen Methode, die in verschiedenen Softwarepaketen (z.B. \texttt{SAS}, \texttt{R} oder \texttt{SPSS}) unterschiedliche implementiert sein könnte
+	\item bei Untersuchung von Gemeinsamkeiten und Unterschieden zwischen verschiedenen Untersuchungsgruppen. Insbesondere wenn man Ergebnislisten unter Festlegung von Grenzwerten filtert können sich Schnittmengen verändern.
+\end{itemize}
+
+\clearpage
+
+\textbf{R-Beispiel 1:}
+\begin{center}
+<<fig=FALSE,echo=FALSE>>=
+vec.p.corr1 <- c(0.012, 0.48, 0.67, 0.23, 0.010, 0.23, 0.051, 0.048, 0.17, 0.005, 0.0055, 0.07)
+vec.p.corr2 <- c(0.001, 0.35, 0.53, 0.12, 0.012, 0.13, 0.045, 0.051, 0.09, 0.003, 0.0049, 0.08)
+example<-data.frame(P1=vec.p.corr1,P2=vec.p.corr2, row.names=1:length(vec.p.corr1))
+@
+
+<<fig=FALSE,echo=TRUE>>=
+# P-Wert Tabelle
+print(example)
+(only.p.corr1<-setdiff(vec.p.corr1,vec.p.corr2))
+length(only.p.corr1)
+(only.p.corr2<-setdiff(vec.p.corr2,vec.p.corr1))
+length(only.p.corr2)
+(isect.corr<-intersect(vec.p.corr1,vec.p.corr2))
+length(isect.corr)
+@
+
+\setkeys{Gin}{width=0.5\textwidth}
+<<fig=TRUE,echo=FALSE>>=
+library(colorfulVennPlot)
+plotVenn2d(	c(length(only.p.corr1), length(only.p.corr2), length(isect.corr)),
+		labels=c("p.corr1", "p.corr2"),
+		Colors=c("white","white","red")
+)
+@
+\end{center}
+
+\textbf {R-Beispiel 2:}
+\begin{center}
+<<fig=FALSE,echo=TRUE>>= 
+p<-0.05
+
+(A<-which(vec.p.corr1<=p))
+length(A)
+vec.p.corr1[A]
+
+(B<-which(vec.p.corr2<=p))
+length(B)
+vec.p.corr2[B]
+
+(isect.AB<-intersect(A,B))
+length(isect.AB)
+vec.p.corr1[isect.AB]
+@
+
+\setkeys{Gin}{width=0.5\textwidth}
+<<fig=TRUE,echo=FALSE>>=
+library(VennDiagram)
+draw.pairwise.venn(
+				area1 = length(A),
+				area2 = length(B),
+				cross.area = length(isect.AB),
+				fill=c("lightgray","lightgray"),
+				sub="subtitle",
+				category = c("A", "B"),
+				cat.cex=c(1.5,1.5), cat.fontface=c("bold", "bold"),
+				)
+@
+\end{center}
+
+
+\section{Grafische Darstellung von Mengenrelationen}
+Zur Veranschaulichung von Mengenrelationen können \emph{Venn}-Diagramme oder Mengendiagramme, benannt nach dem englischen Mathematiker John Venn (1834-1923), benutzt werden. Dabei sollten der Übersichtlichkeit halber nicht mehr als 2-5 Mengen gleichzeitig dargestell werden. Der Vorteil liegt in der schnellen Erfassung von Unterschieden und Gemeinsamkeiten der verglichenen Mengen.
+
+\texttt{R} stellt mehrere Bibiliotheken zur verfügung mit denen Venn-Diagramme geplottet werden können: 
+ \texttt{gplots} $\rightarrow$ \texttt{plotVenn()},  \texttt{colorfulVennPlot} $\rightarrow$ \texttt{plotVenn2d()},  \texttt{VennDiagram} $\rightarrow$ \texttt{draw.pairwise.venn()}.
+
+
+Am R-Beispiel 1 sollen die wichtigstzen Elemente des Plots kurz erläutert werden:
+\begin {center}
+\setkeys{Gin}{width=0.5\textwidth}
+<<fig=TRUE,echo=TRUE>>=
+library(colorfulVennPlot)
+plotVenn2d(	
+		c(length(only.p.corr1), 	length(only.p.corr2), 	length(isect.corr)),
+		labels=c("p.corr1", "p.corr2"),
+		Colors=c("red","red","white")
+)
+@
+\end{center}
+Die Funktion nimmt als erstes Argument  einen numerischen Vektor der Länge 3, wobei die ersten beiden Elemente die Differenzmengen angeben und das dritte Element der Durschnitt angibt. Durch den Farbvektor können die entsprechenden Mengen hervorgehoben werden (hier die symmetrische Differenzmenge).
+
+%\section{Datenbankzugriff mit R}
+%Bibliothek biomaRt
+
+
+%\setkeys{Gin}{width=1.0\textwidth}
+%\begin{center}
+%\begin{figure}
+%\includegraphics[width=1.0\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Statistische_Tests2.pdf}
+%\end{figure}
+%\end{center}
+
+\end{document}

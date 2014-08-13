@@ -1,0 +1,349 @@
+\documentclass[a4paper]{article}
+\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc} 
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\geometry{a4paper,left=2.5cm, right=2.5cm, top=2cm, bottom=2cm} 
+\usepackage[onehalfspacing]{setspace}
+\usepackage{enumitem}
+ 
+\title{Datenanalyse mit dem Statistik-Paket R}
+
+\author{Autoren: Armin Schmitt, Ralf Bortfeldt}
+\date{12. Juni 2013}
+\begin{document}
+\maketitle
+
+\section{Lineare Regression - Vertrauensbereich der Regressionsgeraden}
+Der Vertrauensbereich (Konfidenzintervall, \emph{confidence interval}) ist ein aus den stichprobenwerten berechnetes Intervall
+das den wahren (aber leider unbekannten) Parameter - hier der Anstieg der Regressionsgerade - mit einer 
+vorgegebenen Wahrscheinlichkeit (\emph{confidence probability}) überdeckt.
+Meist wird die Vertrauenswahrscheinlichkeit mit 95\% angesetzt, d.h. das bei häufig wiederholter Stichprobenerfassung 
+die Konfidenzintervalle in 95\% der Fälle die wahre Steigung der Regressionsgraden überdecken und 
+nur in 5\% der Fälle nicht erfassen. Mit dem Konfidenzintervall kann jedoch nicht die Güte des Modells bewertet werden!
+
+\subsection*{Berechnung des Konfidenzintervalls}
+Das formale Vorgehen bei der Berechnung von Konfidenzintervallen soll am Datensatz \texttt{airquality} gezeigt werden:
+Zunächst wird die lineare Regression berechnet und der Regressionsbericht erstellt
+
+<<fig=FALSE,echo=TRUE>>=
+data(airquality)
+lm.temp <- lm(Ozone ~ Temp, data = airquality)
+lm.temp.s<-summary(lm.temp)
+@
+
+\begin{enumerate}
+   \item Bestimmung der Stichproben-basierten Regressionskoeffizienten (\texttt{summary(lm.temp)})
+	Da wir die wahre Steigung der Regressionsgerade anhand der erklärenden Variable ''Temperatur`` aus den Messdaten geschätzt haben, nehmen wir den Regressionskoeffizienten (\emph{Estimate}) für die Variable ''Temp``:
+<<fig=FALSE,echo=TRUE>>=	
+(temp.est<-lm.temp.s$coefficients["Temp","Estimate"])
+@
+   \item Festlegung der Vertrauenswahrscheinlichkeit z.B. 95\%
+	
+   \item Bestimmung der Fehlergrenze (\emph{margin of error}). Dazu geht man folgendermaßen vor:
+   \begin{enumerate}[label*=\arabic*.]     
+        \item Bestimmung des Standardfehler des Regressionskoeffizienten - dem Regressions-Output\\ 
+        			(\texttt{summary(lm.temp)}) zu entnehmen:
+<<fig=FALSE,echo=TRUE>>=	        
+(temp.se<-lm.temp.s$coefficients["Temp","Std. Error"])
+@
+	  \item	Berechnung des kritischen Wertes für die Fehlergrenze. Bei der einfachen linearen Regression ist der kritische Wert ein t-Score mit n-2 Freiheitsgraden (für Steigung und Achsenschnittpunkt) basierend auf den folgenden Größen:
+		\begin{itemize}
+			\item[--] $\alpha$ = 1 - Vertrauenswahrscheinlichkeit = 1 - 0.95 = 0.05, daraus resultierend die kritische Wahrscheinlichkeit (zweiseitig, da wir eine obere und untere Fehlergrenze berechnen):\\  
+			$p* = 1-\alpha/2 = 1 - 0.025 = 0.975$
+      \item[--] Freiheitsgrade: df = n - 2 = \texttt{nrow(airquality)} - 2 = 151
+			\item[--] Der kritische Wert ist die Teststatistik bei 151 Freiheitsgraden und der kumulativen Wahrscheinlichkeit von 0.975.  Ausgehend von der (Student) t-Verteilung kann der kritische Wert berechnet werden:
+<<fig=FALSE,echo=TRUE>>=			
+(t.crit<-qt(0.975,151))
+@	
+		\end{itemize}
+			
+	  \item Fehlergrenze = kritischer Wert x Standardfehler:
+<<fig=FALSE,echo=TRUE>>=
+(temp.me<-t.crit * temp.se)
+@
+	\end{enumerate}
+  \item Angabe des Konfidenzintervalls: die Breite des Konfidenzintervalls wird definiert durch die Stichprobenstatistik $\pm$ Fehlergrenze
+	Die Unsicherheit wird als Konfidenzniveau (\emph{confidence level}) bezeichnet.
+	Daraus folgt, dass das Konfidenzintervall für die Steigung von 1.97 (\texttt{temp.est-temp.me}) bis 2.89 (\texttt{temp.est+temp.me}) geht.
+	Das bedeutet, das mit 95\% Wahrscheinlichkeit der wahre Anstieg der Regressionsgerade bei 2.43 $\pm$ 0.46 liegt.
+\end{enumerate}
+
+
+\subsection*{Grafische Darstellung des Konfidenzintervalls}
+Konfidenzintervalle für die Regressionsgerade lassen sich in \texttt{R} Abildungen relativ einfach mit der Funktion \texttt{lines()} ergänzen.
+Zwei Möglichkeiten werden im Folgenden vorgestellt:
+<<fig=TRUE,echo=TRUE>>=
+layout(matrix(c(1,2),1,2)) 
+plot(airquality$Temp, airquality$Ozone, main="Ozone~Temperatur", xlab="Temp", ylab="Ozone")
+# Temperaturwerte für die eine Ozonkonzentration modelliert werden soll
+new<-data.frame( Temp=seq(min(lm.temp$model$Temp), max(lm.temp$model$Temp), by=1)) 
+conf<-predict(lm.temp, new, int="c", level=0.95)
+head(conf,2)
+
+lines(new$Temp, as.numeric(conf[,"fit"]), lty=1, lwd=2)  # Regressionsgerade => wie mit abline(lm.temp)
+lines(new$Temp, conf[,"upr"], lty=2, col="blue")
+lines(new$Temp, conf[,"lwr"], lty=2, col="blue")
+
+# Das gleich mit der Funktion visreg()
+library(visreg)
+visreg(lm.temp, alpha=0.05, main="Function visreg()", points.par=list(pch=1, cex=1))
+@
+
+Die Abbildung wurde mit der Funktion \texttt{layout()} in zwei Paneele unterteilt. \texttt{layout} stellt eine Alternative zu \texttt{par(mfrow...)}
+dar, die mehr Flexibilität bei der Konstruktion zusammengesetzter Abbildungen bietet.
+Die linke Abbildung zeigt das Konfidenzintervall des Anstiegs der Regressionsgeraden als gepunktete Linie. Mit der Funktion \texttt{predict()} kann man unter Angabe des gefitteten Modells und einem Vektor von X-Werten, modellierte Y-Werte berechnen lassen.
+Die rechte Hälfte zeigt die gleiche Darstellung etwas aufgehübscht mit der Funktion \texttt{visreg()}. Das Vertrauensniveau wird hier über den Parameter \texttt{alpha}
+ festgelegt. Die Formatierung der Punkte erfolgt über eine Werteliste die dem Parameter \texttt{points.par} übergeben wird.
+
+\subsection*{Grafische Darstellung der Residuen}
+Zur Veranschaulichung der Residuen, d.h. der Differenz aus den beobachten und den vom Model vorhergesagten Werten ($d = y - \widehat{y}$)
+kann man diese in den Plot einzeichnen.
+Zunächst entferenen wir die Zeilen mit fehlenden Messwerten (\texttt{NA})für die Zielvariable (hier: Ozonkonzentration)
+<<fig=FALSE,echo=TRUE>>=
+airqual.clean<-airquality[which(!is.na(airquality$Ozone)),] 
+(n<-nrow(airqual.clean))
+@
+
+Dann wird die lineare Regression mit dem gesäuberten Datensatz durchgeführt:
+<<fig=FALSE,echo=TRUE>>=
+lm.temp.clean<-predict(lm(Ozone ~ Temp, data=airqual.clean))
+@
+Nun kann die erklärende Variable gegen die Zielvariable aufgetragen und die Regressionsgrade mit den Residuen eingezeichnet werden:
+<<fig=TRUE,echo=TRUE>>=
+plot(airqual.clean$Temp, airqual.clean$Ozone, main="Ozone~Temperatur", 
+xlab="Temp", ylab="Ozone", pch=16, ylim=c(-10,200))
+abline(lm(airqual.clean$Ozone~airqual.clean$Temp))
+for(i in 1:n){
+	lines( x=c(airqual.clean[i,"Temp"],  airqual.clean[i,"Temp"]), 
+		 y=c(airqual.clean[i,"Ozone"], lm.temp.clean[i]), 
+		col="blue")
+}
+@
+
+Die Residuen beschreiben wie gut die Regressionslinie in die beobachteten Daten gefittet wurde (\emph{goodness of fit})
+Man bezeichnet das Modell das die Summe der Quadrate der Residuen minimiert auch als ein Maximum Likelihood Modell. 
+\clearpage
+
+
+\section{Multiple lineare Regression}
+Ein Blick auf den Datensatz
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+head(airquality)
+@
+\end{center}
+zeigt, da{\ss} er weitere Variablen enth\"alt: \texttt{Wind} und
+\texttt{Solar.R}. 
+Sollte man nicht versuchen, mit diesen Variablen zus\"atzlich das Verhalten der
+Ozonkonzentration zu erkl\"aren? Schlie{\ss}lich ist es durchaus z.~B.\ plausibel
+anzunehmen,
+da{\ss} starker Wind das Ozon schnell wieder vom Ort des Entstehens
+abtransportiert.
+Die Variablen \texttt{Month} und \texttt{Day} sehen zwar
+numerisch
+aus, die Zahlen sind jedoch nur als Symbole f\"ur die Monate und Tage
+aufzufassen.
+Man kann sie nicht direkt in Regressionsanalysen einflie{\ss}en lassen,
+sondern
+m\"usste sie im Rahmen einer Zeitreihenanalyse ({\em time series analysis})
+behandeln. 
+Wollen wir uns zun\"achst mit nur \texttt{Wind} als weiterer Variblen befassen.
+
+Das mathematische Modell einer linearen Regression mit zwei Variablen lautet:
+\begin{equation}
+Y = a + b_1 * x_1 + b_2 * x_2
+\end{equation}
+Im allgemeinen w\"urde man f\"ur $N$ Variablen so schreiben:
+\begin{equation}
+Y = a + \sum_{i = 1}^N  b_i * x_i
+\end{equation}
+Mit den Variablen, mit denen wir arbeiten m\"ochten, w\"urde man schreiben:
+\begin{equation}
+Ozone = a + b_1 * Temp + b_2 * Wind
+\end{equation}
+Gegeben sind also die Werte f\"ur $x_1, x_2 $ und $Y$, gesucht sind die ``besten''
+Sch\"atzungen f\"ur $a, b_1$ und $b_2$. 
+Man notiert \"ubrigens die allgemeinen mathematischen Gleichungen immer mit
+dem Plus-Zeichen. Die einzelnen Koeffizienten k\"onnen jedoch durchaus negativ werden.
+
+Im Falle zweier unabh\"angiger Variablen kann man sich die Geometrie dieser
+Gleichung gerade noch vorstellen. \texttt{Temp} und \texttt{Wind} spannen
+eine Ebene auf, die durch die Regressionskoeffizienten \emph{b1} und \emph{b2} sowie durch
+den Y-Achsenschnittpunkt \emph{a} beschrieben wird. Die zu erklärenden Y-Werte (\texttt{Ozone}) liegen dann
+in einer geneigte Ebene uber dieser Ebene.
+
+Die wird in der folgenden Grafik deutlich (Quelle: D. Enzmann, Univ. Hamburg)
+
+\setkeys{Gin}{width=1.0\textwidth}
+\begin{center}
+\begin{figure}
+\subfigure[a]{\includegraphics[width=0.5\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Multiple_Regression_geometrisch1.pdf}}
+\subfigure[b]{\includegraphics[width=0.5\textwidth]{I:/HU_Berlin/Lehre/MSc_Prozess_Qualitaetsmanagement/SS2012/Datenanalyse_mit_R/VL/Multiple_Regression_geometrisch2.pdf}}
+\caption{Geometrische Veranschaulichung der Regressionskoeffizienten in der multiplen Regression}
+\end{figure}
+\end{center}
+
+Gl\"ucklicherweise ist der Funktionsaufruf in \texttt{R} f\"ur multiple Regression fast
+identisch mit demjenigen f\"ur die einfache Regression. Es ist lediglich
+das neue Modell in Formelsprache zu spezifizieren:
+\texttt{Ozone $\sim$ Temp + Wind}. Auch in der Formelsprache ist das Plus-Zeichen nicht w\"ortlich zu nehmen.
+Es ist zu verstehen als Hinzunahme einer weiteren Variablen.
+
+Der Aufruf zur Erzeugung der Modell-Objekts lautet dann:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+lm.tw <- lm(Ozone ~ Temp + Wind, data = airquality)
+@
+\end{center}
+
+Und das Ergebnis kann wiederum so angeguckt werden:
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+summary(lm.tw)
+@
+\end{center}
+
+Die Korrelation der durch das multiple Regressionsmodell vorhergesagten mit den beobachteten Ozonwerten
+wird durch den multiplen Korrelationskoeffizienten \emph{R} beschrieben. $R^2$ wird bei multipler Regression auch
+\emph{multipler Determinationskoeffizient} genannt.
+
+Wir stellen fest, dass sich bei unserem Modell mit zwei erklärenden Variablen das angepasste
+Bestimmtheitsma{\ss} oder der korrigierte Determinationskoeffizient
+von 48 auf 56 Prozent verbessert hat.
+
+Zu beachten ist ferner, dass sich die Werte f\"ur \texttt{Temp}
+gegen\"uber der Regression mit nur dieser Variablen ver\"andert haben. 
+Die multiple Regression ist eben nicht als blo{\ss}es Anh\"angen einer
+weiteren Variable zu verstehen, sondern als Analyse eines Datensatzes
+als zusammenh\"angende Einheit.
+
+
+Man kann sich nun anschauen, wie gut mit der Modellgleichung vorhergesagte (\emph{geschätzten}) Ozonwerte
+mit den beobachteten Ozonwerten übereinstimmen.
+
+<<fig=TRUE,echo=TRUE>>=
+plot(airquality$Temp, airquality$Ozone, main="Ozone~Temperatur+Wind", 
+xlab="Temperatur", ylab="Ozone")
+Ozone.est <- predict(lm.tw, 
+list(Temp=airquality$Temp,Wind=airquality$Wind))
+points(airquality$Temp, Ozone.est, pch=2, col="red")
+legend("topleft", legend=c("observed", "predicted"), pch=c(1,2), bty="n")
+@
+
+Man erkennt, dass einige Punkte in den Originaldaten ausserhalb des Bereichs der mit dem Model vorhergesagten
+Ozonwerte liegen. Das deutet darauf hin, dass das Model noch nicht optimal ist.  
+
+
+
+\subsection*{Ber\"ucksichtigung von Wechselwirkungen zwischen Variablen}
+
+Wechselwirkungen zwischen Variablen beeinflussen die Regression und es ist sinnvoll im Vorfeld einer Modellierung die Stärke
+solcher Wechselwirkungen durch Korrelationsanalysen festzu stellen.
+Falls man Wechselwirkungen zwischen den Variablen ber\"ucksichtigen m\"ochte,
+k\"onnen diese durch \texttt{Ozone $\sim$ Temp + Wind + Temp : Wind} spezifiziert
+werden. Der Doppelpunkt ist also nicht als Geteilt-Zeichen zu sehen, sondern
+als Symbol f\"ur Wechselwirkungen.
+In mathematischer Notation w\"urde man schreiben:
+\begin{equation}
+Y = a + b_1 * x_1 + b_2 * x_2 + b_3 * x_1 * x_2
+\end{equation}
+Und mit unseren Variablen
+\begin{equation}
+Ozone = a + b_1 * Temp + b_2 * Wind + b_3 * Temp * Wind
+\end{equation}
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+summary(lm(Ozone ~ Temp + Wind + Temp : Wind, data = airquality))
+@
+\end{center}
+Durch die Hinzunahme der Wechselwirkung ergab sich eine weitere Verbesserung
+des Bestimmtheitsma{\ss}es auf 61 Prozent. Man erh\"alt, wie im Falle ohne
+Wechselwirkung,
+immer noch eine Ebene als L\"osung. Diese Ebene ist nun jedoch nicht mehr plan,
+sondern gekr\"ummt.
+
+Im Prinzip lassen sich alle denkbaren Funktionen mit \texttt{lm}
+als Modell fitten, solange sie in den Koeffizienten linear sind.
+
+Dies bedeutet, dass auch Polynome (z.~B.\ quadratische Funktionen)
+als Modelle in \texttt{lm} gew\"ahlt werden k\"onnen. Linearit\"at in den Koeffizienten hei{\ss}t, 
+dass eine Ver\"anderung eines Koeffizienten um eine Einheit 
+immer in der gleichen Ver\"anderung der Zielvariable \texttt{Y} resultiert.
+Dies ist z.~B.\ bei der Funktion
+\begin{equation}
+Y = a * e^{bx} 
+\end{equation}
+{\em nicht} der Fall, da es einen Unterschied macht, ob man $b$ beispielsweise
+von 4 auf 5
+erh\"oht oder von 10 auf 11 (f\"ur festes $a$ und $x$).
+Diese Modelle k\"onnen auch in \texttt{R} behandelt werden, w\"urden jedoch den Rahmen
+dieser Vorlesung sprengen.
+
+
+
+\section{Quadratische Regression}
+Sie l\"auft sehr \"ahnlich zur linearen Regression ab.
+Das mathematische Modell w\"are
+\begin{equation}
+Y = a + b_1 * x + b_2 * x^2
+\end{equation}
+Wenn wir mit der Variable \texttt{Temp} arbeiten, also
+\begin{equation}
+Ozone = a + b_1 * Temp  + b_2 * Temp^2
+\end{equation}
+Als Besonderheit bei der Spezifikation in Formelsprache ist jedoch   
+zu beachten, da{\ss} das normalerweise f\"ur die Potenzierung benutzte
+Zeichen \texttt{\^} schon f\"ur andere Zwecke benutzt wird.
+Man muss nun mit der Funktion \texttt{I()} die urspr\"ungliche
+Interpretation dieses Zeichens wieder herstellen:  
+\begin{center}
+<<fig=FALSE,echo=TRUE>>=
+summary(lm(Ozone ~ Temp + I(Temp^2), data = airquality))
+@
+\end{center}
+
+der quadratische Term ist stark signifikant, was ein Hinweis darauf ist, dass die Beziehung zwischen der erklärenden und der Zielvariable \emph{nicht} linear ist!
+Die beste quadratische Funktion mit nur \texttt{Temp} als freier Variable
+erkl\"art mit 53 Prozent besser als die beste lineare Funktion mit
+dieser Variable (48 Prozent).
+Man kann nun die beste quadratische Funktion mit den Regressionskoeffizienten
+aufschreiben:
+\begin{equation}
+Y = 305.5 - 9.6 * Temp  + 0.078 * Temp^2
+\end{equation}
+und so in einen Streuplot einf\"ugen:
+\begin{center}
+<<fig=TRUE,echo=TRUE>>=
+plot(Ozone ~ Temp, data = airquality)
+curve(305.5 - 9.6 * x  + 0.078 * x^2, add = TRUE)
+@
+\end{center}
+Leider steht nun nicht mehr so eine bequeme Funktion wie \texttt{abline()}
+zur Verf\"ugung, mit der wir die Regressionsgerade direkt aus
+einem Modell-Objekt heraus in den Plot zeichnen konnten, sondern m\"ussen
+mit der Funktion \texttt{curve()} die Kurve zeichnen, wobei wir die als 
+Koeffizienten die zuvor erhaltenen Regressionskoeffizienten eintragen.
+
+An der Kurve l\"asst sich ablesen, dass die Ozon-Konzentration mit abnehmender Temperatur
+wieder ansteigen w\"urde, was sachlich wahrscheinlich nicht zutrifft.
+Dies bedeutet, dass der quadratische Ansatz trotz besserem
+$R^2$ weiterer Diskussion bedarf. Hier liegt also wieder eine Situation
+vor, wo klar wird, was statistische Methoden leisten k\"onnen und wo ihre
+Grenzen liegen. Der haupts\"achliche Faktor sollte immer die Fachdisziplin
+sein.
+
+Abschliessend ist zu bemerken, dass es 
+keinen K\"onigsweg gibt, das bestm\"ogliche Modell zu finden.
+In die Regressionsanalyse sollte soviel Sachverstand aus der
+wissenschaftlichen Disziplin wie m\"oglich einflie{\ss}en.
+Ferner gilt ganz pauschal: So einfach wie m\"oglich, so komplex wie
+n\"otig! Naturgesetze lassen sich meistens durch einfache
+mathematische Zusammenh\"ange beschreiben, hohe Potenzen (also 
+Polynome f\"unften Grades oder h\"oher) sind eher selten.
+
+
+
+
+\end{document}

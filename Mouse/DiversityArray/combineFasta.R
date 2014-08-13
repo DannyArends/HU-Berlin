@@ -23,8 +23,8 @@ setwd("E:/Mouse/DNA/DiversityArray/")
 # Create the blast query fasta from the JAX mouse diversity chip annotation files
 chrAnnotationJAX <- NULL
 aa <- lapply(chromosomes, function(chr){
-  chrAnnotation <- read.table(paste0("Annotation/ProbeAnnotation/chr",chr,".txt"), header=FALSE, sep='\t')       # SNP / Chromosome annotation of the mouse diversity CHIP
-  chrAnnotationJAX <<- rbind(chrAnnotationJAX, chrAnnotation[,c(1, 9)])                             # Take only the annotation of intrest
+  chrAnnotation <- read.table(paste0("Annotation/ProbeAnnotation/chr",chr,".txt"), header=FALSE, sep='\t')        # SNP / Chromosome annotation of the mouse diversity CHIP
+  chrAnnotationJAX <<- rbind(chrAnnotationJAX, chrAnnotation[,c(1, 9)])                                           # Take only the annotation of interest
 })
 colnames(chrAnnotationJAX) <- c("JAX_ID", "Sequence")
 

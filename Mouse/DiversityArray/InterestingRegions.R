@@ -44,6 +44,19 @@ for(chr in chromosomes){
 }
 
 colnames(regions) <- c("Chr","Start","End","SNPs")
+
+# Which markers that we have in the LAB are in the regions we defined
+markers      <- read.table("Annotation/GeneticMarkers.txt", sep="\t", header=TRUE)
+
+markersInRegions <- NULL
+for(r in 1:nrow(regions)){
+  region <- regions[r,]
+  inregion <- which(region["Chr"] == markers[,"Chr"] & region["Start"]-2500000 < markers[,"Location"] & region["End"]+2500000  > markers[,"Location"])
+  markersInRegions <- c(markersInRegions, paste(unlist(markers[inregion,"markerID"]),collapse=", "))
+}
+
+write.table(cbind(regions,markersInRegions), file="Analysis/BFMI861-S1andBFMI860-12vsALL_MarkersInRegions.txt", sep="\t", row.names=FALSE)
+
 query.regions <- paste(regions[,"Chr"],regions[,"Start"],regions[,"End"], sep=":")                                  # Regions encoded for biomart
 
 library(biomaRt)

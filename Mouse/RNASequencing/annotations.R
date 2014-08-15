@@ -67,7 +67,7 @@ pval <- apply(cbind(LBFMI,LB6N),1,function(x){ return(t.test(x[1:2], x[3:4])$p.v
 LP <- cbind(LBFMI, LB6N, apply(LBFMI, 1, mean), apply(LB6N, 1, mean), apply(LBFMI, 1, mean) / apply(LB6N, 1, mean), pval)
 colnames(LP)[5:8] <- c("Mean BFMI860", "Mean B6N", "Ratio", "tTest")
 
-updatedData <- cbind(AnnotatedData[,c("g", "mgi_id", "symbol","chr", "start_position", "end_position", "strand", "biotype", "mgi_description")], QF1, LF1, LP)
+updatedData <- cbind(AnnotatedData[,c("g", "mgi_id", "symbol","chromosome_name", "start_position", "end_position", "strand", "biotype", "mgi_description")], QF1, LF1, LP)
 colnames(updatedData)[1] <- "ensembl_gene_id"
 
 biomartmissing <- which(is.na(updatedData[,"mgi_description"]))

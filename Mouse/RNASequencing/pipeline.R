@@ -15,7 +15,7 @@ referenceName <- "Mus_musculus.GRCm38.74.dna"
 ### Trimmomatic: Remove adapters and trim reads based on quality scores (1 to 2 hours) ###
 logfile       <- paste0(fileBase,"log.txt")
 trimmomatic   <- "/opt/Trimmomatic-0.32/"
-gatk          <- "/opt/GenomeAnalysisTK-2.7-2/GenomeAnalysisTK.jar"
+gatk          <- "/opt/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar"
 
 #cat("", file=logfile)     # Clear the logfile
 

@@ -19,7 +19,7 @@ mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", forma
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 exonsByGene   <- exonsBy(mouse, by = "gene")
 infiles       <- list.files("Analysis", pattern="recalibrated.bam$", full=TRUE)
-bamfiles      <- BamFileList(infiles, yieldSize = 250000)
+bamfiles      <- BamFileList(infiles, yieldSize = 25000)
 se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
 head(assay(se))

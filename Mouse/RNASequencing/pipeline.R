@@ -68,7 +68,7 @@ cat(system(command, intern=TRUE), file=paste0(fileBase,"stats.txt"), sep="\n")
 ### Indel Realign
 outputSNPS    <- "output.snp.intervals"
 outputSIBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.bam")
-knownindels   <- "genomes/mgp.v3.indels.rsIDdbSNPv137.vcf"                              # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
+knownindels   <- paste0(referenceDir, "/mgp.v3.indels.rsIDdbSNPv137.vcf")                              # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
 if(!file.exists(outputSNPS)){
   command <- paste0("java -Xmx4g -jar ", gatk, " -nt 4 -T RealignerTargetCreator -R ", reference, " -known ", knownindels, " -o ", outputSNPS, " -U ALLOW_N_CIGAR_READS")
   cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK RealignerTargetCreator, only need to be done because the knownSNPlist does not change
@@ -77,7 +77,7 @@ command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")     # Call the GATK IndelRealigner
 
 ### Base Recalibration
-knownsnps     <- "genomes/mgp.v3.snps.rsIDdbSNPv137.vcf"                                # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
+knownsnps     <- paste0(referenceDir, "/mgp.v3.snps.rsIDdbSNPv137.vcf")                                # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
 covfile1      <- paste0(fileBase, "1.covariates")
 covfile2      <- paste0(fileBase, "2.covariates")
 plotfile      <- paste0(fileBase, "recalibration.pdf")

@@ -10,7 +10,7 @@ library("GenomicAlignments")
 library("GenomicFeatures")
 library("Rsamtools")
 
-setwd("E:/Mouse/RNA/Sequencing")
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 chrominfo <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
 
 sampleIDs <- read.table("FASTQ/sampleIDs.txt",sep="\t", header=TRUE)

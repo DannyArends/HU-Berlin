@@ -22,8 +22,8 @@ for(chr in chromosomes){
 }
 
 ### Download the known INDELS and SNPs
-system("wget -P genomes ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.indels.rsIDdbSNPv137.vcf.gz")
-system("wget -P genomes ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.snps.rsIDdbSNPv137.vcf.gz")
+system(paste0("wget -P ", referenceDir, " ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.indels.rsIDdbSNPv137.vcf.gz"))
+system(paste0("wget -P ", referenceDir, " ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.snps.rsIDdbSNPv137.vcf.gz"))
 
 ########### PRE-PROCESSING THE REFERENCE ###########
 

@@ -4,8 +4,11 @@
 # last modified Aug, 2014
 # first written Aug, 2014
 
-# Download GTF file from: ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/
+# Install needed packages form bioconductor.org
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("GenomicAlignments", "GenomicFeatures", "Rsamtools"))
 
+# Download GTF file from: ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/
 library("GenomicAlignments")
 library("GenomicFeatures")
 library("Rsamtools")

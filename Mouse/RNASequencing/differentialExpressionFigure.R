@@ -17,7 +17,7 @@ RPKM <- read.table("BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses
 
 mlength <- max(chrInfo[,"Length"])
 
-png("MaternalOrigin.png", width=2000,height=1000)
+png("MaternalOrigin.png", width = 2000, height = 1000)
   op <- par(cex = 2.5)
   plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="Dominant maternal origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 

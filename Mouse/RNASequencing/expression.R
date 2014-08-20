@@ -10,16 +10,15 @@ library("GenomicAlignments")
 library("GenomicFeatures")
 library("Rsamtools")
 
-setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
+#setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 chrominfo <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
-
 sampleIDs <- read.table("FASTQ/sampleIDs.txt",sep="\t", header=TRUE)
 
 mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 exonsByGene   <- exonsBy(mouse, by = "gene")
 infiles       <- list.files("Analysis", pattern="recalibrated.bam$", full=TRUE)
-bamfiles      <- BamFileList(infiles, yieldSize = 25000)
+bamfiles      <- BamFileList(infiles, yieldSize = 2500000)
 se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
 head(assay(se))
@@ -44,6 +43,8 @@ corenames <- lapply(strsplit(corenames,"_"),"[",1)
 colnames(RPKM) <- corenames
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
+write.table(RPKM, file="RPKM.txt", sep="\t", row.names=FALSE))
+
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC
 cat("MPI called expressions for", nrow(RPKM_MPI), "genes\n")
 RPKM_MPI <- RPKM_MPI[, unlist(lapply(colnames(RPKM), grep, colnames(RPKM_MPI)))]
@@ -51,8 +52,8 @@ RPKM_MPI <- RPKM_MPI[, unlist(lapply(colnames(RPKM), grep, colnames(RPKM_MPI)))]
 RPKM_MPI <- RPKM_MPI[which(rownames(RPKM_MPI) %in% rownames(RPKM)),]
 RPKM_GAB <- RPKM[which(rownames(RPKM) %in% rownames(RPKM_MPI)),]
 
-op <- par(mfrow=c(1,2))
-plot(RPKM_GAB[,1], RPKM_MPI[,1], main= colnames(RPKM_GAB)[1], log = "xy")
-plot(RPKM_GAB[,2], RPKM_MPI[,2], main= colnames(RPKM_GAB)[2], log = "xy")
-
-
+png("comparison_RPKM_GAB_MPI.png")
+  op <- par(mfrow=c(1,2))
+  plot(RPKM_GAB[,1], RPKM_MPI[,1], main= colnames(RPKM_GAB)[1], log = "xy")
+  plot(RPKM_GAB[,2], RPKM_MPI[,2], main= colnames(RPKM_GAB)[2], log = "xy")
+dev.off()

@@ -89,12 +89,12 @@ for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
 
 library(topGO)
 
-geneID2GO <- readMappings(file = "geneid2go.map")
-GOdata <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList), annot = annFUN.gene2GO, gene2GO = geneID2GO)
-resultFisher    <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-allRes <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+geneID2GO     <- readMappings(file = "geneid2go.map")
+GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList), annot = annFUN.gene2GO, gene2GO = geneID2GO)
+resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 
-pdf("test.pdf")
+pdf("GeneOntologyTree.pdf")
   showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
 dev.off()
 

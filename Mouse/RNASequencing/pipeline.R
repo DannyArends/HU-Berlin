@@ -9,6 +9,7 @@ fileBase      <- as.character(cmdlineargs[1])
 
 referenceDir  <- "genomes"
 referenceName <- "Mus_musculus.GRCm38.74.dna"
+reference     <- paste0(referenceDir, "/", referenceName, ".fasta")
 
 ########### ANALYSIS ###########
 

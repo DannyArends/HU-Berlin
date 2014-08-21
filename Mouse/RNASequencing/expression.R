@@ -20,8 +20,8 @@ sampleIDs <- read.table("FASTQ/sampleIDs.txt",sep="\t", header=TRUE)
 mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 exonsByGene   <- exonsBy(mouse, by = "gene")
-infiles       <- list.files("Analysis", pattern="recalibrated.bam$", full=TRUE)
-bamfiles      <- BamFileList(infiles, yieldSize = 2500000)
+infiles       <- list.files(pattern="recalibrated.bam$", full=TRUE)
+bamfiles      <- BamFileList(infiles, yieldSize = 1000000, asMates=TRUE)
 se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
 head(assay(se))
@@ -46,7 +46,7 @@ corenames <- lapply(strsplit(corenames,"_"),"[",1)
 colnames(RPKM) <- corenames
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
-write.table(RPKM, file="RPKM.txt", sep="\t", row.names=FALSE))
+write.table(RPKM, file="RPKM.txt", sep="\t", row.names=FALSE)
 
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC
 cat("MPI called expressions for", nrow(RPKM_MPI), "genes\n")

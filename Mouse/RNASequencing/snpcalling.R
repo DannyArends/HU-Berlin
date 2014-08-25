@@ -16,18 +16,15 @@ samples  <- read.table("FASTQ/sampledescription.txt", sep="\t", header=TRUE)
 bamfiles <- dir()[grep("trimmed.aligned.sorted.realigned.recalibrated.bam", dir())]
 
 for(bamfile in bamfiles[7]){
-  fileBase        <- strsplit(bamfile,"_")[[1]][1]
+  fileBase            <- strsplit(bamfile,"_")[[1]][1]
+  outputVCF           <- paste0(fileBase, ".snps.vcf")
+  outputVCFRECAL      <- paste0(fileBase, ".snps.filtered.vcf")
 
-  outputVCF       <- paste0(fileBase, ".snps.vcf")
-  outputVCFANN    <- paste0(fileBase, ".snps.annotated.vcf")
-  outputVCFRECAL  <- paste0(fileBase, ".snps.recalibrated.vcf")
-
-  settings        <- "-recoverDanglingHeads -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
-
-  settingFiltration  <- paste0("-window 35 -cluster 3 -filterName FS -filter \"FS > 30.0\" -filterName LowQual -filter \"QUAL < 40.0 || DP < 4\"")
+  settings            <- "-recoverDanglingHeads -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
+  settingFiltration   <- paste0("-window 35 -cluster 3 -filterName FS -filter \"FS > 30.0\" -filterName LowQual -filter \"QUAL < 30.0 || DP < 4\"")
 
   # Haplotype Caller              ( ~ 8 hours)
-  command <- paste0("java -Xmx4g -jar ", gatk, " -T HaplotypeCaller -R ", reference, " -I ", bamfile, "  --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF)
+  command <- paste0("java -Xmx4g -jar ", gatk, " -T HaplotypeCaller -R ", reference, " -I ", bamfile, " --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF)
   cat(command, "\n")   # Call the GATK Haplotype Caller
 
   # Variant Filtration           ( ~ 0.5 hours)

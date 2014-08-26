@@ -21,45 +21,39 @@ setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 B6Nm <- read.table("Analysis/5068_GAGTGG_L004_.snps.vcf", colClasses="character")
 B6Nf <- read.table("Analysis/5069_AGTCAA_L004_.snps.vcf", colClasses="character")
 
-namesB6Nf <- createNames(B6Nf) ; namesB6Nm <- createNames(B6Nm)
-
-B6N <- B6Nm[which(namesB6Nm %in% namesB6Nf),]
-colnames(B6N) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
+colnames(B6Nm) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
+colnames(B6Nf) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 
 BFMIm <- read.table("Analysis/4868_GCCAAT_L001_.snps.vcf", colClasses="character")
 BFMIf <- read.table("Analysis/5067_ATCACG_L004_.snps.vcf", colClasses="character")
 
-namesBFMIf <- createNames(BFMIf) ; namesBFMIm <- createNames(BFMIm)
+colnames(BFMIm) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
+colnames(BFMIf) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 
-BFMI <- BFMIm[which(namesBFMIm %in% namesBFMIf),]
-colnames(BFMI) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
-
-# maternal B6N
-
-matB6_1 <- read.table("Analysis/5070_CGATGT_L005_.snps.vcf", colClasses="character")
-matB6_2 <- read.table("Analysis/5071_CCGTCC_L005_.snps.vcf", colClasses="character")
-matB6_3 <- read.table("Analysis/5072_TAGCTT_L005_.snps.vcf", colClasses="character")
+matB6_1 <- read.table("Analysis/5070_CGATGT_L005_.snps.vcf", colClasses="character")        # maternal B6N
+matB6_2 <- read.table("Analysis/5071_CCGTCC_L005_.snps.vcf", colClasses="character")        # maternal B6N
+matB6_3 <- read.table("Analysis/5072_TAGCTT_L005_.snps.vcf", colClasses="character")        # maternal B6N
 
 namesmB6_1 <- createNames(matB6_1) ; namesmB6_2 <- createNames(matB6_2) ; namesmB6_3 <- createNames(matB6_3)
 matB6 <- matB6_1[which(namesmB6_1 %in% namesmB6_2 & namesmB6_1 %in% namesmB6_3),]
 colnames(matB6) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 
-# maternal BFMI
-
-matBFMI_1 <- read.table("Analysis/5073_TTAGGC_L006_.snps.vcf", colClasses="character")
-matBFMI_2 <- read.table("Analysis/5074_GATCAG_L006_.snps.vcf", colClasses="character")
-matBFMI_3 <- read.table("Analysis/5075_ATGTCA_L006_.snps.vcf", colClasses="character")
+matBFMI_1 <- read.table("Analysis/5073_TTAGGC_L006_.snps.vcf", colClasses="character")      # maternal BFMI
+matBFMI_2 <- read.table("Analysis/5074_GATCAG_L006_.snps.vcf", colClasses="character")      # maternal BFMI
+matBFMI_3 <- read.table("Analysis/5075_ATGTCA_L006_.snps.vcf", colClasses="character")      # maternal BFMI
 
 namesmBFMI_1 <- createNames(matBFMI_1) ; namesmBFMI_2 <- createNames(matBFMI_2) ; namesmBFMI_3 <- createNames(matBFMI_3)
 matBFMI <- matBFMI_1[which(namesmBFMI_1 %in% namesmBFMI_2 & namesmBFMI_1 %in% namesmBFMI_3),]
 colnames(matBFMI) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 
-rownames(B6N)   <- createNames(B6N)
-rownames(BFMI)   <- createNames(BFMI)
-rownames(matB6)   <- createNames(matB6)
-rownames(matBFMI) <- createNames(matBFMI)
+rownames(B6Nm)     <- createNames(B6Nm)
+rownames(B6Nf)     <- createNames(B6Nf)
+rownames(BFMIm)    <- createNames(BFMIm)
+rownames(BFMIf)    <- createNames(BFMIf)
+rownames(matB6)    <- createNames(matB6)
+rownames(matBFMI)  <- createNames(matBFMI)
 
-doAnalysis <- function(maternal, BFMI, B6N){
+doAnalysis <- function(maternal){
   mmatrix <- NULL
   for(snp in rownames(maternal)){
     if(maternal[snp,"FORMAT"] == "GT:AD:DP:GQ:PL"){
@@ -68,13 +62,13 @@ doAnalysis <- function(maternal, BFMI, B6N){
       if(totalReads > 10){                                                                                  # Minimum of 10 reads (combined for the alleles)
         alleleReads <- as.numeric(unlist(strsplit(unlist(values[[1]][2]),",")))
         if(length(alleleReads) == 2){                                                                       # Limit to bi-allelic SNPs
-          inBFMI  <- which(rownames(BFMI) ==  snp)
-          inB6N   <- which(rownames(B6N) ==  snp)
-          if(length(inBFMI) > 0 && length(inB6N) == 0){                                                     # SNP found in BFMI, not B6N
+          inBFMI  <- c(which(rownames(BFMIm) ==  snp), which(rownames(BFMIf) ==  snp))                      # SNP in BFMI males/females
+          inB6N   <- c(which(rownames(B6Nm) ==  snp), which(rownames(B6Nf) ==  snp))                        # SNP in B6N males/females
+          if(length(inBFMI) == 2 && length(inB6N) == 0){                                                    # SNP found in BFMI, not B6N
             cat(snp,": ", totalReads,"->", alleleReads/totalReads, "\n")
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], "BFMI", inBFMI, alleleReads/totalReads))
           }
-          if(length(inBFMI) == 0 && length(inB6N) > 0){                                                     # SNP found in B6N, not BFMI
+          if(length(inBFMI) == 0 && length(inB6N) == 2){                                                    # SNP found in B6N, not BFMI
             cat(snp,": ", totalReads,"->", alleleReads/totalReads, "\n")
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], "B6N", inB6N, alleleReads/totalReads))
           }
@@ -90,8 +84,8 @@ doAnalysis <- function(maternal, BFMI, B6N){
   return(mmatrix)
 }
 
-matB6Nsnps <- doAnalysis(matB6, BFMI, B6N)
-matBFMIsnps <- doAnalysis(matBFMI, BFMI, B6N)
+matB6Nsnps <- doAnalysis(matB6)
+matBFMIsnps <- doAnalysis(matBFMI)
 
 plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="SNP origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 cnt <- 1
@@ -132,3 +126,23 @@ points(ma(mBFMI, 25), t='l',lwd=2)
 mB6N <- matB6Nsnps[matB6Nsnps[,"Chr"]==chr,"Alternative"]
 plot(mB6N, col=as.numeric(as.factor(matB6Nsnps[,"Origin"])), pch=19,cex=1)
 points(ma(mB6N, 25), t='l',lwd=2)
+
+# Exon level analysis
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+
+GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")
+EXONS <- GTF[which(GTF[,3]=="exon"),]
+GENES <- unlist(lapply(strsplit(as.character(lapply(strsplit(as.character(EXONS[,9]),";"), "[", 1))," "),"[",2))
+
+RESULTS <- vector("list", length(unique(GENES)))
+names(RESULTS) <- unique(GENES)
+
+x <- 1
+for(gene in unique(GENES)){
+   exonids <- which(GENES == gene)
+   RESULTS[[gene]] <- vector("list", length(exonids)+1)
+   RESULTS[[gene]][[1]] <- EXONS[exonids, c(1,4,5)]
+   colnames(RESULTS[[gene]][[1]]) <- c("Chr","Start","Stop")
+   cat("Done ",x,"/", length(unique(GENES)),"->", gene, "\n")
+   x <- x + 1
+}

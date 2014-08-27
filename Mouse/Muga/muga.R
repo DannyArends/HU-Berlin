@@ -54,6 +54,7 @@ map <- NULL
 for(chr in chromosomes){ map <- rbind(map, imap[imap$Chr == chr,]); }                 # Correct the chromosome ordering
 map$Mb_NCBI38 <- map$Mb_NCBI38 * 1000000                                              # We use basepairs, not megabases
 
+### Visualize the locations of the 'good' markers
 plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="MegaMuga markers", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 cnt <- 1
 aa <- apply(chrInfo,1,function(x){
@@ -65,3 +66,9 @@ aa <- apply(map, 1,function(x){
   yloc <- match(as.character(x["Chr"]), chromosomes); xloc <- as.numeric(x["Mb_NCBI38"])
   points(x=xloc, y=yloc + 0.1, pch="|", cex=0.9)
 })
+
+# TODO: Sort out duplicate markers
+# TODO: Create a cross object for R/qtl
+# TODO: Get the phenotype data and match it to the cross
+# TODO: Create relationship trees based on the genotype data
+# TODO: Phase the genotypes based on the parental strains

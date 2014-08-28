@@ -67,6 +67,9 @@ aa <- apply(map, 1,function(x){
   points(x=xloc, y=yloc + 0.1, pch="|", cex=0.9)
 })
 
+write.table(map, "Analysis/map.txt", sep="\t")
+write.table(genotypes, "Analysis/genotypes.txt", sep="\t")
+
 # TODO: Sort out duplicate markers
 # TODO: Create a cross object for R/qtl
 # TODO: Get the phenotype data and match it to the cross

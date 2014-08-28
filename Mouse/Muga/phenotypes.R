@@ -26,3 +26,7 @@ map[is.na(map[,"cM"]),"cM"] <- 1
 write.table(rbind(cbind(Chr = "", cM = "", t(phenotypes[F2,phenos])), cbind(map[,c("Chr","cM")],genotypes[,F2])), "cross.csvr",sep=",", quote=FALSE, col.names=FALSE)
 library(qtl)
 cross <- read.cross("csvr", file="cross.csvr")
+
+Xchr <- genotypes[rownames(map)[which(map$Chr == "X")], F2]                                 # Get the X-chromosomes for the F2 individuals
+heterozygous <- apply(Xchr, 2, function(x){ sum(x == "H",na.rm = TRUE) } ) / nrow(Xchr)     # Calculate the amount of heterozygous markers on the X-chromosomes
+plot(heterozygous)                                                                          # Plot the amount of heterozygous per individual 

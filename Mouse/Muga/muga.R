@@ -54,6 +54,8 @@ map <- NULL
 for(chr in chromosomes){ map <- rbind(map, imap[imap$Chr == chr,]); }                 # Correct the chromosome ordering
 map$Mb_NCBI38 <- map$Mb_NCBI38 * 1000000                                              # We use basepairs, not megabases
 
+genotypes <- genotypes[rownames(map),]                                                # Not all markers have a valid chromosome position, so take only the genotypes that survived
+
 ### Visualize the locations of the 'good' markers
 plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="MegaMuga markers", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 cnt <- 1
@@ -63,9 +65,14 @@ aa <- apply(chrInfo,1,function(x){
 })
 
 aa <- apply(map, 1,function(x){
-  yloc <- match(as.character(x["Chr"]), chromosomes); xloc <- as.numeric(x["Mb_NCBI38"])
+  yloc <- match(as.character(x["Chr"]), chromosomes); 
+  if(as.character(x["Chr"]) == "X"){ cat(as.numeric(x["Mb_NCBI38"]),"\n"); }
+  xloc <- as.numeric(x["Mb_NCBI38"])
   points(x=xloc, y=yloc + 0.1, pch="|", cex=0.9)
 })
+
+axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
+axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 
 write.table(map, "Analysis/map.txt", sep="\t")
 write.table(genotypes, "Analysis/genotypes.txt", sep="\t")

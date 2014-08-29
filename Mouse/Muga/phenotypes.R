@@ -31,6 +31,8 @@ Xchr <- genotypes[rownames(map)[which(map$Chr == "X")], F2]                     
 heterozygous <- apply(Xchr, 2, function(x){ sum(x == "H",na.rm = TRUE) } ) / nrow(Xchr)     # Calculate the amount of heterozygous markers on the X-chromosomes
 plot(heterozygous)                                                                          # Plot the amount of heterozygous per individual 
 
+# TODO: Scan the phenotypes using the correct models
+# TODO: Add covariates, and interactions
 res42 <- scanone(cross, pheno.col="mri42d_fat", model="np")
 res56 <- scanone(cross, pheno.col="mri56d_fat", model="np")
 res70 <- scanone(cross, pheno.col="mri70d_fat", model="np")

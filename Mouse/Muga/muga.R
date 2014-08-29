@@ -78,7 +78,7 @@ write.table(map, "Analysis/map.txt", sep="\t")
 write.table(genotypes, "Analysis/genotypes.txt", sep="\t")
 
 # TODO: Sort out duplicate markers
-# TODO: Create a cross object for R/qtl
-# TODO: Get the phenotype data and match it to the cross
 # TODO: Create relationship trees based on the genotype data
-# TODO: Phase the genotypes based on the parental strains
+# TODO: Phase the genotypes based on the parental strain information
+# TODO: Look for differences between AB and BA, heterozygous animals
+

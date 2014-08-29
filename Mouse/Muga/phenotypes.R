@@ -30,3 +30,7 @@ cross <- read.cross("csvr", file="cross.csvr")
 Xchr <- genotypes[rownames(map)[which(map$Chr == "X")], F2]                                 # Get the X-chromosomes for the F2 individuals
 heterozygous <- apply(Xchr, 2, function(x){ sum(x == "H",na.rm = TRUE) } ) / nrow(Xchr)     # Calculate the amount of heterozygous markers on the X-chromosomes
 plot(heterozygous)                                                                          # Plot the amount of heterozygous per individual 
+
+res42 <- scanone(cross, pheno.col="mri42d_fat", model="np")
+res56 <- scanone(cross, pheno.col="mri56d_fat", model="np")
+res70 <- scanone(cross, pheno.col="mri70d_fat", model="np")

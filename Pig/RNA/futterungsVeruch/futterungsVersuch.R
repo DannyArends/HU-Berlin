@@ -14,13 +14,17 @@ source("functions.R")     # Source the functions
 #biocLite("biomaRt")
 #install.packages("xlsx")
 #install.packages("gplots")
+#install.packages("extrafont")     ## Extra packages to be able to use Arial in plots
 
+library("extrafont")
 library("parallel")
 library("DESeq2")
 library("vsn")
 library("xlsx")
 library("biomaRt")
 library("gplots")
+
+font_import()
 
 setwd("H:/Expressionsanalyse/results_pig_Ensembl73") # Location of input files
 
@@ -231,10 +235,6 @@ dev.off()
 genenames <- c("ENSSSCG00000015781", "ENSSSCG00000014727", "HBB - ENSSSCT00000036536", "CLU - ENSSSCT00000036649", "HBB - ENSSSCT00000016076", "MZB1", "LAG3", "PTPRCAP", "IGKV-3", "IGKV-5",
   "CCL19", "ENSSSCG00000029057", "ENSSSCG00000020750", "IGKC", "IGKV-11", "IGKJ2", "IGKV-7", "IGKV-6", "ENSSSCG00000008205", "IGLV-5", "CLU - ENSSSCT00000010601", "ENSSSCG00000030271",
   "HEXDC", "IGJ - ENSSSCT00000033582", "IGJ - ENSSSCT00000009792", "IGLC - ENSSSCT00000010999", "IGLC - ENSSSCT00000011005", "ENSSSCG00000010077", "IGLV-8", "IGLV-4", "IGLV-7")
-
-install.packages("extrafont")     ## Extra packages to be able to use Arial in plots
-library("extrafont")
-font_import()
 
 loadfonts(device = "postscript") ## for postscript()
 

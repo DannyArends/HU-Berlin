@@ -227,8 +227,22 @@ postscript(file="UpRegulated_4_tissues_NOTREE.eps", width=10, height=15)
   legend("topleft",title="FoldChange", c("High","Medium","Low","Lowest"), col=c(gray.colors(4)),lwd=c(10))
 dev.off()
 
-postscript(file="DownRegulated_4_tissues.eps", width=10, height=10)
-  heatmap(scRatios[c(down),], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4))
+
+genenames <- c("ENSSSCG00000015781", "ENSSSCG00000014727", "HBB - ENSSSCT00000036536", "CLU - ENSSSCT00000036649", "HBB - ENSSSCT00000016076", "MZB1", "LAG3", "PTPRCAP", "IGKV-3", "IGKV-5",
+  "CCL19", "ENSSSCG00000029057", "ENSSSCG00000020750", "IGKC", "IGKV-11", "IGKJ2", "IGKV-7", "IGKV-6", "ENSSSCG00000008205", "IGLV-5", "CLU - ENSSSCT00000010601", "ENSSSCG00000030271",
+  "HEXDC", "IGJ - ENSSSCT00000033582", "IGJ - ENSSSCT00000009792", "IGLC - ENSSSCT00000010999", "IGLC - ENSSSCT00000011005", "ENSSSCG00000010077", "IGLV-8", "IGLV-4", "IGLV-7")
+
+install.packages("extrafont")     ## Extra packages to be able to use Arial in plots
+library("extrafont")
+font_import()
+
+loadfonts(device = "postscript") ## for postscript()
+
+dendro <- heatmap(scRatios[c(down),], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Rowv=NA, keep.dendro = TRUE)
+
+postscript(file="DownRegulated_4_tissues.jenny.eps", width=9, height=10, family = "Arial", paper = "special", horizontal=FALSE)
+  op <- par(omi = c(0,0,0,2))
+  heatmap(scRatios[c(down),][dendro$rowInd,], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Colv=NA,Rowv=NA)
   legend("topleft",title="FoldChange", c("High","Medium","Low","Lowest"), col=c(gray.colors(4)),lwd=c(10))
 dev.off()
 
@@ -268,4 +282,25 @@ TvsC <- t(apply(TvsC,1,function(x){ return(x/max(abs(x))) }))
 
 postscript(file="Treatment_vs_Control.eps", width= 10, height = 10)
   heatmap(TvsC, scale="none", Rowv=NA, Colv=NA, margins=c(15,10), col=c(gray.colors(10)), main="Treatment vs Control")
+dev.off()
+
+Jennymatrix <- rbind(c("IGLC", 0.86, 0.61438169, 1.05031759),
+c("IGLV-4", 0.39, 3.76900462, 0.25368569),
+c("IGLV-12", 1.08100798, 0.90863049, 1.10661884),
+c("IGKC", 0.98209508, 0.69016745, 1.24069134),
+c("IL4I1", 0.83520808, 0.83520808, 0.83643003),
+c("PTPRCAP", 0.54646822, 1.50614902, 1.22101453),
+c("CCL17", 0.94367609, 1.06694952, 1.62117059))
+
+colfunc <- colorRampPalette(c("green", rgb(0.9, 0.9, 0.9), "red"))
+
+postscript(file="MyTry.jenny.eps", width=11, height=10, family = "Arial", horizontal=FALSE)
+
+  image(t(apply(Jennymatrix[,2:4],2,as.numeric)), col=colfunc(7), breaks= c(0, 0.25, 0.5,0.9,1.1, 2, 8, 100), xaxt='n', yaxt='n')
+  box()
+  axis(1, at=c(0, 0.5, 1), c("Day 14","Day 35", "Day 56"))
+  axis(2, at=seq(0, 1, 1/(nrow(Jennymatrix)-1)), Jennymatrix[,1],las=2)
+  grid(3,7,lty=1,col="white")
+  legend("topleft", title="Ratios", c("0.25 - 0.50", "0.50 - 0.90","0.90 - 1.10","1.10 - 2.00", "2.00 - 8.00"), fill=colfunc(7)[-c(1,7)])
+
 dev.off()

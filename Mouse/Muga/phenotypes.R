@@ -23,6 +23,8 @@ sum(length(F2), length(F1), length(P))
 
 
 plot(apply(genotypes[which(map[,"Chr"] == "X"), F2], 2, function(x){length(which(x == "H"))}))        # Plot the number of heterozygous loci on the X chromosome
+which(apply(genotypes[which(map[,"Chr"] == "X"), F2], 2, function(x){length(which(x == "H"))}) > 20)  # Which animals are more heterozygous then expected
+# 6661524 6661965 6662141 6662142 6662143 6662144
 
 map[is.na(map[,"cM"]), "cM"] <- 1                                                                     # make sure there is always a cM position
 
@@ -36,7 +38,7 @@ plot(heterozygous)                                                              
 
 # TODO: Scan the phenotypes using the correct models
 # TODO: Add covariates, and interactions
-res42 <- scanone(cross, pheno.col="mri42d_fat", model="np")
+res42 <- scanone(cross, pheno.col="mri42d_fat", addcovar="WG2" model="np")
 res56 <- scanone(cross, pheno.col="mri56d_fat", model="np")
 res70 <- scanone(cross, pheno.col="mri70d_fat", model="np")
 plot(res42)

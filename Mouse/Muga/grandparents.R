@@ -80,6 +80,7 @@ for(individual in F2){
 
 colnames(phasedgenotypes) <- F2
 rownames(phasedgenotypes) <- rownames(genotypes)
-phasedgenotypes <- t(phasedgenotypes)
-
 write.table(phasedgenotypes, "Analysis/genotypesPhasedGP.txt", sep="\t")
+
+phasedSubSet <- phasedgenotypes[which(apply(phasedgenotypes,1,function(x){sum(x!="")}) > 50),]
+write.table(phasedSubSet, "Analysis/genotypesPhasedGPSubSet.txt", sep="\t")

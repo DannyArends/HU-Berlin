@@ -79,6 +79,5 @@ write.table(genotypes, "Analysis/genotypes.txt", sep="\t")
 
 # TODO: Sort out duplicate markers
 # TODO: Create relationship trees based on the genotype data
-# TODO: Phase the genotypes based on the parental strain information
 # TODO: Look for differences between AB and BA, heterozygous animals
 

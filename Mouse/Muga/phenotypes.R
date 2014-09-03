@@ -21,6 +21,11 @@ phenos <- c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1"
 
 sum(length(F2), length(F1), length(P))
 
+
+idx <- which(map[,"Chr"] == "X")
+apply(genotypes[idx,F2], 2, function(x){length(which(x == "H"))})
+
+
 map[is.na(map[,"cM"]),"cM"] <- 1
 
 write.table(rbind(cbind(Chr = "", cM = "", t(phenotypes[F2,phenos])), cbind(map[,c("Chr","cM")],genotypes[,F2])), "cross.csvr",sep=",", quote=FALSE, col.names=FALSE)
@@ -36,3 +41,4 @@ plot(heterozygous)                                                              
 res42 <- scanone(cross, pheno.col="mri42d_fat", model="np")
 res56 <- scanone(cross, pheno.col="mri56d_fat", model="np")
 res70 <- scanone(cross, pheno.col="mri70d_fat", model="np")
+plot(res42)

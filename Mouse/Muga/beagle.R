@@ -98,7 +98,7 @@ for(m in 1:nrow(genotypes)){
     phasedGeno[m,ind] <- toSNPgenotype(genotypes[m, ind], alleles[m,],"")
   }
 }
-for(ind in F1){
+for(ind in c(F1,F2)){
   phaseddata <- read.table(gzfile(paste0("Analysis/", ind,".",ind,".bgl.phased.gz")), header=TRUE, colClasses="character", row.names=2)
   phasedGeno[rownames(phaseddata), ind] <-  apply(phaseddata[,6:7],1,function(x){paste0(x[1],x[2]); })
 }

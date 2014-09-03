@@ -74,12 +74,12 @@ F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
 
 phasedgenotypes <- NULL
 for(individual in F2){
-  phasedgenotypes <- rbind(genotypes, phase(genotypes, parentinfo, individual, FALSE))
+  phasedgenotypes <- cbind(phasedgenotypes, phase(genotypes, parentinfo, individual, FALSE))
   cat("Done individual", individual, "\n")
 }
 
-rownames(phasedgenotypes) <- F2
-colnames(phasedgenotypes) <- rownames(genotypes)
+colnames(phasedgenotypes) <- F2
+rownames(phasedgenotypes) <- rownames(genotypes)
 phasedgenotypes <- t(phasedgenotypes)
 
 write.table(phasedgenotypes, "Analysis/genotypesPhasedGP.txt", sep="\t")

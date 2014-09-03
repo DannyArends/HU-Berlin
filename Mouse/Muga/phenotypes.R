@@ -22,11 +22,9 @@ phenos <- c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1"
 sum(length(F2), length(F1), length(P))
 
 
-idx <- which(map[,"Chr"] == "X")
-apply(genotypes[idx,F2], 2, function(x){length(which(x == "H"))})
+plot(apply(genotypes[which(map[,"Chr"] == "X"), F2], 2, function(x){length(which(x == "H"))}))        # Plot the number of heterozygous loci on the X chromosome
 
-
-map[is.na(map[,"cM"]),"cM"] <- 1
+map[is.na(map[,"cM"]), "cM"] <- 1                                                                     # make sure there is always a cM position
 
 write.table(rbind(cbind(Chr = "", cM = "", t(phenotypes[F2,phenos])), cbind(map[,c("Chr","cM")],genotypes[,F2])), "cross.csvr",sep=",", quote=FALSE, col.names=FALSE)
 library(qtl)

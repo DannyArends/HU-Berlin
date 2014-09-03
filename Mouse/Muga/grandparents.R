@@ -10,7 +10,7 @@ phenotypedata <- read.csv("20140801_AIL1_666.txt", sep="\t", header=TRUE)
 parentinfo <- phenotypedata[,c("Vater", "Mutter")]
 
 setwd("E:/Mouse/DNA/MegaMuga/")
-genotypes <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE, colClasses="character")         # Genotypes measured on the MUGA array
+genotypes <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE, colClasses="character")          # Genotypes measured on the MUGA array
 
 missingPerInd <- apply(genotypes, 2, function(x){ sum(is.na(x)) / length(x) * 100 })                            # Missing amount of genotype data per individual
 genotypes <- genotypes[,-which(missingPerInd==100)]                                                             # Remove individuals which have NO genotypes
@@ -20,7 +20,7 @@ parentinfo <- parentinfo[which(rownames(parentinfo) %in% colnames(genotypes)),]
 individual <- "6661051"
 
 hasParents <- function(parentinfo, individual = "6661051"){
-  if(any(parentinfo[individual, ] == 0)){ return(FALSE) }                                   # We do not have parents in the set
+  if(any(parentinfo[individual, ] == 0)){ return(FALSE) }                                                       # We do not have parents in the set
   return(TRUE)
 }
 
@@ -32,7 +32,7 @@ isGrandChild <- function(parentinfo, individual = "6661051"){
   return(FALSE)
 }
 
-getGP <- function(parentinfo, individual = "6661051", side="Vater"){
+getGP <- function(parentinfo, individual = "6661051", side="Vater"){                                            # Get the grandparents *and parent as rowname*
   if(!isGrandChild(parentinfo, individual)) stop(paste0("individual", individual, "has no grandparents"))
   return(parentinfo[as.character(parentinfo[individual, side]),])
 }
@@ -77,3 +77,9 @@ for(individual in F2){
   phasedgenotypes <- rbind(genotypes, phase(genotypes, parentinfo, individual, FALSE))
   cat("Done individual", individual, "\n")
 }
+
+rownames(phasedgenotypes) <- F2
+colnames(phasedgenotypes) <- rownames(genotypes)
+phasedgenotypes <- t(phasedgenotypes)
+
+write.table(phasedgenotypes, "Analysis/genotypesPhasedGP.txt", sep="\t")

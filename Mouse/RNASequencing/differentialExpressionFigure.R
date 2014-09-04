@@ -52,19 +52,14 @@ mlength <- max(chrInfo[,"Length"])
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
 cat("Maternal B6: B6N:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "BFMI"),"\n")
 
-# Continue with the Maternal BFMI
-which(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N")
+RPKM[,"A.D_BFMI860.12xB6N"]
+RPKM[,"A.D_B6NxBFMI860.12"]
 
-selected <- RPKM[which(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"), "ensembl_gene_id"]
 allgenes <- RPKM[, "ensembl_gene_id"]
 
-geneList <- rep(0, length(allgenes))
-names(geneList) <- allgenes
-geneList[selected] <- 1
-
 if(!file.exists("GOannotation.txt")){
-  library(biomaRt)                                                                                                    # Biomart
-  bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                                            # Biomart for mouse genes
+  library(biomaRt)                                                                                      # Biomart
+  bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                              # Biomart for mouse genes
   biomartResults <- NULL
   for(x in seq(1, length(allgenes), 1000)){                                                             # Do 1000 per time, just to please biomaRt
     xend <- min((x + 1000),length(allgenes))                                                            # Don't walk passed the end of the array
@@ -87,6 +82,12 @@ for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
   if(length(goids) > 0) cat(ensid,"\t", paste(goids, collapse=", "),"\n", file="geneid2go.map", append=TRUE, sep="")
 }
 
+# Do Gene ontology on the Maternal BFMI
+selected <- RPKM[which(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"), "ensembl_gene_id"]
+geneList <- rep(0, length(allgenes))                                                                # Create a gene list
+names(geneList) <- allgenes                                                                         # Add the names
+geneList[selected] <- 1                                                                             # Set the maternal BFMI genes to 1
+
 library(topGO)
 
 geneID2GO     <- readMappings(file = "geneid2go.map")
@@ -97,4 +98,3 @@ allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "class
 pdf("GeneOntologyTree.pdf")
   showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
 dev.off()
-

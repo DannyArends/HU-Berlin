@@ -52,8 +52,11 @@ mlength <- max(chrInfo[,"Length"])
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
 cat("Maternal B6: B6N:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "BFMI"),"\n")
 
-RPKM[,"A.D_BFMI860.12xB6N"]
-RPKM[,"A.D_B6NxBFMI860.12"]
+switched <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){
+  if(x[1] == "BFMI" && x[2] == "B6N") return(1)
+  if(x[1] == "B6N" && x[2] == "BFMI") return(1)
+  return(0)
+})
 
 allgenes <- RPKM[, "ensembl_gene_id"]
 
@@ -83,7 +86,7 @@ for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
 }
 
 # Do Gene ontology on the Maternal BFMI
-selected <- RPKM[which(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"), "ensembl_gene_id"]
+selected <- RPKM[which(switched == 1), "ensembl_gene_id"]
 geneList <- rep(0, length(allgenes))                                                                # Create a gene list
 names(geneList) <- allgenes                                                                         # Add the names
 geneList[selected] <- 1                                                                             # Set the maternal BFMI genes to 1
@@ -95,6 +98,6 @@ GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList
 resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 
-pdf("GeneOntologyTree.pdf")
+#pdf("GeneOntologyTree.pdf")
   showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-dev.off()
+#dev.off()

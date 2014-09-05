@@ -42,9 +42,8 @@ command     <- paste0(command, "samtools view -Sb - | ")
 ### Sort the BAM (1 hour) ###
 # -@ : Number of CPU cores to use
 # -m : Memory per CPU core
-filePrefix   <- fileBase
 outputSBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.bam")
-command      <- paste0(command, "samtools sort -@ 4 -m 2G -o - ", filePrefix, " > ", outputSBAM)
+command      <- paste0(command, "samtools sort -@ 4 -m 2G -o - ", fileBase, " > ", outputSBAM)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
 ### Add a read group ###
@@ -98,8 +97,7 @@ cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call 
 command <- paste0("java -Xmx4g -jar ", gatk, " -T AnalyzeCovariates -R ", reference, " -before ", covfile1, " -after ", covfile2, " -U ALLOW_N_CIGAR_READS -plots ", plotfile)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK AnalyzeCovariates
 
-### SNP calling -> VCF for NoverlSNPer
-# See http://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_sting_gatk_walkers_haplotypecaller_HaplotypeCaller.html
+### SNP calling -> VCF for NoverlSNPer, see http://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_sting_gatk_walkers_haplotypecaller_HaplotypeCaller.html
 outputVCF    <- paste0(fileBase, ".snps.vcf")
 settings     <- "-dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
 

@@ -5,6 +5,7 @@
 # first written Aug, 2014
 #
 # Create a figure for the RNA sequencing data (pre-processed by MDC)
+# TODO: Use RPKM from our own analysis
 
 chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 
@@ -19,34 +20,38 @@ mlength <- max(chrInfo[,"Length"])
 
 #png("MaternalOrigin.png", width = 2000, height = 1000)
   #op <- par(cex = 2.5)
-  plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="Dominant maternal origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+  plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Dominant expression compared to the original strains", yaxt="n", xlab="Chromosome", ylab="Length (Mb)", xaxt="n")
 
-  aa <- apply(RPKM, 1,function(x){
-    yloc <- match(as.character(x["chromosome_name"]), chromosomes); xloc <- as.numeric(x["start_position"])
-    #ttest <- as.numeric(x["tTest.1"])
-    #if(!is.na(ttest) && ttest < 0.1){
-      col <- "white"
-      if(x["A.D_BFMI860.12xB6N"] == "B6N") col <- "gray"
-      if(x["A.D_BFMI860.12xB6N"] == "BFMI") col <- "orange"
-      if(x["A.D_BFMI860.12xB6N"] == "ADDITIVE") col <- "white"
-      if(col != "white") points(x=xloc, y=yloc + 0.1, pch=15, col=col,cex=0.9)
-      col <- "white"
-      if(x["A.D_B6NxBFMI860.12"] == "B6N") col <- "gray"
-      if(x["A.D_B6NxBFMI860.12"] == "BFMI") col <- "orange"
-      if(x["A.D_B6NxBFMI860.12"] == "ADDITIVE") col <- "white"
-      if(col != "white") points(x=xloc, y=yloc - 0.1, pch=15, col=col,cex=0.9)
-    #}
-  })
+  abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
 
   cnt <- 1
   aa <- apply(chrInfo,1,function(x){
-    lines(c(0,x["Length"]), c(cnt, cnt), type="l", col="black", lty=1,lwd=2)
+    lines(c(cnt, cnt), c(0,x["Length"]), type="l", col="gray", lty=1,lwd=3)
     cnt <<- cnt + 1
   })
 
-  axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
-  axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
-  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
+  aa <- apply(RPKM, 1,function(x){
+    xloc <- match(as.character(x["chromosome_name"]), chromosomes); yloc <- as.numeric(x["start_position"])
+    #ttest <- as.numeric(x["tTest.1"])
+    #if(!is.na(ttest) && ttest < 0.1){
+      col <- "white"
+      if(x["A.D_BFMI860.12xB6N"] == "B6N") col <- "blue"
+      if(x["A.D_BFMI860.12xB6N"] == "BFMI") col <- "orange"
+      if(x["A.D_BFMI860.12xB6N"] == "ADDITIVE") col <- "white"
+      if(col != "white") points(x=xloc + 0.15, y=yloc, pch="-", col=col,cex=1.2)
+      col <- "white"
+      if(x["A.D_B6NxBFMI860.12"] == "B6N") col <- "blue"
+      if(x["A.D_B6NxBFMI860.12"] == "BFMI") col <- "orange"
+      if(x["A.D_B6NxBFMI860.12"] == "ADDITIVE") col <- "white"
+      if(col != "white") points(x=xloc - 0.15, y=yloc, pch="-", col=col,cex=1.2)
+      
+      
+    #}
+  })
+
+  axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
+  axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
+  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","blue"))
 #dev.off()
 
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
@@ -123,26 +128,30 @@ doGO(RPKM[which(switched == 1), "ensembl_gene_id"])
 doGO(RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
 doGO(RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
 
-  plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Dominant maternal origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+png("OriginOfExpression.png", width = 800, height = 600)
+  plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Origin of Expression", yaxt="n", ylab="Length (Mb)", xlab="Chromosome", xaxt="n")
 
+  abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
   cnt <- 1
   aa <- apply(chrInfo,1,function(x){
-    lines(c(cnt, cnt), c(0,x["Length"]), type="l", col="black", lty=1,lwd=2)
+    lines(c(cnt, cnt), c(0,x["Length"]), type="l", col="gray", lty=1,lwd=3)
     cnt <<- cnt + 1
   })
 
   aa <- apply(RPKM, 1,function(x){
     xloc <- match(as.character(x["chromosome_name"]), chromosomes); yloc <- as.numeric(x["start_position"])
     if(x["A.D_BFMI860.12xB6N"] == "B6N" && x["A.D_B6NxBFMI860.12"] == "BFMI"){
-      points(x=xloc, y=yloc, pch="-", col="blue",cex=2)
+      points(x=xloc, y=yloc, pch="-", col="blue",cex=1.5)
     }
+    
     if(x["A.D_BFMI860.12xB6N"] == "BFMI" && x["A.D_B6NxBFMI860.12"] == "B6N"){
-      points(x=xloc, y=yloc, pch="-", col="red",cex=2)
+      points(x=xloc, y=yloc, pch="-", col="red",cex=1.5)
     }
   })
-  
+
   axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
   axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7, las=2)
-  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
-  abline(h=seq(0, mlength, 10000000))
+  legend("topright", c("Expressed as paternal", "Expressed as maternal"), fill=c("blue","red"))
+  # TODO: make a supplementary table of these genes.
+dev.off()
 

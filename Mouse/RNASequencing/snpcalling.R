@@ -20,7 +20,7 @@ for(bamfile in bamfiles[7]){
   outputVCF           <- paste0(fileBase, ".snps.vcf")
   outputVCFRECAL      <- paste0(fileBase, ".snps.filtered.vcf")
 
-  settings            <- "-recoverDanglingHeads -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
+  settings            <- " -dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
   settingFiltration   <- paste0("-window 35 -cluster 3 -filterName FS -filter \"FS > 30.0\" -filterName LowQual -filter \"QUAL < 30.0 || DP < 4\"")
 
   # Haplotype Caller              ( ~ 8 hours)

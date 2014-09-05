@@ -53,7 +53,7 @@ IDcode       <- substr(fileBase, 1, 4)
 command      <- paste0("java -Xmx4g -jar /opt/picard-tools-1.99/AddOrReplaceReadGroups.jar INPUT=", outputSBAM, " OUTPUT=", outputSRGBAM," CREATE_INDEX=false RGID=",IDcode," RGLB=LIB",IDcode," RGPL=Illumina RGPU=X RGSM=", IDcode)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
-### Move the file with the read group over the previous file
+### Move the file with the read group over the previous file ###
 command <- paste0("mv ", outputSRGBAM, " ", outputSBAM)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
@@ -62,8 +62,13 @@ outputSBAI   <- paste0(fileBase, "P_trimmed.aligned.sorted.bai")
 command      <- paste0("samtools index ", outputSBAM, " ", outputSBAI)
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")
 
+### Mark duplicates, using the Picard tools ###
+outputSBAID    <- paste0(fileBase, "P_trimmed.aligned.sorted.dedup.bai")
+outputMetrics  <- paste0(fileBase, "matrics.txt")
+command        <- paste0("java -jar MarkDuplicates.jar INPUT=", outputSBAI, " OUTPUT=", outputSBAID," METRICS_FILE=", outputMetrics)
+
 ### Get some basic statistics (5 to 10 minutes)
-command      <- paste0("samtools flagstat ", outputSBAM)
+command      <- paste0("samtools flagstat ", outputSBAID)
 cat(system(command, intern=TRUE), file=paste0(fileBase,"stats.txt"), sep="\n")
 
 ### Indel Realign
@@ -74,7 +79,7 @@ if(!file.exists(outputSNPS)){
   command <- paste0("java -Xmx4g -jar ", gatk, " -nt 4 -T RealignerTargetCreator -R ", reference, " -known ", knownindels, " -o ", outputSNPS, " -U ALLOW_N_CIGAR_READS")
   cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK RealignerTargetCreator, only need to be done because the knownSNPlist does not change
 }
-command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference, " -targetIntervals ", outputSNPS, " -maxReads 150000 -I ", outputSBAM, " -o ",outputSIBAM," -known ",knownindels, " -U ALLOW_N_CIGAR_READS")
+command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference, " -targetIntervals ", outputSNPS, " -maxReads 150000 -I ", outputSBAID, " -o ",outputSIBAM," -known ",knownindels, " -U ALLOW_N_CIGAR_READS")
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")     # Call the GATK IndelRealigner
 
 ### Base Recalibration

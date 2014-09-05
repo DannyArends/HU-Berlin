@@ -52,11 +52,24 @@ mlength <- max(chrInfo[,"Length"])
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
 cat("Maternal B6: B6N:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "BFMI"),"\n")
 
-switched <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){
-  if(x[1] == "BFMI" && x[2] == "B6N") return(1)
-  if(x[1] == "B6N" && x[2] == "BFMI") return(1)
+switched <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){        # Which expressions switch from B6N to BFMI (or vise versa) between the different directions
+  if(x[1] == "BFMI" && x[2] == "B6N")  return(1)
+  if(x[1] == "B6N"  && x[2] == "BFMI") return(1)
   return(0)
 })
+sum(switched)
+
+alwaysBFMI <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){      # Which expressions shows BFMI between the different directions
+  if(x[1] == "BFMI" && x[2] == "BFMI") return(1)
+  return(0)
+})
+sum(alwaysBFMI)
+
+alwaysB6N <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){       # Which expressions shows B6N between the different directions
+  if(x[1] == "B6N" && x[2] == "B6N") return(1)
+  return(0)
+})
+sum(alwaysB6N)
 
 allgenes <- RPKM[, "ensembl_gene_id"]
 
@@ -76,28 +89,60 @@ if(!file.exists("GOannotation.txt")){
   biomartResults <- read.table("GOannotation.txt", sep="\t", header=TRUE)
 }
 
-cat("", file="geneid2go.map")
-for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
-  idxes <- which(biomartResults[,"ensembl_gene_id"] == ensid)
-  goids <- biomartResults[idxes,"go_id"]
-  emptygo <- which(goids=="")
-  if(length(emptygo) > 0) goids <- goids[-emptygo]
-  if(length(goids) > 0) cat(ensid,"\t", paste(goids, collapse=", "),"\n", file="geneid2go.map", append=TRUE, sep="")
+if(!file.exists("geneid2go.map")){                                                                      # Create the ENSG to GO map only if it doesn't exists
+  cat("", file="geneid2go.map")
+  for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
+    idxes <- which(biomartResults[,"ensembl_gene_id"] == ensid)
+    goids <- biomartResults[idxes,"go_id"]
+    emptygo <- which(goids=="")
+    if(length(emptygo) > 0) goids <- goids[-emptygo]
+    if(length(goids) > 0) cat(ensid,"\t", paste(goids, collapse=", "),"\n", file="geneid2go.map", append=TRUE, sep="")
+  }
 }
 
-# Do Gene ontology on the Maternal BFMI
-selected <- RPKM[which(switched == 1), "ensembl_gene_id"]
-geneList <- rep(0, length(allgenes))                                                                # Create a gene list
-names(geneList) <- allgenes                                                                         # Add the names
-geneList[selected] <- 1                                                                             # Set the maternal BFMI genes to 1
+# Do gene ontology
+doGO <- function(selected){
+  geneList <- rep(0, length(allgenes))                                                                # Create a gene list
+  names(geneList) <- allgenes                                                                         # Add the names
+  geneList[selected] <- 1                                                                             # Set the switched genes to 1
 
-library(topGO)
+  library(topGO)
 
-geneID2GO     <- readMappings(file = "geneid2go.map")
-GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList), annot = annFUN.gene2GO, gene2GO = geneID2GO)
-resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+  geneID2GO     <- readMappings(file = "geneid2go.map")
+  GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList), annot = annFUN.gene2GO, gene2GO = geneID2GO)
+  resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+  allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 
-#pdf("GeneOntologyTree.pdf")
-  showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-#dev.off()
+  #pdf("GeneOntologyTree.pdf")
+    showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
+  #dev.off()
+  return(allRes)
+}
+
+doGO(RPKM[which(switched == 1), "ensembl_gene_id"])
+doGO(RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
+doGO(RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
+
+  plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Dominant maternal origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+
+  cnt <- 1
+  aa <- apply(chrInfo,1,function(x){
+    lines(c(cnt, cnt), c(0,x["Length"]), type="l", col="black", lty=1,lwd=2)
+    cnt <<- cnt + 1
+  })
+
+  aa <- apply(RPKM, 1,function(x){
+    xloc <- match(as.character(x["chromosome_name"]), chromosomes); yloc <- as.numeric(x["start_position"])
+    if(x["A.D_BFMI860.12xB6N"] == "B6N" && x["A.D_B6NxBFMI860.12"] == "BFMI"){
+      points(x=xloc, y=yloc, pch="-", col="blue",cex=2)
+    }
+    if(x["A.D_BFMI860.12xB6N"] == "BFMI" && x["A.D_B6NxBFMI860.12"] == "B6N"){
+      points(x=xloc, y=yloc, pch="-", col="red",cex=2)
+    }
+  })
+  
+  axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
+  axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7, las=2)
+  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
+  abline(h=seq(0, mlength, 10000000))
+

@@ -15,7 +15,7 @@ library("Rsamtools")
 
 #setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 chrominfo <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
-sampleIDs <- read.table("FASTQ/sampleIDs.txt",sep="\t", header=TRUE)
+sampleIDs <- read.table("FASTQ/sampledescription.txt",sep="\t", header=TRUE)
 
 mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")

@@ -8,17 +8,17 @@
 
 library(biomaRt)
 
-setwd("E:/Mouse/RNA/Sequencing/MPI_RPKM_ANALYSIS")
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 
-RPKM <- read.csv("2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE)                                               # RNA-Seq summary data from MDC
+RPKM <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE)                             # RNA-Seq summary data from MDC
 probeannotation <-  RPKM[,1:6]                                                                                    # Split the data from the probe annotation
 RPKM <-  RPKM[,-c(1:6)]
 colnames(RPKM) <- gsub(".", "-", gsub("RPKM_", "", colnames(RPKM)), fixed=TRUE)                                   # Fix the inconsistencies in the column names
 
-annotation <- read.csv("SampleAnnotation.txt", sep="\t", header=TRUE)                                             # Sample annotation
+annotation <- read.csv("FastQ/sampledescription.txt", sep="\t", header=TRUE)                                      # Sample annotation
 
-if(!file.exists("BiomartAnnotation.txt")){
-  bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")                                                  # Biomart for mouse genes
+if(!file.exists("MPI_RPKM_ANALYSIS/BiomartAnnotation.txt")){
+  bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")                                                # Biomart for mouse genes
   ENSMUSG <- as.character(probeannotation[,1])                                                                    # Ensemble genes we want to retrieve
   biomartResults <- NULL
   for(x in seq(0, length(ENSMUSG), 1000)){                                                                        # Do 1000 per time, just to please biomaRt
@@ -31,12 +31,12 @@ if(!file.exists("BiomartAnnotation.txt")){
     biomartResults <- rbind(biomartResults, res.biomart)
     Sys.sleep(1)
   }
-  write.table(biomartResults, file="BiomartAnnotation.txt", sep="\t", row.names=FALSE)
+  write.table(biomartResults, file="MPI_RPKM_ANALYSIS/BiomartAnnotation.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading biomart annotation from disk\n")
-  biomartResults <- read.table("BiomartAnnotation.txt", sep="\t", header=TRUE)
+  biomartResults <- read.table("MPI_RPKM_ANALYSIS/BiomartAnnotation.txt", sep="\t", header=TRUE)
 }
-hasAnnotation <- match(as.character(probeannotation[,1]), biomartResults[,"ensembl_gene_id"])                         # Annotation matching to normdata
+hasAnnotation <- match(as.character(probeannotation[,1]), biomartResults[,"ensembl_gene_id"])                     # Annotation matching to normdata
 biomartResults <- biomartResults[hasAnnotation, ]
 
 AnnotatedData <- cbind(probeannotation, biomartResults)
@@ -44,9 +44,9 @@ AnnotatedData <- cbind(probeannotation, biomartResults)
 # Quadriceps
 Qcross1 <- c("F1-V-1004_Q", "F1-V-1016_Q", "F1-V-1020_Q")
 Qcross2 <- c("F1-V-1000_Q", "F1-V-1008_Q", "F1-V-1012_Q")
-QD1 <- RPKM[,Qcross1]                                                                                                 # BFMI cross BFMI860-12xB6N (D1)
-QD2 <- RPKM[,Qcross2]                                                                                                 # BFMI cross B6NxBFMI860-12 (D2)
-pval <- apply(cbind(QD1,QD2),1,function(x){ return(t.test(x[1:3], x[4:6])$p.value)})                                  # T-test for differences
+QD1 <- RPKM[,Qcross1]                                                                                             # BFMI cross BFMI860-12xB6N (D1)
+QD2 <- RPKM[,Qcross2]                                                                                             # BFMI cross B6NxBFMI860-12 (D2)
+pval <- apply(cbind(QD1,QD2),1,function(x){ return(t.test(x[1:3], x[4:6])$p.value)})                              # T-test for differences
 QF1 <- cbind(QD1, QD2, apply(QD1, 1, mean), apply(QD2, 1, mean), apply(QD1, 1, mean) / apply(QD2, 1, mean), pval)
 colnames(QF1)[7:10] <- c("Mean BFMI860-12xB6N Q", "Mean B6NxBFMI860-12 Q", "Ratio", "tTest")
 
@@ -74,7 +74,7 @@ biomartmissing <- which(is.na(updatedData[,"mgi_description"]))
 updatedData[,"mgi_description"] <- as.character(updatedData[,"mgi_description"])
 updatedData[biomartmissing, "mgi_description"] <- as.character(probeannotation[biomartmissing, "description"])
 
-write.table(updatedData, file="BFMI_RPKM_ANN.txt", sep="\t", row.names=FALSE)
+write.table(updatedData, file="MPI_RPKM_ANALYSIS/BFMI_RPKM_ANN.txt", sep="\t", row.names=FALSE)
 
 # Quality control of the data
 
@@ -174,4 +174,4 @@ updatedData[as.numeric(rownames(analysis_LD2[[7]])), "A/D_B6NxBFMI860-12"] <- "B
 updatedData[as.numeric(rownames(analysis_LD2[[7]])), "E_D_B6NxBFMI860-12_B6N"] <- alleffectsD2[as.numeric(rownames(analysis_LD2[[7]]))]
 updatedData[as.numeric(rownames(analysis_LD2[[8]])), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
 
-write.table(updatedData, file="BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)
+write.table(updatedData, file="MPI_RPKM_ANALYSIS/BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)

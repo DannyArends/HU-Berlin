@@ -45,8 +45,8 @@ RPKM <- t(apply(assay(se), 1, function(x){
 
 corenames <- as.character(sampleIDs[match(as.numeric(unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))), sampleIDs$Lib_id), "Core.name"])
 corenames <- lapply(strsplit(corenames,"_"),"[",1)
-colnames(RPKM) <- corenames
-rownames(RPKM) <- namez
+colnames(RPKM) <- colnames(assay(se))
+rownames(RPKM) <- rownames(assay(se))
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
 write.table(RPKM, file="RPKM.txt", sep="\t")

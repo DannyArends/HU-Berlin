@@ -1,7 +1,7 @@
 library(biomaRt)
 bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")
 
-ensemblIDS <- c("ENSMUSG00000000031")
+ensemblIDS <- c("ENSMUSG00000099339")
 
 res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "mgi_id", "mgi_symbol", "mgi_description"), 
                         filters = c("ensembl_gene_id"), 

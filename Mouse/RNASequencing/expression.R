@@ -26,6 +26,8 @@ se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEn
 
 head(assay(se))
 
+namez <- rownames(assay(se))
+
 #RPKM = (10^9 * C)/(N * L)
 #C = Number of reads mapped to a gene
 #N = Total mapped reads in the experiment
@@ -44,9 +46,10 @@ RPKM <- t(apply(assay(se), 1, function(x){
 corenames <- as.character(sampleIDs[match(as.numeric(unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))), sampleIDs$Lib_id), "Core.name"])
 corenames <- lapply(strsplit(corenames,"_"),"[",1)
 colnames(RPKM) <- corenames
+rownames(RPKM) <- namez
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
-write.table(RPKM, file="RPKM.txt", sep="\t", row.names=FALSE)
+write.table(RPKM, file="RPKM.txt", sep="\t")
 
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC
 cat("MPI called expressions for", nrow(RPKM_MPI), "genes\n")

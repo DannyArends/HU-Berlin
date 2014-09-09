@@ -18,8 +18,8 @@ RPKM <- read.table("BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses
 
 mlength <- max(chrInfo[,"Length"])
 
-#png("MaternalOrigin.png", width = 2000, height = 1000)
-  #op <- par(cex = 2.5)
+png("MaternalOrigin.png", width = 2000, height = 1000)
+  op <- par(cex = 2.5)
   plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Dominant expression compared to the original strains", yaxt="n", xlab="Chromosome", ylab="Length (Mb)", xaxt="n")
 
   abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
@@ -35,12 +35,12 @@ mlength <- max(chrInfo[,"Length"])
     #ttest <- as.numeric(x["tTest.1"])
     #if(!is.na(ttest) && ttest < 0.1){
       col <- "white"
-      if(x["A.D_BFMI860.12xB6N"] == "B6N") col <- "blue"
+      if(x["A.D_BFMI860.12xB6N"] == "B6N") col <- "gray"
       if(x["A.D_BFMI860.12xB6N"] == "BFMI") col <- "orange"
       if(x["A.D_BFMI860.12xB6N"] == "ADDITIVE") col <- "white"
       if(col != "white") points(x=xloc + 0.15, y=yloc, pch="-", col=col,cex=1.2)
       col <- "white"
-      if(x["A.D_B6NxBFMI860.12"] == "B6N") col <- "blue"
+      if(x["A.D_B6NxBFMI860.12"] == "B6N") col <- "gray"
       if(x["A.D_B6NxBFMI860.12"] == "BFMI") col <- "orange"
       if(x["A.D_B6NxBFMI860.12"] == "ADDITIVE") col <- "white"
       if(col != "white") points(x=xloc - 0.15, y=yloc, pch="-", col=col,cex=1.2)
@@ -51,8 +51,8 @@ mlength <- max(chrInfo[,"Length"])
 
   axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
   axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
-  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","blue"))
-#dev.off()
+  legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
+dev.off()
 
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
 cat("Maternal B6: B6N:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "BFMI"),"\n")
@@ -128,7 +128,8 @@ doGO(RPKM[which(switched == 1), "ensembl_gene_id"])
 doGO(RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
 doGO(RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
 
-png("OriginOfExpression.png", width = 800, height = 600)
+png("OriginOfExpression.png", width = 2000, height = 1000)
+  op <- par(cex = 2.5)
   plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Origin of Expression", yaxt="n", ylab="Length (Mb)", xlab="Chromosome", xaxt="n")
 
   abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")

@@ -4,7 +4,7 @@
 
 # ------------------------ Set up the environment ------------------------ #
 
-setwd("D:/Github/Gudrun")        # Location of script files
+setwd("D:/Github/HU-Berlin/Pig/RNA/futterungsVeruch")        # Location of script files
 source("functions.R")     # Source the functions
 
 # If you need to install the packages please uncomment the following lines
@@ -26,7 +26,7 @@ library("gplots")
 
 font_import()
 
-setwd("H:/Expressionsanalyse/results_pig_Ensembl73") # Location of input files
+setwd("H:/Expressionsanalyse/redo2014") # Location of input files
 
 # ------------------------ Names of the samples provided ------------------------ #
 sampleNames <- c("JE_PP_c", "JE_LN_c", "Il_PP_c","Il_LN_c","JE_PP_t","JE_LN_t","Il_PP_t","Il_LN_t")
@@ -303,4 +303,51 @@ postscript(file="MyTry.jenny.eps", width=11, height=10, family = "Arial", horizo
   grid(3,7,lty=1,col="white")
   legend("topleft", title="Ratios", c("0.25 - 0.50", "0.50 - 0.90","0.90 - 1.10","1.10 - 2.00", "2.00 - 8.00"), fill=colfunc(7)[-c(1,7)])
 
+dev.off()
+
+
+
+
+Jennymatrix2 <-  rbind(
+  c("IGLC", 0.96987074, 0.67405008, 1.14732238),
+  c("IGLV-4", 0.39929536, 0.773, 0.68502904),
+  c("IGLV-12", 1.30074984, 0.90654549, 1.28108294),
+  c("IGKC", 1.0698559, 0.9624132, 1.28861571),
+  c("IL4I1", 1.7444824,0.94500129, 0.92236487),
+  c("PTPRCAP", 0.98853112, 1.42998712, 1.41903169),
+  c("CCL17 ",0.96987074, 1.14177479, 1.02777089))
+  
+  
+postscript(file="ColorPlot.eps", width=11, height=10, family = "Arial", horizontal=FALSE)
+  image(t(apply(Jennymatrix2[,2:4],2,as.numeric)), col=colfunc(7), breaks= c(0, 0.25, 0.5,0.9,1.1, 2, 8, 100), xaxt='n', yaxt='n')
+  box()
+  axis(1, at=c(0, 0.5, 1), c("Day 14","Day 35", "Day 56"))
+  axis(2, at=seq(0, 1, 1/(nrow(Jennymatrix2)-1)), Jennymatrix2[,1],las=2)
+  grid(3,7,lty=1,col="white")
+  legend("topleft", title="Ratios", c("0.25 - 0.50", "0.50 - 0.90","0.90 - 1.10","1.10 - 2.00", "2.00 - 8.00"), fill=colfunc(7)[-c(1,7)])
+dev.off()
+
+
+library(Hmisc)
+
+l1 <- c(0.86795804, 2.35150836, 0.9381197)
+e1 <- c(0.06799247, 0.50538637, 0.14528211)
+l2 <- c(1.35985557, 0.67405008, 1.14732238)
+e2 <- c(0.52371163, 0.10520785, 0.15523188)
+
+postscript(file="AnteWeening.eps", width=5, height=5, family = "Arial", horizontal=FALSE)
+  plot(c(1,3), c(0,3), t='n', yaxt="n", ylab="Relative expression", xlab="Ante/post weening", xaxt="n")
+  points(x=(1:3)-0.01, y = l1, type='l', lwd=2, col="gray")
+  segments((1:3)-0.01, l1-e1, (1:3)-0.01, l1+e1, col="gray", lwd=2)
+  segments((1:3)-0.01-0.02,l1-e1,(1:3)-0.01+0.02,l1-e1, col="gray", lwd=2)
+  segments((1:3)-0.01-0.02,l1+e1,(1:3)-0.01+0.02,l1+e1, col="gray", lwd=2)
+
+  points(x=(1:3)+0.01, y = l2, type='l')
+  segments((1:3)+0.01, l2-e2, (1:3)+0.01, l2+e2)
+  segments((1:3)+0.01-0.02,l2-e2,(1:3)+0.01+0.02,l2-e2)
+  segments((1:3)+0.01-0.02,l2+e2,(1:3)+0.01+0.02,l2+e2)
+
+  axis(1, c("14d","35d","56d"), at=1:3, las=1)
+  axis(2, seq(0,3,0.25), seq(0,3,0.25), cex.axis=0.7, las=2)
+  legend("topright", c("Gray", "Black"), lwd=c(2,1), col=c("gray","black"))
 dev.off()

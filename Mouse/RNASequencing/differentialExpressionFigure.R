@@ -13,8 +13,8 @@ setwd("E:/Mouse/DNA/DiversityArray/")
 chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 markers      <- read.table("Annotation/GeneticMarkers.txt", sep="\t", header=TRUE)
   
-setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/MPI_RPKM_ANALYSIS/")
-RPKM <- read.table("BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")
 
 mlength <- max(chrInfo[,"Length"])
 

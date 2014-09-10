@@ -34,7 +34,7 @@ if(!file.exists("Analysis/BiomartAnnotation.txt")){
   write.table(biomartResults, file="Analysis/BiomartAnnotation.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading biomart annotation from disk\n")
-  biomartResults <- read.table("Analysis/BiomartAnnotation.txt", sep="\t", header=TRUE)
+  biomartResults <- read.table("Analysis/BiomartAnnotation.txt", sep="\t", header=TRUE, colClasses=c("character"))
 }
 
 RPKM <- RPKM[,-c(11,12)]                                                                                              # Remove the quadriceps samples
@@ -60,11 +60,6 @@ LP <- cbind(LBFMI, LB6N, apply(LBFMI, 1, mean), apply(LB6N, 1, mean), apply(LBFM
 colnames(LP)[5:8] <- c("Mean BFMI860", "Mean B6N", "Ratio", "tTest")
 
 updatedData <- cbind(LF1, LP)
-
-t.test.n <- function(...) {
-  obj<-try(t.test(...), silent=TRUE)
-  if (is(obj, "try-error")) return(NA) else return(obj)
-}
 
 # Subset the data
 findGroups <- function(BFMI, B6N, F1, pExp=0.1, p = 0.1){
@@ -153,6 +148,19 @@ updatedData[(rownames(analysis_LD2[[6]])), "E_D_B6NxBFMI860-12_B6N"] <- alleffec
 updatedData[(rownames(analysis_LD2[[7]])), "A/D_B6NxBFMI860-12"] <- "B6N"
 updatedData[(rownames(analysis_LD2[[7]])), "E_D_B6NxBFMI860-12_B6N"] <- alleffectsD2[(rownames(analysis_LD2[[7]]))]
 updatedData[(rownames(analysis_LD2[[8]])), "A/D_B6NxBFMI860-12"] <- "UNKNOWN"
+
+noAnnotationData <- which(!rownames(updatedData) %in% biomartResults[,"ensembl_gene_id"])
+
+EmptyMBiomart <- matrix("", length(rownames(updatedData)[noAnnotationData]), ncol(biomartResults))
+colnames(EmptyMBiomart) <- colnames(biomartResults)
+EmptyMBiomart[,"ensembl_gene_id"] <- rownames(updatedData)[noAnnotationData]
+
+geneAnnotation <- rbind(EmptyMBiomart, biomartResults)
+
+idxes <- match(rownames(updatedData), geneAnnotation[,"ensembl_gene_id"])
+geneAnnotation <- geneAnnotation[idxes,]
+
+updatedData <- cbind(geneAnnotation, updatedData)
 
 write.table(updatedData, file="Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)
 

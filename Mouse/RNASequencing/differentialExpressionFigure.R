@@ -18,7 +18,7 @@ RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, c
 
 mlength <- max(chrInfo[,"Length"])
 
-png("MaternalOrigin.png", width = 2000, height = 1000)
+png("MaternalOriginOurAnalysis.png", width = 2000, height = 1000)
   op <- par(cex = 2.5)
   plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Dominant expression compared to the original strains", yaxt="n", xlab="Chromosome", ylab="Length (Mb)", xaxt="n")
 
@@ -57,78 +57,7 @@ dev.off()
 cat("Maternal BFMI: B6N:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_BFMI860.12xB6N"] == "BFMI"),"\n")
 cat("Maternal B6: B6N:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "B6N"), "BFMI:", sum(RPKM[,"A.D_B6NxBFMI860.12"] == "BFMI"),"\n")
 
-switched <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){        # Which expressions switch from B6N to BFMI (or vise versa) between the different directions
-  if(x[1] == "BFMI" && x[2] == "B6N")  return(1)
-  if(x[1] == "B6N"  && x[2] == "BFMI") return(1)
-  return(0)
-})
-sum(switched)
-
-alwaysBFMI <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){      # Which expressions shows BFMI between the different directions
-  if(x[1] == "BFMI" && x[2] == "BFMI") return(1)
-  return(0)
-})
-sum(alwaysBFMI)
-
-alwaysB6N <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"]),1,function(x){       # Which expressions shows B6N between the different directions
-  if(x[1] == "B6N" && x[2] == "B6N") return(1)
-  return(0)
-})
-sum(alwaysB6N)
-
-allgenes <- RPKM[, "ensembl_gene_id"]
-
-if(!file.exists("GOannotation.txt")){
-  library(biomaRt)                                                                                      # Biomart
-  bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                              # Biomart for mouse genes
-  biomartResults <- NULL
-  for(x in seq(1, length(allgenes), 1000)){                                                             # Do 1000 per time, just to please biomaRt
-    xend <- min((x + 1000),length(allgenes))                                                            # Don't walk passed the end of the array
-    cat("Retrieving", x, "/", xend,"\n")
-    res.biomart <- getBM(c("ensembl_gene_id","go_id"),                                                  # Use biomart to retrieve GO terms
-                          filters="ensembl_gene_id", values=allgenes[x:xend], mart=bio.mart)
-    biomartResults <- rbind(biomartResults, res.biomart)
-  }
-  write.table(biomartResults, file="GOannotation.txt", sep="\t", row.names=FALSE)
-}else{
-  biomartResults <- read.table("GOannotation.txt", sep="\t", header=TRUE)
-}
-
-if(!file.exists("geneid2go.map")){                                                                      # Create the ENSG to GO map only if it doesn't exists
-  cat("", file="geneid2go.map")
-  for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
-    idxes <- which(biomartResults[,"ensembl_gene_id"] == ensid)
-    goids <- biomartResults[idxes,"go_id"]
-    emptygo <- which(goids=="")
-    if(length(emptygo) > 0) goids <- goids[-emptygo]
-    if(length(goids) > 0) cat(ensid,"\t", paste(goids, collapse=", "),"\n", file="geneid2go.map", append=TRUE, sep="")
-  }
-}
-
-# Do gene ontology
-doGO <- function(selected){
-  geneList <- rep(0, length(allgenes))                                                                # Create a gene list
-  names(geneList) <- allgenes                                                                         # Add the names
-  geneList[selected] <- 1                                                                             # Set the switched genes to 1
-
-  library(topGO)
-
-  geneID2GO     <- readMappings(file = "geneid2go.map")
-  GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(geneList), annot = annFUN.gene2GO, gene2GO = geneID2GO)
-  resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-  allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-
-  #pdf("GeneOntologyTree.pdf")
-    showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-  #dev.off()
-  return(allRes)
-}
-
-doGO(RPKM[which(switched == 1), "ensembl_gene_id"])
-doGO(RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
-doGO(RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
-
-png("OriginOfExpression.png", width = 2000, height = 1000)
+png("OriginOfExpressionOurAnalysis.png", width = 2000, height = 1000)
   op <- par(cex = 2.5)
   plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Origin of Expression", yaxt="n", ylab="Length (Mb)", xlab="Chromosome", xaxt="n")
 
@@ -155,4 +84,3 @@ png("OriginOfExpression.png", width = 2000, height = 1000)
   legend("topright", c("Expressed as paternal", "Expressed as maternal"), fill=c("blue","red"))
   # TODO: make a supplementary table of these genes.
 dev.off()
-

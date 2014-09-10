@@ -5,7 +5,6 @@
 # first written Aug, 2014
 #
 # Create a figure for the RNA sequencing data (pre-processed by MDC)
-# TODO: Use RPKM from our own analysis
 
 chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 

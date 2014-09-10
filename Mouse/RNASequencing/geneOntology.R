@@ -5,11 +5,13 @@
 # first written Aug, 2014
 #
 
+library(biomaRt)                                                                                        # Biomart package
+library(topGO)                                                                                          # topGO package
+  
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")
 
 if(!file.exists("GeneOntology/GOannotation.txt")){
-  library(biomaRt)                                                                                      # Biomart
   bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                              # Biomart for mouse genes
   biomartResults <- NULL
   for(x in seq(1, length(allgenes), 1000)){                                                             # Do 1000 per time, just to please biomaRt
@@ -40,8 +42,6 @@ doGO <- function(allgenes, selected){
   genelist <- rep(0, length(allgenes))                                                                # Create a gene list
   names(genelist) <- allgenes                                                                         # Add the names
   genelist[selected] <- 1                                                                             # Set the switched genes to 1
-
-  library(topGO)
 
   geneID2GO     <- readMappings(file = "GeneOntology/geneid2go.map")
   GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)

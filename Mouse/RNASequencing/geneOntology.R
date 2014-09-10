@@ -9,7 +9,7 @@ library(biomaRt)                                                                
 library(topGO)                                                                                          # topGO package
   
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")
+RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
 
 if(!file.exists("GeneOntology/GOannotation.txt")){
   bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                              # Biomart for mouse genes
@@ -73,7 +73,23 @@ alwaysB6N <- apply(cbind(RPKM[,"A.D_BFMI860.12xB6N"], RPKM[,"A.D_B6NxBFMI860.12"
 })
 sum(alwaysB6N)
 
+LD1 <- RPKM[,c("F1-V-1004_L", "F1-V-1016_L", "F1-V-1020_L")]                                                                                                 # BFMI cross BFMI860-12xB6N (D1)
+LD2 <- RPKM[,c("F1-V-1000_L", "F1-V-1008_L", "F1-V-1012_L")]                                                                                                 # BFMI cross B6NxBFMI860-12 (D2)
+cnt <- 1
+pval <- apply(cbind(LD1,LD2),1,function(x){
+  cat(cnt,"\n")
+  cnt <<- cnt +1
+  return(t.test(as.numeric(x[1:3]), as.numeric(x[4:6]))$p.value)})                                  # T-test for differences
+
+
 doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == 1), "ensembl_gene_id"])
 doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
 doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
+doGO(RPKM[, "ensembl_gene_id"], RPKM[which(pval < 0.005), "ensembl_gene_id"])
+
+write.table(RPKM[which(switched == 1), ],   "Expression_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(RPKM[which(alwaysBFMI == 1), ], "Expression_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(RPKM[which(alwaysB6N == 1), ], "Expression_B6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(RPKM[which(pval < 0.005), ], "Expression_Differential_0.005.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
 

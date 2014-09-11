@@ -10,14 +10,14 @@ library(biomaRt)
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 
-RPKM <- read.csv("Analysis/RPKM.txt", sep="\t", header=TRUE, check.names=FALSE)                                                          # RNA-Seq RPKM data
+RPKM <- read.csv("Analysis/RPKM.txt", sep="\t", header=TRUE, check.names=FALSE, stringsAsFactors = FALSE)                                # RNA-Seq RPKM data
 annotation <- read.csv("FastQ/sampledescription.txt", sep="\t", header=TRUE)                                                             # Sample annotation
 RPKM <- RPKM[, -2]                                                                                                                       # Throw away the second column
 colnamesShort <- unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))
 
 colnames(RPKM) <- annotation[match(colnamesShort, annotation[,"Lib_id"]),"our_name"]                                                     # Correct column names
 
-if(!file.exists("Analysis/BiomartAnnotation.txt")){
+if(!file.exists("bioMart/BiomartAnnotation.txt")){
   bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")                                                # Biomart for mouse genes
   ENSMUSG <- as.character(rownames(RPKM))                                                                         # Ensemble genes we want to retrieve
   biomartResults <- NULL
@@ -25,16 +25,16 @@ if(!file.exists("Analysis/BiomartAnnotation.txt")){
     xend <- min((x + 1000),length(ENSMUSG))                                                                       # Don't walk passed the end of the array
     cat("Retrieving", x, "/", xend,"\n")
 
-    res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "mgi_id", "mgi_description"), 
+    res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "mgi_id", "mgi_symbol", "mgi_description"), 
                         filters = c("ensembl_gene_id"), 
                         values = ENSMUSG[x:xend], mart = bio.mart)
     biomartResults <- rbind(biomartResults, res.biomart)
     Sys.sleep(1)
   }
-  write.table(biomartResults, file="Analysis/BiomartAnnotation.txt", sep="\t", row.names=FALSE)
+  write.table(biomartResults, file="bioMart/BiomartAnnotation.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading biomart annotation from disk\n")
-  biomartResults <- read.table("Analysis/BiomartAnnotation.txt", sep="\t", header=TRUE, colClasses=c("character"))
+  biomartResults <- read.table("bioMart/BiomartAnnotation.txt", sep="\t", header=TRUE, colClasses=c("character"))
 }
 
 RPKM <- RPKM[,-c(11,12)]                                                                                              # Remove the quadriceps samples

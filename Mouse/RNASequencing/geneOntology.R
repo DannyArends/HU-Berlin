@@ -92,7 +92,7 @@ goPaternal   <- GenTable(goPaternalGO[[1]], classicFisher = goPaternalGO[[2]], o
 write.table(goPaternal, "GO_Paternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goBFMIGO     <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
-goBFMI   <- GenTable(goBFMIGO[[1]], classicFisher = oBFMIGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+goBFMI   <- GenTable(goBFMIGO[[1]], classicFisher = goBFMIGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goBFMI, "GO_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goB6NGO      <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
@@ -121,9 +121,9 @@ doHeatmap <- function(group, selection, whichGO){
   heatmap(data4heatmap, Colv=NA)
 }
 
-doHeatmap(goSwitchedGO[[1]], which(switched != 0),  goSwitched[1,"GO.ID"])
-doHeatmap(goMaternalGO[[1]], which(switched == -1), goMaternal[1,"GO.ID"])
-doHeatmap(goPaternalGO[[1]], which(switched == 1),  goPaternal[1,"GO.ID"])
-doHeatmap(goBFMIGO[[1]], which(alwaysBFMI == 1),    goBFMI[1,"GO.ID"])
-doHeatmap(goB6NGO[[1]], which(alwaysB6N == 1),      goB6N[1,"GO.ID"])
-doHeatmap(goDEGO[[1]], which(pval < 0.005),         goDE[1,"GO.ID"])
+doHeatmap(goSwitchedGO[[1]], which(switched != 0),  goSwitched[1, "GO.ID"])                                               # Create a heatmap, using the 1st GO term
+doHeatmap(goMaternalGO[[1]], which(switched == -1), goMaternal[1, "GO.ID"])
+doHeatmap(goPaternalGO[[1]], which(switched == 1),  goPaternal[1, "GO.ID"])
+doHeatmap(goBFMIGO[[1]], which(alwaysBFMI == 1),    goBFMI[1, "GO.ID"])
+doHeatmap(goB6NGO[[1]], which(alwaysB6N == 1),      goB6N[1, "GO.ID"])
+doHeatmap(goDEGO[[1]], which(pval < 0.005),         goDE[1, "GO.ID"])

@@ -49,12 +49,11 @@ doGO <- function(allgenes, selected){
   geneID2GO     <- readMappings(file = "GeneOntology/geneid2go.map")
   GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)
   resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
-  allRes        <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 
   #pdf("GeneOntologyTree.pdf")
     showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
   #dev.off()
-  return(allRes)
+  return(list(GOdata,resultFisher))
 }
 
 switched <- apply(cbind(RPKM[,"A/D_BFMI860-12xB6N"], RPKM[,"A/D_B6NxBFMI860-12"]),1,function(x){        # Which expressions switch from B6N to BFMI (or vise versa) between the different directions
@@ -80,17 +79,28 @@ LD1 <- RPKM[,c("F1-V-1004_L", "F1-V-1016_L", "F1-V-1020_L")]                    
 LD2 <- RPKM[,c("F1-V-1000_L", "F1-V-1008_L", "F1-V-1012_L")]                                                        # BFMI cross B6NxBFMI860-12 (D2)
 pval <- apply(cbind(LD1,LD2),1,function(x){ return(t.test(as.numeric(x[1:3]), as.numeric(x[4:6]))$p.value)})        # T-test for differences
 
-goSwitched <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched != 0), "ensembl_gene_id"])
+goSwitchedGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched != 0), "ensembl_gene_id"])
+goSwitched   <- GenTable(goSwitchedGO[[1]], classicFisher = goSwitchedGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goSwitched, "GO_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goMaternal <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == -1), "ensembl_gene_id"])
+
+goMaternalGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == -1), "ensembl_gene_id"])
+goMaternal <- GenTable(goMaternalGO[[1]], classicFisher = goMaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goMaternal, "GO_Maternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goPaternal <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == 1), "ensembl_gene_id"])
+
+goPaternalGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == 1), "ensembl_gene_id"])
+goPaternal   <- GenTable(goPaternalGO[[1]], classicFisher = goPaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goPaternal, "GO_Paternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goBFMI     <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
+
+goBFMIGO     <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
+goBFMI   <- GenTable(goBFMIGO[[1]], classicFisher = oBFMIGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goBFMI, "GO_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goB6N      <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
+
+goB6NGO      <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
+goB6N   <- GenTable(goB6NGO[[1]], classicFisher = goB6NGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goB6N, "GO_B6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goDE       <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(pval < 0.005), "ensembl_gene_id"])
+
+goDEGO       <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(pval < 0.005), "ensembl_gene_id"])
+goDE   <- GenTable(goDEGO[[1]], classicFisher = goDEGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 write.table(goDE, "GO_DiffExp_0.005.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 write.table(RPKM[which(switched == 1), ],   "Expression_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
@@ -98,10 +108,22 @@ write.table(RPKM[which(alwaysBFMI == 1), ], "Expression_BFMI.txt", sep="\t", row
 write.table(RPKM[which(alwaysB6N == 1), ],  "Expression_B6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(RPKM[which(pval < 0.005), ],    "Expression_Differential_0.005.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+doHeatmap <- function(group, selection, whichGO){
+  allGenesGO <- genesInTerm(group, whichGO = whichGO)[[1]]
+  shortRPKM <- RPKM[selection,][which(as.character(RPKM[selection, "ensembl_gene_id"]) %in% allGenesGO),]
+  P1 <- shortRPKM[,c("86026522_L", "86026502_L")]
+  LD1 <- shortRPKM[,c("F1-V-1004_L", "F1-V-1016_L", "F1-V-1020_L")]                                                        # BFMI cross BFMI860-12xB6N (D1)
+  LD2 <- shortRPKM[,c("F1-V-1000_L", "F1-V-1008_L", "F1-V-1012_L")]                                                        # BFMI cross B6NxBFMI860-12 (D2)
+  P2 <- shortRPKM[,c("1006954_L", "1006956_L")]
 
+  data4heatmap <- apply(cbind(P2, P1, LD2, LD1), 2, as.numeric)
+  rownames(data4heatmap) <- shortRPKM[,"mgi_symbol"]
+  heatmap(data4heatmap, Colv=NA)
+}
 
-allGenesGO <- as.character(biomartResults[which(biomartResults[,"go_id"] == goSwitched[1,"GO.ID"]),"ensembl_gene_id"])
-allGenesGO
-
-RPKM[which(switched != 0),][which(as.character(RPKM[which(switched != 0), "ensembl_gene_id"] %in% allGenesGO),]
-
+doHeatmap(goSwitchedGO[[1]], which(switched != 0),  goSwitched[1,"GO.ID"])
+doHeatmap(goMaternalGO[[1]], which(switched == -1), goMaternal[1,"GO.ID"])
+doHeatmap(goPaternalGO[[1]], which(switched == 1),  goPaternal[1,"GO.ID"])
+doHeatmap(goBFMIGO[[1]], which(alwaysBFMI == 1),    goBFMI[1,"GO.ID"])
+doHeatmap(goB6NGO[[1]], which(alwaysB6N == 1),      goB6N[1,"GO.ID"])
+doHeatmap(goDEGO[[1]], which(pval < 0.005),         goDE[1,"GO.ID"])

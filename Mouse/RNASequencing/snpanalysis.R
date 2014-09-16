@@ -2,7 +2,7 @@
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Aug, 2014
-# first written Aug, 2014
+# first written Sep, 2014
 
 # Filer: B6N == B6N && BFMI == BFMI (not on X, Y)
 # Filter first: B6N != BFMI
@@ -62,7 +62,7 @@ doAnalysis <- function(maternal, m1, m2, m3){
     if(maternal[snp,"FORMAT"] == "GT:AD:DP:GQ:PL"){
       v1 <- strsplit(m1[snp,"SAMPLE"], ":") ; v2 <- strsplit(m2[snp,"SAMPLE"], ":") ; v3 <- strsplit(m3[snp,"SAMPLE"], ":")
       v1Reads <- as.numeric(unlist(v1[[1]][3])) ; v2Reads <- as.numeric(unlist(v2[[1]][3])) ; v3Reads <- as.numeric(unlist(v3[[1]][3]))
-      if(v1Reads > 10 && v2Reads > 10 && v3Reads > 10){                                                     # Minimum of 10 reads (combined for the alleles)
+      if(v1Reads > 5 && v2Reads > 5 && v3Reads > 5){                                                        # Minimum of 5 reads (combined for the alleles)
         v1ReadsA <- as.numeric(unlist(strsplit(unlist(v1[[1]][2]),",")))
         v2ReadsA <- as.numeric(unlist(strsplit(unlist(v2[[1]][2]),",")))
         v3ReadsA <- as.numeric(unlist(strsplit(unlist(v3[[1]][2]),",")))
@@ -94,8 +94,11 @@ doAnalysis <- function(maternal, m1, m2, m3){
 matB6Nsnps <- doAnalysis(matB6, matB6_1, matB6_2, matB6_3)
 matBFMIsnps <- doAnalysis(matBFMI, matBFMI_1, matBFMI_2, matBFMI_3)
 
-write.table(matB6Nsnps, file="maternalB6snps.txt", sep="\t", row.names=FALSE)
-write.table(matBFMIsnps, file="maternalBFMIsnps.txt", sep="\t", row.names=FALSE)
+write.table(matB6Nsnps, file="maternalB6snps_5reads.txt", sep="\t", row.names=FALSE)
+write.table(matBFMIsnps, file="maternalBFMIsnps_5reads.txt", sep="\t", row.names=FALSE)
+
+matB6Nsnps  <- read.table("maternalB6snps_5reads.txt", sep="\t", header=TRUE)
+matBFMIsnps <- read.table("maternalBFMIsnps_5reads.txt", sep="\t", header=TRUE)
 
 ### PLOTS
 
@@ -145,41 +148,69 @@ setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 
 GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")
 EXONS <- GTF[which(GTF[,3]=="exon"),]
-TRANSCRIPTS <- unlist(lapply(strsplit(as.character(lapply(strsplit(as.character(EXONS[,9]),";"), "[", 2))," "),"[",3))
 
-RESULTS <- vector("list", length(unique(TRANSCRIPTS)))
-names(RESULTS) <- unique(TRANSCRIPTS)
+datastr <- strsplit(as.character(EXONS[,9]), "; ")
+lengths <- unlist(lapply(datastr, length))
 
+addInfo <- matrix(NA,length(datastr),2)
+for(x in 1:length(datastr)){ addInfo[x, ] <- c(strsplit(datastr[[x]][1]," ")[[1]][2], strsplit(datastr[[x]][lengths[x]]," ")[[1]][2]); }
+
+EXONS <- cbind(addInfo, EXONS)
+uniqueGenes <- unique(EXONS[,1])
+
+geneExonsCoupling <- vector("list", length(uniqueGenes))
 x <- 1
-for(gene in unique(TRANSCRIPTS)){
-   exonids <- which(TRANSCRIPTS == gene)
-   RESULTS[[gene]] <- vector("list", 2)
-   RESULTS[[gene]][[1]] <- EXONS[exonids, c(1,4,5)]
-   colnames(RESULTS[[gene]][[1]]) <- c("Chr","Start","Stop")
-   cat("Done ",x,"/", length(unique(TRANSCRIPTS)),"->", gene, "\n")
-   x <- x + 1
-}
-
-matBFMIsnps <- read.table(file="maternalBFMIsnps.txt", sep="\t", header=TRUE)
-matB6Nsnps <- read.table(file="maternalB6snps.txt", sep="\t", header=TRUE)
-
-x <- 1
-for(gene in RESULTS){
-  onChr <- as.character(matBFMIsnps[,"Chr"]) == as.character(gene[[1]]$Chr[1])
-  found <- FALSE
-  SNPinfo <- NULL
-  for(exon in 1:nrow(gene[[1]])){
-    exonStart <- as.numeric(gene[[1]]$Start[exon])
-    exonEnd <- as.numeric(gene[[1]]$Stop[exon])
-    #cat(exon,"/",nrow(gene[[1]]),":", exonStart, " ", exonEnd,"\n")
-    inEXON <- which(matBFMIsnps[onChr,"Loc"] >= as.numeric(gene[[1]]$Start[exon]) & matBFMIsnps[onChr,"Loc"] <= as.numeric(gene[[1]]$Stop[exon]))
-    if(length(inEXON) > 0){
-      cat(x, "found", length(inEXON), "snps in exon", exon,"/",nrow(gene[[1]]),"\n")
-      SNPinfo <- rbind(SNPinfo, cbind(matBFMIsnps[onChr,][inEXON, ], exon = rep(exon, length(inEXON))))
-      found <- TRUE
-    }
-  }
-  RESULTS[[x]][[2]] <- SNPinfo
-  #if(!found) cat(x, "No SNP\n")
+for(gene in uniqueGenes){
+  geneExons <- which(EXONS[,1] == gene)
+  possibleExons <- EXONS[geneExons[!duplicated(EXONS[geneExons,2])], -11]
+  geneExonsCoupling[[x]] <- possibleExons
+  cat(x, "Gene", gene, "has",nrow(geneExonsCoupling[[x]]),"/", length(geneExons),"Exons\n")
   x <- x + 1
 }
+
+geneSNPCoupling <- vector("list", length(uniqueGenes))
+x <- 1
+for(gene in geneExonsCoupling){
+  onChr <- as.character(matBFMIsnps[,"Chr"]) == as.character(unique(gene[,3]))
+  for(exon in 1:nrow(gene)){
+    exonStart <- as.numeric(gene[exon,6])
+    exonEnd <- as.numeric(gene[exon,7])
+    inEXON <- which(matBFMIsnps[onChr,"Loc"] >= exonStart & matBFMIsnps[onChr,"Loc"] <= exonEnd)
+    if(length(inEXON) > 0){
+      geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], matBFMIsnps[onChr,][inEXON,])
+      geneSNPCoupling[[x]] <- geneSNPCoupling[[x]][!duplicated(geneSNPCoupling[[x]][,"ID"]),]
+    }
+  }
+  cat(x, "found", nrow(geneSNPCoupling[[x]]), "snps in gene\n")
+  x <- x + 1
+}
+
+matBFMImeans <- NULL
+for(x in 1:length(geneSNPCoupling)){ matBFMImeans <- c(matBFMImeans, mean(geneSNPCoupling[[x]][,"ImprintingScore"])); }
+
+geneSNPCoupling <- vector("list", length(uniqueGenes))
+x <- 1
+for(gene in geneExonsCoupling){
+  onChr <- as.character(matB6Nsnps[,"Chr"]) == as.character(unique(gene[,3]))
+  for(exon in 1:nrow(gene)){
+    exonStart <- as.numeric(gene[exon,6])
+    exonEnd <- as.numeric(gene[exon,7])
+    inEXON <- which(matB6Nsnps[onChr,"Loc"] >= exonStart & matB6Nsnps[onChr,"Loc"] <= exonEnd)
+    if(length(inEXON) > 0){
+      geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], matB6Nsnps[onChr,][inEXON,])
+      geneSNPCoupling[[x]] <- geneSNPCoupling[[x]][!duplicated(geneSNPCoupling[[x]][,"ID"]),]
+    }
+  }
+  cat(x, "found", nrow(geneSNPCoupling[[x]]), "snps in gene\n")
+  x <- x + 1
+}
+
+matB6Nmeans <- NULL
+for(x in 1:length(geneSNPCoupling)){ matB6Nmeans <- c(matB6Nmeans, mean(geneSNPCoupling[[x]][,"ImprintingScore"])); }
+
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")
+
+write.table(RPKM[which(RPKM[,"ensembl_gene_id"] %in% as.character(uniqueGenes[which(matBFMImeans >= 0.4)])),], "Imprinted_matBFMIsnps_above_0.4.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(RPKM[which(RPKM[,"ensembl_gene_id"] %in% as.character(uniqueGenes[which(matB6Nmeans >= 0.4)])),], "Imprinted_matB6Nsnps_above_0.4.txt", sep="\t", quote=FALSE, row.names=FALSE)
+

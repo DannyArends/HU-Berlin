@@ -38,7 +38,10 @@ plot(heterozygous)                                                              
 
 # TODO: Scan the phenotypes using the correct models
 # TODO: Add covariates, and interactions
-res42 <- scanone(cross, pheno.col="mri42d_fat", addcovar="WG2" model="np")
+res42 <- scanone(cross, pheno.col="mri42d_fat", addcovar="WG2", model="np")
 res56 <- scanone(cross, pheno.col="mri56d_fat", model="np")
 res70 <- scanone(cross, pheno.col="mri70d_fat", model="np")
-plot(res42)
+plot(res56)
+
+# JAX00107082 3 47884149-50986795
+# UNC5246978 3 50986795

@@ -84,7 +84,7 @@ goSwitched <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched != 0), "ensemb
 write.table(goSwitched, "GO_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
 goMaternal <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == -1), "ensembl_gene_id"])
 write.table(goMaternal, "GO_Maternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
-goPaternal <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched != 1), "ensembl_gene_id"])
+goPaternal <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == 1), "ensembl_gene_id"])
 write.table(goPaternal, "GO_Paternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
 goBFMI     <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
 write.table(goBFMI, "GO_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
@@ -98,4 +98,10 @@ write.table(RPKM[which(alwaysBFMI == 1), ], "Expression_BFMI.txt", sep="\t", row
 write.table(RPKM[which(alwaysB6N == 1), ],  "Expression_B6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(RPKM[which(pval < 0.005), ],    "Expression_Differential_0.005.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
+
+
+allGenesGO <- as.character(biomartResults[which(biomartResults[,"go_id"] == goSwitched[1,"GO.ID"]),"ensembl_gene_id"])
+allGenesGO
+
+RPKM[which(switched != 0),][which(as.character(RPKM[which(switched != 0), "ensembl_gene_id"] %in% allGenesGO),]
 

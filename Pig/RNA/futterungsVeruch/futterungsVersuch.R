@@ -240,11 +240,23 @@ loadfonts(device = "postscript") ## for postscript()
 
 dendro <- heatmap(scRatios[c(down),], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Rowv=NA, keep.dendro = TRUE)
 
-postscript(file="DownRegulated_4_tissues.jenny.eps", width=9, height=10, family = "Arial", paper = "special", horizontal=FALSE)
+postscript(file="DownRegulated_4_tissues.eps", width=9, height=10, family = "Arial", paper = "special", horizontal=FALSE)
   op <- par(omi = c(0,0,0,2))
-  heatmap(scRatios[c(down),][dendro$rowInd,], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Colv=NA,Rowv=NA)
+  heatmap(scRatios[c(down),], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Colv=NA,Rowv=NA)
   legend("topleft",title="FoldChange", c("High","Medium","Low","Lowest"), col=c(gray.colors(4)),lwd=c(10))
 dev.off()
+
+postscript(file="DownRegulated_4_tissues.dendro.eps", width=9, height=10, family = "Arial", paper = "special", horizontal=FALSE)
+  op <- par(omi = c(0,0,0,2))
+  dendro <- heatmap(scRatios[c(down),], margins=c(6, 9), main="Down regulated genes", col=gray.colors(4),Colv=NA, keep.dendro = TRUE)
+  legend("topleft",title="FoldChange", c("High","Medium","Low","Lowest"), col=c(gray.colors(4)),lwd=c(10))
+dev.off()
+
+write.table(cbind(
+  unlist(lapply(strsplit(rownames(scRatios[c(down),][dendro$rowInd[31:1],]),":"),"[",1)),
+  unlist(lapply(strsplit(rownames(scRatios[c(down),][dendro$rowInd[31:1],]),":"),"[",2)),
+  unlist(lapply(strsplit(rownames(scRatios[c(down),][dendro$rowInd[31:1],]),":"),"[",3))
+),"genes.DownRegulated_4_tissues.dendro.eps.txt", sep="\t", quote=FALSE, row.names=FALSE)
 
 postscript(file="DownRegulated_4_tissues_NOTREE.eps", width=10, height=15)
   op <- par(oma=c(2,2,10,2))

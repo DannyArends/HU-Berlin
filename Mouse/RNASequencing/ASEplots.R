@@ -1,4 +1,4 @@
-# ASEplots.R - Analyze the SNPs and indels called by the GenomeAnalysisToolKit
+# ASEplots.R - Analyse the SNPs and indels called by the GenomeAnalysisToolKit
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Sep, 2014

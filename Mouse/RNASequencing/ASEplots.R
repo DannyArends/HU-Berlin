@@ -23,7 +23,7 @@ abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
 
 aa <- apply(matBFMI, 1,function(x){
   xloc <- match(as.character(x["chromosome_name"]), chromosomes); yloc <- as.numeric(x["start_position"])
-  if(x["ImprintingScore"] > 0.25){
+  if(x["ImprintingScore"] > 0.35){
     col <- "gray"
     if(x["Origin"]=="BFMI") col <- "orange"
     points(x=xloc+0.2, y=yloc, pch="-", col=col, cex=1.3)
@@ -32,7 +32,7 @@ aa <- apply(matBFMI, 1,function(x){
   
 aa <- apply(matB6N, 1,function(x){
   xloc <- match(as.character(x["chromosome_name"]), chromosomes); yloc <- as.numeric(x["start_position"])
-  if(x["ImprintingScore"] > 0.25){
+  if(x["ImprintingScore"] > 0.35){
     col <- "gray"
     if(x["Origin"]=="BFMI") col <- "orange"
     points(x=xloc-0.2, y=yloc, pch="-", col=col, cex=1.3)

@@ -70,13 +70,15 @@ doAnalysis <- function(maternal, m1, m2, m3){
           inBFMI  <- c(which(rownames(BFMIm) ==  snp), which(rownames(BFMIf) ==  snp))                      # SNP in BFMI males/females
           inB6N   <- c(which(rownames(B6Nm) ==  snp), which(rownames(B6Nf) ==  snp))                        # SNP in B6N males/females
           if(length(inBFMI) == 2 && length(inB6N) == 0){                                                    # SNP found in BFMI, not B6N
-            impScore <- (abs((v1ReadsA/v1Reads)[2] - 0.5) + abs((v2ReadsA/v2Reads)[2] - 0.5) + abs((v3ReadsA/v3Reads)[2] - 0.5)) / 3
-            cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, ":", impScore, "\n")
+            r1 <- v1ReadsA/v1Reads; r2 <- v2ReadsA/v2Reads; r3 <- v3ReadsA/v3Reads
+            impScore <- (abs(r1[2] - 0.5) + abs(r2[2] - 0.5) + abs(r3[2] - 0.5)) / 3
+            cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", r1, r2, r3, ":", impScore, "\n")
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], "BFMI", inBFMI, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore))
           }
           if(length(inBFMI) == 0 && length(inB6N) == 2){                                                    # SNP found in B6N, not BFMI
-            impScore <- (abs((v1ReadsA/v1Reads)[2] - 0.5) + abs((v2ReadsA/v2Reads)[2] - 0.5) + abs((v3ReadsA/v3Reads)[2] - 0.5)) / 3
-            cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, ":", impScore, "\n")
+            r1 <- v1ReadsA/v1Reads; r2 <- v2ReadsA/v2Reads; r3 <- v3ReadsA/v3Reads
+            impScore <- (abs(r1[2] - 0.5) + abs(r2[2] - 0.5) + abs(r3[2] - 0.5)) / 3
+            cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", r1, r2, r3, ":", impScore, "\n")
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], "B6N",  inB6N, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore))
           }
         }

@@ -12,7 +12,6 @@ chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 markers      <- read.table("Annotation/GeneticMarkers.txt", sep="\t", header=TRUE)
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-
 matBFMI <- read.csv("Imprinted_matBFMIsnps_5reads.txt", sep="\t", header=TRUE, stringsAsFactor=FALSE)
 matB6N <- read.csv( "Imprinted_matB6Nsnps_5reads.txt", sep="\t", header=TRUE, stringsAsFactor=FALSE)
 

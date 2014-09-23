@@ -82,10 +82,6 @@ doAnalysis <- function(maternal, m1, m2, m3){
         }
       }
     }
-    #if(!is.null(mmatrix) && nrow(mmatrix) > 5000){
-    #  colnames(mmatrix) <- c("ID", "Chr", "Loc", "dbSNP", "Origin", "OriginPaternal", "OriginMaternal", "R1", "A1", "R2", "A2", "R3", "A3", "ImprintingScore")
-    #  return(mmatrix)
-    #}
   }
   colnames(mmatrix) <- c("ID", "Chr", "Loc", "dbSNP", "Origin", "OriginPaternal", "OriginMaternal", "R1", "A1", "R2", "A2", "R3", "A3",  "ImprintingScore")
   return(mmatrix)
@@ -97,12 +93,10 @@ matBFMIsnps <- doAnalysis(matBFMI, matBFMI_1, matBFMI_2, matBFMI_3)
 write.table(matB6Nsnps, file="maternalB6snps_5reads.txt", sep="\t", row.names=FALSE)                                  # Also available for 10 reads per individual
 write.table(matBFMIsnps, file="maternalBFMIsnps_5reads.txt", sep="\t", row.names=FALSE)                               # Also available for 10 reads per individual
 
-### Downstream analysis and some plots
+### PLOT
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 matB6Nsnps  <- read.table("maternalB6snps_5reads.txt", sep="\t", header=TRUE)
 matBFMIsnps <- read.table("maternalBFMIsnps_5reads.txt", sep="\t", header=TRUE)
-
-### PLOTS
 
 plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="SNP origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 cnt <- 1
@@ -133,7 +127,6 @@ axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axi
 legend("topright", c("> 90% BFMI", "> 90% B6N"), fill=c("orange","gray"))
 
 ma <- function(x,n=5){filter(x,rep(1/n,n), sides=2)}
-
 
 plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="SNP origin", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
 cnt <- 1

@@ -5,9 +5,9 @@
 # first written Sep, 2014
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-matB6Nsnps  <- read.table("maternalB6snps_5reads.txt", sep="\t", header=TRUE)                                   # SNPs detected in the maternal B6N F1 cross
-matBFMIsnps <- read.table("maternalBFMIsnps_5reads.txt", sep="\t", header=TRUE)                                 # SNPs detected in the maternal BFMI F1 cross
-RPKM        <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
+matB6Nsnps  <- read.csv("maternalB6snps_5reads.txt", sep="\t", header=TRUE)                                   # SNPs detected in the maternal B6N F1 cross
+matBFMIsnps <- read.csv("maternalBFMIsnps_5reads.txt", sep="\t", header=TRUE)                                 # SNPs detected in the maternal BFMI F1 cross
+RPKM        <- read.csv("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
 
 GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                   # Gene models
 EXONS <- GTF[which(GTF[,3]=="exon"),]

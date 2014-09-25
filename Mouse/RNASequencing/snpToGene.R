@@ -97,6 +97,7 @@ imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, AS
   return(list(BFMIsummary, B6Nsummary))
 }
 
+imputedData <- imputeReferenceASE(BFMIsummary, B6Nsummary, RPKM)
 
 getShortList <- function(CROSSsummary, cutoff = 0.35){
   v <- NULL
@@ -107,11 +108,10 @@ getShortList <- function(CROSSsummary, cutoff = 0.35){
   return(CROSSsummary[which(v > cutoff)])
 }
 
-BFMIase <- getShortList(BFMIsummary)
-B6Nase <- getShortList(B6Nsummary)
+BFMIase <- getShortList(imputedData[[1]])
+B6Nase <- getShortList(imputedData[[2]])
 
-BFMIsummary <- BFMIsummary[-which(is.na(BFMIsummary[,2])),]
-B6Nsummary  <- B6Nsummary[-which(is.na(B6Nsummary[,2])),]
+# TODO: Summarize genes to a single origin
 
 ordering <- match(BFMIsummary[,"geneID"], RPKM[,"ensembl_gene_id"])
 write.table(cbind(RPKM[ordering,], BFMIsummary), "Imprinted_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)

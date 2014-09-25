@@ -61,12 +61,54 @@ summarizeImprintedSNPsInGene <- function(uniqueGenes, geneExonsCoupling, directi
 }
 
 BFMIsummary <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matBFMIsnps)
+names(BFMIsummary) <- uniqueGenes
 B6Nsummary  <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matB6Nsnps)
+names(B6Nsummary) <- uniqueGenes
 
-v <- NULL
-for(x in 1:3000){
-  v <- c(v, mean(BFMIsummary[[x]][,"ImprintingScore"]))
+imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, ASEcutoff = 0.35){
+  for(x in 1:length(BFMIsummary)){
+    if(!is.null(BFMIsummary[[x]]) && is.null(B6Nsummary[[x]])){
+      if(mean(BFMIsummary[[x]][,"ImprintingScore"]) >= ASEcutoff && RPKM[which(RPKM[,"ensembl_gene_id"] == names(BFMIsummary[x])),"Mean.B6NxBFMI860.12.L"] >= RPKMcutoff){
+        B6Nsummary[[x]] <- BFMIsummary[[x]]
+        for(snp in 1:nrow(B6Nsummary[[x]])){
+          for(origin in c("Origin1", "Origin2", "Origin3")){
+            if(B6Nsummary[[x]][snp,origin]=="BFMI"){ B6Nsummary[[x]][snp,origin] <- "B6N"; }else{ B6Nsummary[[x]][snp,origin] <- "BFMI"; }
+          }
+          B6Nsummary[[x]][snp,"ImprintingScore"] <- 1
+          for(column in c("R1", "A1", "R2", "A2", "R3", "A3")){ B6Nsummary[[x]][snp, column] <- "?"; }
+        }
+        cat(x,"imputed\n");
+      }
+    }
+    if(is.null(BFMIsummary[[x]]) && !is.null(B6Nsummary[[x]])){
+      if(mean(B6Nsummary[[x]][,"ImprintingScore"]) >= ASEcutoff && RPKM[which(RPKM[,"ensembl_gene_id"] == names(BFMIsummary[x])),"Mean.BFMI860.12xB6N.L"] >= RPKMcutoff){
+        BFMIsummary[[x]] <- B6Nsummary[[x]]
+        for(snp in 1:nrow(BFMIsummary[[x]])){
+          for(origin in c("Origin1", "Origin2", "Origin3")){
+            if(BFMIsummary[[x]][snp,origin]=="BFMI"){ BFMIsummary[[x]][snp,origin] <- "B6N"; }else{ BFMIsummary[[x]][snp,origin] <- "BFMI"; }
+          }
+          BFMIsummary[[x]][snp,"ImprintingScore"] <- 1
+          for(column in c("R1", "A1", "R2", "A2", "R3", "A3")){ BFMIsummary[[x]][snp, column] <- "?"; }
+        }
+        cat(x,"imputed\n");
+      }
+    }
+  }
+  return(list(BFMIsummary, B6Nsummary))
 }
+
+
+getShortList <- function(CROSSsummary, cutoff = 0.35){
+  v <- NULL
+  for(x in 1:length(CROSSsummary)){
+    v <- c(v, mean(CROSSsummary[[x]][,"ImprintingScore"]))
+  }
+  hist(v)
+  return(CROSSsummary[which(v > cutoff)])
+}
+
+BFMIase <- getShortList(BFMIsummary)
+B6Nase <- getShortList(B6Nsummary)
 
 BFMIsummary <- BFMIsummary[-which(is.na(BFMIsummary[,2])),]
 B6Nsummary  <- B6Nsummary[-which(is.na(B6Nsummary[,2])),]

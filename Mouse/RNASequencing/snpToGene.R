@@ -41,27 +41,32 @@ summarizeImprintedSNPsInGene <- function(uniqueGenes, geneExonsCoupling, directi
       exonEnd <- as.numeric(gene[exon,7])
       inEXON <- which(direction[onChr,"Loc"] >= exonStart & direction[onChr,"Loc"] <= exonEnd)
       if(length(inEXON) > 0){
-        geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], direction[onChr,][inEXON,])
+        geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], cbind(direction[onChr,][inEXON,], Exon=exon))
         geneSNPCoupling[[x]] <- geneSNPCoupling[[x]][!duplicated(geneSNPCoupling[[x]][,"ID"]),]
       }
     }
     cat(x, "found", nrow(geneSNPCoupling[[x]]), "SNPs in gene\n")
     x <- x + 1
   }
-
-  mmatrix <- matrix(NA, length(geneSNPCoupling), 3)                                                             # Create an output matrix with 3 columns
-  for(x in 1:length(geneSNPCoupling)){ 
-    mmatrix[x,1] <- as.character(uniqueGenes[x])                                                                # Ensembl geneID
-    mmatrix[x,2] <- mean(geneSNPCoupling[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
-    origin <- names(which.max(table(geneSNPCoupling[[x]][,"Origin"])))
-    if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                             # Take the one which occurs most as the origin
-  }
-  colnames(mmatrix) <- c("geneID", "ImprintingScore", "Origin")
-  return(mmatrix)
+  return(geneSNPCoupling)
+  #mmatrix <- matrix(NA, length(geneSNPCoupling), 3)                                                             # Create an output matrix with 3 columns
+  #for(x in 1:length(geneSNPCoupling)){ 
+  #  mmatrix[x,1] <- as.character(uniqueGenes[x])                                                                # Ensembl geneID
+  #  mmatrix[x,2] <- mean(geneSNPCoupling[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
+  #  origin <- names(which.max(table(geneSNPCoupling[[x]][,"Origin"])))
+  #  if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                             # Take the one which occurs most as the origin
+  #}
+  #colnames(mmatrix) <- c("geneID", "ImprintingScore", "Origin")
+  #return(mmatrix)
 }
 
 BFMIsummary <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matBFMIsnps)
 B6Nsummary  <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matB6Nsnps)
+
+v <- NULL
+for(x in 1:3000){
+  v <- c(v, mean(BFMIsummary[[x]][,"ImprintingScore"]))
+}
 
 BFMIsummary <- BFMIsummary[-which(is.na(BFMIsummary[,2])),]
 B6Nsummary  <- B6Nsummary[-which(is.na(B6Nsummary[,2])),]

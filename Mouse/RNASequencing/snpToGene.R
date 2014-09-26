@@ -102,15 +102,10 @@ getShortList <- function(CROSSsummary, cutoff = 0.35){
 BFMIase <- getShortList(imputedData[[1]])
 B6Nase <- getShortList(imputedData[[2]])
 
-# TODO: Filter the shortList for possible errors due to the other side not expressing
-filterASE <- function(CROSSsummary, RPKM){
-
-}
-
 summarize <- function(CROSSsummary){
   mmatrix <- matrix(NA, length(CROSSsummary), 3)                                                             # Create an output matrix with 3 columns
   for(x in 1:length(CROSSsummary)){ 
-    mmatrix[x,1] <- names(CROSSsummary[x])                                                             # Ensembl geneID
+    mmatrix[x,1] <- names(CROSSsummary[x])                                                                   # Ensembl geneID
     mmatrix[x,2] <- mean(CROSSsummary[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
     origin <- names(which.max(table(unlist(CROSSsummary[[x]][,c("Origin1","Origin2","Origin3")]))))
     if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                          # Take the one which occurs most as the origin
@@ -122,8 +117,21 @@ summarize <- function(CROSSsummary){
 BFMIaseSummary <- summarize(BFMIase)
 B6NaseSummary <- summarize(B6Nase)
 
-ordering <- match(BFMIaseSummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
-write.table(cbind(RPKM[ordering,], BFMIaseSummary), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+# TODO: Filter the shortList for possible errors due to the other side not expressing
+filterASE <- function(CROSSsummary, otherCross, RPKM, RPKMcutoff = 3){
+  ordering <- match(CROSSsummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
+  combined <- cbind(RPKM[ordering,], CROSSsummary)
+  cat("Starting with", nrow(combined),"\n")
+  SnpFromBFMInoB6Nexpression <-  which(combined[,"Origin"] == "BFMI" & as.numeric(combined[,"Mean.B6N"]) < RPKMcutoff)
+  # TODO MAKE SURE THAT BOTH THE F1s have the SAME SNPs
+  combined <- combined[ - SnpFromBFMInoB6Nexpression,]                # Filter the erroneously called BFMI ASE genes
+  combined <- combined[ - which(combined[,"Origin"] == "B6N" & as.numeric(combined[,"Mean.BFMI860"]) < RPKMcutoff),]             # Filter the erroneously called B6N ASE genes
+  cat("Filtered out", nrow(CROSSsummary) - nrow(combined), "genes due to low expression in one of the parents\n")
+  predictedGenes <- grep("predicted", combined[,"mgi_description"])
+  combined <- combined[ - predictedGenes, ]
+  cat("Filtered out", length(predictedGenes), "predicted genes, left with",  nrow(combined),"\n")
+  return(combined)
+}
 
-ordering <- match(B6NaseSummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
-write.table(cbind(RPKM[ordering,], B6NaseSummary), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(BFMIaseSummary, B6NaseSummary, RPKM), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(B6NaseSummary, BFMIaseSummary, RPKM), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)

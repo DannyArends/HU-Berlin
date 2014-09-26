@@ -49,15 +49,6 @@ summarizeImprintedSNPsInGene <- function(uniqueGenes, geneExonsCoupling, directi
     x <- x + 1
   }
   return(geneSNPCoupling)
-  #mmatrix <- matrix(NA, length(geneSNPCoupling), 3)                                                             # Create an output matrix with 3 columns
-  #for(x in 1:length(geneSNPCoupling)){ 
-  #  mmatrix[x,1] <- as.character(uniqueGenes[x])                                                                # Ensembl geneID
-  #  mmatrix[x,2] <- mean(geneSNPCoupling[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
-  #  origin <- names(which.max(table(geneSNPCoupling[[x]][,"Origin"])))
-  #  if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                             # Take the one which occurs most as the origin
-  #}
-  #colnames(mmatrix) <- c("geneID", "ImprintingScore", "Origin")
-  #return(mmatrix)
 }
 
 BFMIsummary <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matBFMIsnps)
@@ -111,10 +102,28 @@ getShortList <- function(CROSSsummary, cutoff = 0.35){
 BFMIase <- getShortList(imputedData[[1]])
 B6Nase <- getShortList(imputedData[[2]])
 
-# TODO: Summarize genes to a single origin
+# TODO: Filter the shortList for possible errors due to the other side not expressing
+filterASE <- function(CROSSsummary, RPKM){
 
-ordering <- match(BFMIsummary[,"geneID"], RPKM[,"ensembl_gene_id"])
-write.table(cbind(RPKM[ordering,], BFMIsummary), "Imprinted_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+}
 
-ordering <- match(B6Nsummary[,"geneID"], RPKM[,"ensembl_gene_id"])
-write.table(cbind(RPKM[ordering,], B6Nsummary), "Imprinted_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+summarize <- function(CROSSsummary){
+  mmatrix <- matrix(NA, length(CROSSsummary), 3)                                                             # Create an output matrix with 3 columns
+  for(x in 1:length(CROSSsummary)){ 
+    mmatrix[x,1] <- names(CROSSsummary[x])                                                             # Ensembl geneID
+    mmatrix[x,2] <- mean(CROSSsummary[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
+    origin <- names(which.max(table(unlist(CROSSsummary[[x]][,c("Origin1","Origin2","Origin3")]))))
+    if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                          # Take the one which occurs most as the origin
+  }
+  colnames(mmatrix) <- c("ensembl_gene_id", "ImprintingScore", "Origin")
+  return(mmatrix)
+}
+
+BFMIaseSummary <- summarize(BFMIase)
+B6NaseSummary <- summarize(B6Nase)
+
+ordering <- match(BFMIaseSummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
+write.table(cbind(RPKM[ordering,], BFMIaseSummary), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+
+ordering <- match(B6NaseSummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
+write.table(cbind(RPKM[ordering,], B6NaseSummary), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)

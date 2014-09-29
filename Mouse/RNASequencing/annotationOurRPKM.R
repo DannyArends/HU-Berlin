@@ -48,16 +48,32 @@ Lcross2 <- c("F1-V-1000_L", "F1-V-1008_L", "F1-V-1012_L")
 LD1 <- RPKM[,Lcross1]                                                                                                 # BFMI cross BFMI860-12xB6N (D1)
 LD2 <- RPKM[,Lcross2]                                                                                                 # BFMI cross B6NxBFMI860-12 (D2)
 pval <- apply(cbind(LD1,LD2),1,function(x){ return(t.test(x[1:3], x[4:6])$p.value)})                                  # T-test for differences
-LF1 <- cbind(LD1, LD2, apply(LD1, 1, mean), apply(LD2, 1, mean), apply(LD1, 1, mean) / apply(LD2, 1, mean), pval)
-colnames(LF1)[7:10] <- c("Mean BFMI860-12xB6N L", "Mean B6NxBFMI860-12 L", "Ratio", "tTest")
+LD1mean <- apply(LD1, 1, mean)
+LD2mean <- apply(LD2, 1, mean)
+ratios  <-  LD1mean / LD2mean
+rations[which(is.infinite(ratios))] <- NA
+ratiosScale <- ratios
+ratiosToFlip <- which(LD1mean < LD2mean)
+ratiosScale[ratiosToFlip] <- -((LD2mean/LD1mean)[ratiosToFlip])
+ratiosScale[which(is.infinite(ratiosScale))] <- NA
+LF1 <- cbind(LD1, LD2, LD1mean, LD2mean, ratios, ratiosScale, pval)
+colnames(LF1)[7:11] <- c("Mean BFMI860-12xB6N L", "Mean B6NxBFMI860-12 L", "Ratio_F1", "Ratio_F1_Scale", "tTest_F1")
 
 LBFMIA  <- c("86026522_L", "86026502_L")
 LB6NA   <- c("1006954_L", "1006956_L")
 LBFMI <- RPKM[,LBFMIA]
 LB6N  <- RPKM[,LB6NA]
 pval <- apply(cbind(LBFMI,LB6N),1,function(x){ return(t.test(x[1:2], x[3:4])$p.value)})
-LP <- cbind(LBFMI, LB6N, apply(LBFMI, 1, mean), apply(LB6N, 1, mean), apply(LBFMI, 1, mean) / apply(LB6N, 1, mean), pval)
-colnames(LP)[5:8] <- c("Mean BFMI860", "Mean B6N", "Ratio", "tTest")
+LBFMImean <- apply(LBFMI, 1, mean)
+LB6Nmean <- apply(LB6N, 1, mean)
+ratios  <-  LBFMImean / LB6Nmean
+rations[which(is.infinite(ratios))] <- NA
+ratiosScale <- ratios
+ratiosToFlip <- which(LBFMImean < LB6Nmean)
+ratiosScale[ratiosToFlip] <- -((LB6Nmean/LBFMImean)[ratiosToFlip])
+ratiosScale[which(is.infinite(ratiosScale))] <- NA
+LP <- cbind(LBFMI, LB6N, LBFMImean, LB6Nmean, ratios, ratiosScale, pval)
+colnames(LP)[5:9] <- c("Mean BFMI860", "Mean B6N", "Ratio_Par", "Ratio_Par_Scale", "tTest_Par")
 
 updatedData <- cbind(LF1, LP)
 

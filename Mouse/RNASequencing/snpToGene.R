@@ -118,14 +118,33 @@ BFMIaseSummary <- summarize(BFMIase)
 B6NaseSummary <- summarize(B6Nase)
 
 # TODO: Filter the shortList for possible errors due to the other side not expressing
-filterASE <- function(CROSSsummary, otherCross, RPKM, RPKMcutoff = 3){
+filterASE <- function(CROSSsummary, otherCross, RPKM, RPKMcutoff = 3, noFilter=FALSE){
   ordering <- match(CROSSsummary[,"ensembl_gene_id"], RPKM[,"ensembl_gene_id"])
   combined <- cbind(RPKM[ordering,], CROSSsummary)
+  if(noFilter)return(combined)
   cat("Starting with", nrow(combined),"\n")
+  ## BFMI based genes, we should remove because of low expression in B6N
   SnpFromBFMInoB6Nexpression <-  which(combined[,"Origin"] == "BFMI" & as.numeric(combined[,"Mean.B6N"]) < RPKMcutoff)
-  # TODO MAKE SURE THAT BOTH THE F1s have the SAME SNPs
-  combined <- combined[ - SnpFromBFMInoB6Nexpression,]                # Filter the erroneously called BFMI ASE genes
-  combined <- combined[ - which(combined[,"Origin"] == "B6N" & as.numeric(combined[,"Mean.BFMI860"]) < RPKMcutoff),]             # Filter the erroneously called B6N ASE genes
+  genesWeCouldRemove <- combined[SnpFromBFMInoB6Nexpression, "ensembl_gene_id"]
+  genesToRemove <- NULL
+  for(gene in genesWeCouldRemove){
+    imp1 <- CROSSsummary[which(CROSSsummary[,"ensembl_gene_id"] == gene), "Origin"]                                               # Only delete genes which have the same imprinted SNP
+    imp2 <- otherCross[which(otherCross[,"ensembl_gene_id"] == gene), "Origin"]
+    if(length(imp2) > 0 && imp1 == imp2) genesToRemove <- c(genesToRemove, gene)
+  }
+  combined <- combined[ - which(combined[,"ensembl_gene_id"] %in% genesToRemove),]                                                # Filter the erroneously called BFMI ASE genes
+  
+  ## B6N based genes, we should remove because of low expression in BFMI
+  SnpFromBFMInoB6Nexpression <-  which(combined[,"Origin"] == "B6N" & as.numeric(combined[,"Mean.BFMI860"]) < RPKMcutoff)
+  genesWeCouldRemove <- combined[SnpFromBFMInoB6Nexpression, "ensembl_gene_id"]
+  genesToRemove <- NULL
+  for(gene in genesWeCouldRemove){
+    imp1 <- CROSSsummary[which(CROSSsummary[,"ensembl_gene_id"] == gene), "Origin"]                                               # Only delete genes which have the same imprinted SNP
+    imp2 <- otherCross[which(otherCross[,"ensembl_gene_id"] == gene), "Origin"]
+    if(length(imp2) > 0 && imp1 == imp2) genesToRemove <- c(genesToRemove, gene)
+  }
+  combined <- combined[ - which(combined[,"ensembl_gene_id"] %in% genesToRemove),]                                                # Filter the erroneously called B6N ASE genes
+  
   cat("Filtered out", nrow(CROSSsummary) - nrow(combined), "genes due to low expression in one of the parents\n")
   predictedGenes <- grep("predicted", combined[,"mgi_description"])
   combined <- combined[ - predictedGenes, ]
@@ -133,5 +152,5 @@ filterASE <- function(CROSSsummary, otherCross, RPKM, RPKMcutoff = 3){
   return(combined)
 }
 
-write.table(filterASE(BFMIaseSummary, B6NaseSummary, RPKM), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(filterASE(B6NaseSummary, BFMIaseSummary, RPKM), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(BFMIaseSummary, B6NaseSummary, RPKM, 3, TRUE), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(B6NaseSummary, BFMIaseSummary, RPKM, 3, TRUE), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)

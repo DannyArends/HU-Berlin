@@ -8,6 +8,18 @@
 
 library(biomaRt)
 
+setwd("E:/Mouse/DNA/Sequencing/BFMI")
+snps <- read.csv("860v2.pes.s.rmd.rg.realigned.recal.haplotclld.Q30DP3HomFilt_NovelSNPer_detailed.out", sep="\t", header=TRUE, check.names=FALSE, stringsAsFactors = FALSE) # DNA-Seq SNP data
+snps <- snps[-which(snps$FuncClass == "SYNONYMOUS_CODING"), ]                 # Throw away the SYNONYMOUS_CODING functional class
+
+codingRegion  <- unique(snps[grepl("CODING_REGION", snps$Region),"Gene_ID"])
+domainRegion  <- unique(snps[!is.na(snps$DomainRegion),"Gene_ID"])
+UTR5          <- unique(snps[grepl("5PRIME_UTR", snps$Region),"Gene_ID"])
+UTR3          <- unique(snps[grepl("3PRIME_UTR", snps$Region),"Gene_ID"])
+SPLICE        <- unique(snps[grepl("SPLICE_SITE", snps$Region),"Gene_ID"])
+STARTSTOP     <- unique(snps[grepl("START", snps$FuncClass),"Gene_ID"])
+STARTSTOP     <- unique(c(STARTSTOP, unique(snps[grepl("STOP", snps$FuncClass),"Gene_ID"])))
+
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 
 RPKM <- read.csv("Analysis/RPKM.txt", sep="\t", header=TRUE, check.names=FALSE, stringsAsFactors = FALSE)                                # RNA-Seq RPKM data
@@ -177,6 +189,19 @@ idxes <- match(rownames(updatedData), geneAnnotation[,"ensembl_gene_id"])
 geneAnnotation <- geneAnnotation[idxes,]
 
 updatedData <- cbind(geneAnnotation, updatedData)
+
+updatedData <- cbind(updatedData, "CodingRegion"  = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% codingRegion), "CodingRegion"] <- 1
+updatedData <- cbind(updatedData, "DomainRegion"  = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% domainRegion), "DomainRegion"] <- 1
+updatedData <- cbind(updatedData, "5' UTR"        = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% UTR5), "5' UTR"] <- 1
+updatedData <- cbind(updatedData, "3' UTR"        = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% UTR3), "3' UTR"] <- 1
+updatedData <- cbind(updatedData, "SpliceSite"    = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% SPLICE), "SpliceSite"] <- 1
+updatedData <- cbind(updatedData, "Stop/Start"    = rep(0, nrow(updatedData)))
+updatedData[which(updatedData$ensembl_gene_id %in% STARTSTOP), "Stop/Start"] <- 1
 
 write.table(updatedData, file="Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)
 

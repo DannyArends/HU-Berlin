@@ -113,13 +113,14 @@ write.table(RPKM[which(pval < 0.005), ],    "Expression_Differential_0.005.txt",
 doHeatmap <- function(group, selection, whichGO){
   allGenesGO <- genesInTerm(group, whichGO = whichGO)[[1]]
   shortRPKM <- RPKM[selection,][which(as.character(RPKM[selection, "ensembl_gene_id"]) %in% allGenesGO),]
-  P1 <- shortRPKM[,c("86026522_L", "86026502_L")]
-  LD1 <- shortRPKM[,c("F1-V-1004_L", "F1-V-1016_L", "F1-V-1020_L")]                                                        # BFMI cross BFMI860-12xB6N (D1)
-  LD2 <- shortRPKM[,c("F1-V-1000_L", "F1-V-1008_L", "F1-V-1012_L")]                                                        # BFMI cross B6NxBFMI860-12 (D2)
-  P2 <- shortRPKM[,c("1006954_L", "1006956_L")]
+  P1 <- shortRPKM[,c("Mean BFMI860")]
+  LD1 <- shortRPKM[,c("Mean BFMI860-12xB6N L")]                                                        # BFMI cross BFMI860-12xB6N (D1)
+  LD2 <- shortRPKM[,c("Mean B6NxBFMI860-12 L")]                                                        # BFMI cross B6NxBFMI860-12 (D2)
+  P2 <- shortRPKM[,c("Mean B6N")]
 
   data4heatmap <- apply(cbind(P2, P1, LD2, LD1), 2, as.numeric)
   rownames(data4heatmap) <- shortRPKM[,"mgi_symbol"]
+  colnames(data4heatmap) <- c("B6N", "BFMI860", "matB6N", "matBFMI")
   heatmap(data4heatmap, Colv=NA)
 }
 

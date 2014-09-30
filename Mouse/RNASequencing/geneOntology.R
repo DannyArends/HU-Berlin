@@ -10,6 +10,8 @@ library(topGO)                                                                  
   
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
+ASEB6N  <- read.csv("ASE_matB6Nsnps_5reads.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
+ASEBFMI <- read.csv("ASE_matBFMIsnps_5reads.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
 
 allgenes <- RPKM[, "ensembl_gene_id"]
 
@@ -127,3 +129,18 @@ doHeatmap(goPaternalGO[[1]], which(switched == 1),  goPaternal[1, "GO.ID"])
 doHeatmap(goBFMIGO[[1]], which(alwaysBFMI == 1),    goBFMI[1, "GO.ID"])
 doHeatmap(goB6NGO[[1]], which(alwaysB6N == 1),      goB6N[1, "GO.ID"])
 doHeatmap(goDEGO[[1]], which(pval < 0.005),         goDE[1, "GO.ID"])
+
+
+goASEBFMIGO       <- doGO(RPKM[, "ensembl_gene_id"], ASEBFMI[, "ensembl_gene_id"])
+goASEBFMI   <- GenTable(goASEBFMIGO[[1]], classicFisher = goASEBFMIGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+write.table(goASEBFMI, "GO_ASE_matBFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+goASEB6NGO       <- doGO(RPKM[, "ensembl_gene_id"], ASEB6N[, "ensembl_gene_id"])
+goASEB6N   <- GenTable(goASEB6NGO[[1]], classicFisher = goASEB6NGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+write.table(goASEB6N, "GO_ASE_matB6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+doHeatmap(goASEBFMIGO[[1]], which(RPKM[, "ensembl_gene_id"] %in% ASEBFMI[, "ensembl_gene_id"]), goASEBFMI[1, "GO.ID"])    #matBFMI GO term 1
+doHeatmap(goASEBFMIGO[[1]], which(RPKM[, "ensembl_gene_id"] %in% ASEBFMI[, "ensembl_gene_id"]), goASEBFMI[5, "GO.ID"])    #matBFMI GO term 5
+
+doHeatmap(goASEB6NGO[[1]],  which(RPKM[, "ensembl_gene_id"] %in% ASEB6N[, "ensembl_gene_id"]), goASEB6N[1, "GO.ID"])      #matB6N GO term 1
+doHeatmap(goASEB6NGO[[1]],  which(RPKM[, "ensembl_gene_id"] %in% ASEB6N[, "ensembl_gene_id"]), goASEB6N[2, "GO.ID"])      #matB6N GO term 2

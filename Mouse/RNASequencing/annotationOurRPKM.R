@@ -63,7 +63,7 @@ pval <- apply(cbind(LD1,LD2),1,function(x){ return(t.test(x[1:3], x[4:6])$p.valu
 LD1mean <- apply(LD1, 1, mean)
 LD2mean <- apply(LD2, 1, mean)
 ratios  <-  LD1mean / LD2mean
-rations[which(is.infinite(ratios))] <- NA
+ratios[which(is.infinite(ratios))] <- NA
 ratiosScale <- ratios
 ratiosToFlip <- which(LD1mean < LD2mean)
 ratiosScale[ratiosToFlip] <- -((LD2mean/LD1mean)[ratiosToFlip])
@@ -79,7 +79,7 @@ pval <- apply(cbind(LBFMI,LB6N),1,function(x){ return(t.test(x[1:2], x[3:4])$p.v
 LBFMImean <- apply(LBFMI, 1, mean)
 LB6Nmean <- apply(LB6N, 1, mean)
 ratios  <-  LBFMImean / LB6Nmean
-rations[which(is.infinite(ratios))] <- NA
+ratios[which(is.infinite(ratios))] <- NA
 ratiosScale <- ratios
 ratiosToFlip <- which(LBFMImean < LB6Nmean)
 ratiosScale[ratiosToFlip] <- -((LB6Nmean/LBFMImean)[ratiosToFlip])

@@ -152,5 +152,5 @@ filterASE <- function(CROSSsummary, otherCross, RPKM, RPKMcutoff = 3, noFilter=F
   return(combined)
 }
 
-write.table(filterASE(BFMIaseSummary, B6NaseSummary, RPKM, 3, TRUE), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(filterASE(B6NaseSummary, BFMIaseSummary, RPKM, 3, TRUE), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(BFMIaseSummary, B6NaseSummary, RPKM), "ASE_matBFMIsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(filterASE(B6NaseSummary, BFMIaseSummary, RPKM), "ASE_matB6Nsnps_5reads.txt", sep="\t", quote=FALSE, row.names=FALSE)

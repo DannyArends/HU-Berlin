@@ -21,7 +21,6 @@ phenos <- c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1"
 
 sum(length(F2), length(F1), length(P))
 
-
 plot(apply(genotypes[which(map[,"Chr"] == "X"), F2], 2, function(x){length(which(x == "H"))}))        # Plot the number of heterozygous loci on the X chromosome
 which(apply(genotypes[which(map[,"Chr"] == "X"), F2], 2, function(x){length(which(x == "H"))}) > 20)  # Which animals are more heterozygous then expected
 # 6661524 6661965 6662141 6662142 6662143 6662144

@@ -38,22 +38,13 @@ mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotype
   return(-log10(pvalues))
 }
 
-qtl42   <- mriGWAS(genotypes,   phenotypes, "42d")
-qtl56   <- mriGWAS(genotypes,   phenotypes, "56d")
-qtl70   <- mriGWAS(genotypes,   phenotypes, "70d")
-qtls <- 
+qtl42   <- mriGWAS(genotypes,   phenotypes, "42d") ; qtl56   <- mriGWAS(genotypes,   phenotypes, "56d") ; qtl70   <- mriGWAS(genotypes,   phenotypes, "70d")
+qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d") ; qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d") ; qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")
+qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d") ; qtlGP56 <- mriGWAS(genotypesGP, phenotypes, "56d") ; qtlGP70 <- mriGWAS(genotypesGP, phenotypes, "70d")
 
-qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d")
-qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d")
-qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")
-
-qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d")
-qtlGP56 <- mriGWAS(genotypesGP, phenotypes, "56d")
-qtlGP70 <- mriGWAS(genotypesGP, phenotypes, "70d")
-
-write.table(cbind(qtl42,qtl56,qtl70), "Analysis/qtls_fatDlean_gwas.txt", sep="\t")
-write.table(cbind(qtlPH42,qtlPH56,qtlPH70), "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
-write.table(cbind(qtlGP42,qtlGP56,qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
+write.table(cbind(qtl42,   qtl56,   qtl70), "Analysis/qtls_fatDlean_gwas.txt", sep="\t")
+write.table(cbind(qtlPH42, qtlPH56, qtlPH70), "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
 
 chromosomes  <- as.character(c(1:19, "X", "Y", "MT"))
 setwd("E:/Mouse/DNA/DiversityArray/")

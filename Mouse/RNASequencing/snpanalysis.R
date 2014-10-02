@@ -77,7 +77,7 @@ doAnalysis <- function(maternal, m1, m2, m3){
             if(r1[2] < 0.5) origin[1] <- "B6N"
             if(r2[2] < 0.5) origin[2] <- "B6N"
             if(r3[2] < 0.5) origin[3] <- "B6N"
-            mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin, inBFMI, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore))
+            mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin, inBFMI, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore, "BFMIsnp"))
           }
           if(length(inBFMI) == 0 && length(inB6N) == 2){                                                    # SNP found in B6N, not BFMI
             r1 <- v1ReadsA/v1Reads; r2 <- v2ReadsA/v2Reads; r3 <- v3ReadsA/v3Reads
@@ -87,13 +87,13 @@ doAnalysis <- function(maternal, m1, m2, m3){
             if(r1[2] < 0.5) origin[1] <- "BFMI"
             if(r2[2] < 0.5) origin[2] <- "BFMI"
             if(r3[2] < 0.5) origin[3] <- "BFMI"
-            mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin,  inB6N, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore))
+            mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin,  inB6N, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore, "B6Nsnp"))
           }
         }
       }
     }
   }
-  colnames(mmatrix) <- c("ID", "Chr", "Loc", "dbSNP", "Origin1", "Origin2", "Origin3", "OriginPaternal", "OriginMaternal", "R1", "A1", "R2", "A2", "R3", "A3",  "ImprintingScore")
+  colnames(mmatrix) <- c("ID", "Chr", "Loc", "dbSNP", "Origin1", "Origin2", "Origin3", "OriginPaternal", "OriginMaternal", "R1", "A1", "R2", "A2", "R3", "A3", "ImprintingScore", "Detected")
   return(mmatrix)
 }
 

@@ -42,11 +42,15 @@ qtl42   <- mriGWAS(genotypes,   phenotypes, "42d") ; qtl56   <- mriGWAS(genotype
 qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d") ; qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d") ; qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")
 qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d") ; qtlGP56 <- mriGWAS(genotypesGP, phenotypes, "56d") ; qtlGP70 <- mriGWAS(genotypesGP, phenotypes, "70d")
 
+setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+
 write.table(cbind(qtl42,   qtl56,   qtl70), "Analysis/qtls_fatDlean_gwas.txt", sep="\t")
 write.table(cbind(qtlPH42, qtlPH56, qtlPH70), "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
 write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
 
-chromosomes  <- as.character(c(1:19, "X", "Y", "MT"))
+qtls <- read.table("Analysis/qtls_fatDlean_gwas.txt", sep="\t", colClasses=c("character",rep("numeric",3)), header=TRUE,row.names=FALSE)
+
+chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 setwd("E:/Mouse/DNA/DiversityArray/")
 chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 markers      <- read.table("Annotation/GeneticMarkers.txt", sep="\t", header=TRUE)
@@ -54,6 +58,14 @@ mlength      <- max(chrInfo[,"Length"])
 
 plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="ASE & Dominant expression (maternal BFMI)", yaxt="n", xlab="Chromosome", ylab="Length (Mb)", xaxt="n")
 abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
+
+aa <- lapply(rownames(qtls), function(x){
+  xloc <- match(as.character(map[x,"Chr"]), chromosomes); yloc <- as.numeric(map[x,"Mb_NCBI38"])
+  cat(x, yloc, xloc,"\n")
+  LOD <- qtls[x,1]
+  points(x=xloc + (LOD/100), y=yloc , pch=15,cex=0.5)
+})
+
 
 cnt <- 1
 aa <- apply(chrInfo,1,function(x){

@@ -63,7 +63,7 @@ imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, AS
         B6Nsummary[[x]] <- BFMIsummary[[x]]
         for(snp in 1:nrow(B6Nsummary[[x]])){
           for(origin in c("Origin1", "Origin2", "Origin3")){
-            if(B6Nsummary[[x]][snp,origin]=="BFMI"){ B6Nsummary[[x]][snp,origin] <- "B6N"; }else{ B6Nsummary[[x]][snp,origin] <- "BFMI"; }
+            if(B6Nsummary[[x]][snp,"Detected"]=="BFMIsnp"){ B6Nsummary[[x]][snp,origin] <- "B6N"; }else{ B6Nsummary[[x]][snp,origin] <- "BFMI"; }
           }
           B6Nsummary[[x]][snp,"ImprintingScore"] <- 1
           for(column in c("R1", "A1", "R2", "A2", "R3", "A3")){ B6Nsummary[[x]][snp, column] <- "?"; }
@@ -76,7 +76,7 @@ imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, AS
         BFMIsummary[[x]] <- B6Nsummary[[x]]
         for(snp in 1:nrow(BFMIsummary[[x]])){
           for(origin in c("Origin1", "Origin2", "Origin3")){
-            if(BFMIsummary[[x]][snp,origin]=="BFMI"){ BFMIsummary[[x]][snp,origin] <- "B6N"; }else{ BFMIsummary[[x]][snp,origin] <- "BFMI"; }
+            if(BFMIsummary[[x]][snp,"Detected"]=="BFMIsnp"){ BFMIsummary[[x]][snp,origin] <- "B6N"; }else{ BFMIsummary[[x]][snp,origin] <- "BFMI"; }
           }
           BFMIsummary[[x]][snp,"ImprintingScore"] <- 1
           for(column in c("R1", "A1", "R2", "A2", "R3", "A3")){ BFMIsummary[[x]][snp, column] <- "?"; }
@@ -88,29 +88,33 @@ imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, AS
   return(list(BFMIsummary, B6Nsummary))
 }
 
-imputedData <- imputeReferenceASE(BFMIsummary, B6Nsummary, RPKM)
+imputedData <- imputeReferenceASE(BFMIsummary, B6Nsummary, RPKM)                                                 # Impute the expressed genes (without a SNP)
 
-getShortList <- function(CROSSsummary, cutoff = 0.35){
+getShortList <- function(CROSSsummary, cutoff = 0.35) {
   v <- NULL
-  for(x in 1:length(CROSSsummary)){
-    v <- c(v, mean(CROSSsummary[[x]][,"ImprintingScore"]))
-  }
+  for(x in 1:length(CROSSsummary)){ v <- c(v, mean(CROSSsummary[[x]][,"ImprintingScore"])); }
   hist(v)
   return(CROSSsummary[which(v > cutoff)])
 }
 
 BFMIase <- getShortList(imputedData[[1]])
+for(x in 1:length(BFMIase)){ write.table(BFMIase[[x]], paste0(names(BFMIase[x]),".BFMI.txt"),sep="\t", quote=FALSE); }
+
 B6Nase <- getShortList(imputedData[[2]])
+for(x in 1:length(B6Nase)){ write.table(B6Nase[[x]], paste0(names(B6Nase[x]),".B6N.txt"),sep="\t", quote=FALSE); }
+
 
 summarize <- function(CROSSsummary){
-  mmatrix <- matrix(NA, length(CROSSsummary), 3)                                                             # Create an output matrix with 3 columns
+  mmatrix <- matrix(NA, length(CROSSsummary), 4)                                                                # Create an output matrix with 3 columns
   for(x in 1:length(CROSSsummary)){ 
-    mmatrix[x,1] <- names(CROSSsummary[x])                                                                   # Ensembl geneID
-    mmatrix[x,2] <- mean(CROSSsummary[[x]][,"ImprintingScore"]);                                             # Mean imprinting score across the gene
+    mmatrix[x,1] <- names(CROSSsummary[x])                                                                      # Ensembl geneID
+    mmatrix[x,2] <- mean(CROSSsummary[[x]][,"ImprintingScore"]);                                                # Mean imprinting score across the gene
     origin <- names(which.max(table(unlist(CROSSsummary[[x]][,c("Origin1","Origin2","Origin3")]))))
-    if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                          # Take the one which occurs most as the origin
+    if(!is.null(origin)){ mmatrix[x,3] <- origin; }                                                             # Take the one which occurs most as the origin
+    detected <- names(which.max(table(unlist(CROSSsummary[[x]][,c("Detected")]))))
+    if(!is.null(origin)){ mmatrix[x,4] <- detected; }                                                           # Take the one which occurs most as the origin
   }
-  colnames(mmatrix) <- c("ensembl_gene_id", "ImprintingScore", "Origin")
+  colnames(mmatrix) <- c("ensembl_gene_id", "ImprintingScore", "Origin", "Detected")
   return(mmatrix)
 }
 

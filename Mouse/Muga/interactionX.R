@@ -26,7 +26,7 @@ topChr3 <- rownames(qtls[which.max(qtls[,"qtl70"]),])
 markersOnX <- rownames(map[(map[,"Chr"]=="X"),])
 
 ind           <- colnames(genotypes[topChr3,!is.na(genotypes[topChr3,])])
-phenotype     <- phenotypes[ind, paste0("mri70d_fat")] / phenotypes[ind, paste0("mri70d_lean")]
+phenotype     <- phenotypes[ind, paste0("mri42d_fat")] /  phenotypes[ind, paste0("mri70d_lean")]
 M1            <- as.factor(as.character(genotypes[topChr3,ind]))
 littersize    <- as.numeric(phenotypes[ind, "WG2"])
 
@@ -76,3 +76,12 @@ names(which(interactions> 4))
 # Flank: backupUNC200098152   X  69213997 35.2874
 # Top:         UNC200019054   X  74112481 37.7436
 # Flank: backupUNC200099374   X  74266257 37.9316
+
+### Get the genes in the region, using the snpToGene files (see snpToGene.R)
+sel <- which(EXONS[which(EXONS[,1] == "X"),4] > 69213000 &  EXONS[which(EXONS[,1] == "X"), 5] < 74266300)
+geneids <- unique(gsub("gene_id ","",unlist(lapply(strsplit(as.character(EXONS[which(EXONS[,1] == "X"),][sel, 9]),"; "),"[",1))))
+RPKM[which(RPKM[,1] %in% geneids),"mgi_description"]
+
+
+iii <- which(apply(RPKM[which(RPKM[,1] %in% geneids),c(35:40)],1,function(x){return(sum(as.numeric(x))); }) > 0)
+RPKM[which(RPKM[,1] %in% geneids),c(7,8,35:40)][iii,]

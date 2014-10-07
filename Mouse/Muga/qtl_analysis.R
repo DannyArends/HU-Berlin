@@ -73,6 +73,17 @@ png("Plots/QTL_FatdLean_Day70.png", width=1024, height=768)
   abline(h = -log10(0.1/nrow(qtls)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtls)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtls)), col="green", lty=2)
 dev.off()
 
+map[which(qtls[,"qtl42"] > -log10(0.01/nrow(qtls))),]
+map[which(qtls[,"qtl56"] > -log10(0.01/nrow(qtls))),]
+map[which(qtls[,"qtl70"] > -log10(0.01/nrow(qtls))),]
+#  Regions found in QTL mapping:
+# Chr   Start     Stop   42 56 70
+#  3  32392808  54702204  V  V  V
+#  4 143353391 143419321  V
+#  9  70272613 103351100     V  V
+# 16  69339204  71889002  V  V  V
+#  X  74247872  74247872  V
+
 mriGWAS_Cof <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){                                            # Use the chromosome 3 locus as cofactor
   pvalues <- NULL
   for(x in 1:to){
@@ -106,14 +117,6 @@ aa <- lapply(rownames(qtls), function(x){
   LOD <- qtls[x,1]
   points(x=xloc + (LOD/100), y=yloc , pch=15,cex=0.5)
 })
-
-#  Regions found in QTL mapping:
-# Chr   Start     Stop   42 56 70
-#  3  32392808  54702204  V  V  V
-#  4 143353391 143419321  V
-#  9  70272613 103351100     V  V
-# 16  69339204  71889002  V  V  V
-#  X  74247872  74247872  V
 
 cnt <- 1
 aa <- apply(chrInfo,1,function(x){

@@ -26,7 +26,7 @@ topChr3 <- rownames(qtls[which.max(qtls[,"qtl70"]),])
 markersOnX <- rownames(map[(map[,"Chr"]=="X"),])
 
 ind           <- colnames(genotypes[topChr3,!is.na(genotypes[topChr3,])])
-phenotype     <- phenotypes[ind, paste0("mri42d_fat")] /  phenotypes[ind, paste0("mri70d_lean")]
+phenotype     <- phenotypes[ind, paste0("mri42d_fat")] /  phenotypes[ind, paste0("mri42d_lean")]
 M1            <- as.factor(as.character(genotypes[topChr3,ind]))
 littersize    <- as.numeric(phenotypes[ind, "WG2"])
 
@@ -36,7 +36,7 @@ markersOnXNoH <- markersOnX[which(!markersOnX %in% names(which(hetrozygousness >
 interactions  <- NULL
 for(marker in markersOnXNoH){
   M2     <- as.factor(as.character(genotypes[marker, ind]))
-  tryCatch(res  <- anova(lm(phenotype ~  littersize + M1 + M1:M2 ))[[5]][3], error = function(e){ res <<- NA })
+  tryCatch(res  <- anova(lm(phenotype ~  littersize + M1 + M2 + M1:M2 ))[[5]][4], error = function(e){ res <<- NA })
   interactions <- c(interactions, -log10(res))
 }
 names(interactions) <- markersOnXNoH                   # Name the markers
@@ -51,24 +51,24 @@ correctedphenotype <- lm(phenotype ~  littersize)$residuals
 plot(c(1,3.5), c(-0.3, 0.5), t='n', xaxt="n")
 for(elemX in c("A","H","B")){
   elemLine <- NULL
-  moffset <- match(elemX, c("A","H","B"))/20
-  for(elem in c("A","H","B")){
+  moffset <- match(elemX, c("A","H","B"))/50
+  for(elem in c("A","H")){
     ix <- which(genotypes[topChr3,] == elem & genotypes[names(topChrX),] == elemX)
     mmean <- mean(correctedphenotype[ix],na.rm=TRUE)
     msd <- sd(correctedphenotype[ix],na.rm=TRUE)
     cat(length(ix), elem, elemX, mmean,"\n")
     points(match(elem,c("A","H","B"))+moffset, mmean, col=colorz[elem])
-    points(match(elem,c("A","H","B"))+moffset, mmean+msd, pch="-", col=colorz[elem])
-    points(match(elem,c("A","H","B"))+moffset, mmean-msd, pch="-", col=colorz[elem])
-    points(rep(match(elem,c("A","H","B")),3)+moffset, c(mmean-msd,mmean,mmean+msd),type='l', col=colorz[elem])
+    #points(match(elem,c("A","H","B"))+moffset, mmean+msd, pch="-", col=colorz[elem])
+    #points(match(elem,c("A","H","B"))+moffset, mmean-msd, pch="-", col=colorz[elem])
+    #points(rep(match(elem,c("A","H","B")),3)+moffset, c(mmean-msd,mmean,mmean+msd),type='l', col=colorz[elem])
     elemLine <-c(elemLine, mmean)
     
-    ix <- which(genotypes[topChr3,] == elem)
-    mmean <- mean(correctedphenotype[ix],na.rm=TRUE)
-    msd <- sd(correctedphenotype[ix],na.rm=TRUE)
-    points(match(elem,c("A","H","B"))+moffset, mmean, col="black",pch="X")
+    #ix <- which(genotypes[topChr3,] == elem)
+    #mmean <- mean(correctedphenotype[ix],na.rm=TRUE)
+    #msd <- sd(correctedphenotype[ix],na.rm=TRUE)
+    #points(match(elem,c("A","H","B"))+moffset, mmean, col="black",pch="X")
   }
-  points(c(1,2,3)+moffset, elemLine, type='l', col=colorz[elemX])
+  #points(c(1,2,3)+moffset, elemLine, type='l', col=colorz[elemX])
 }
 
 # Get the region

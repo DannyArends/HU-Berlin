@@ -44,15 +44,14 @@ qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d") ; qtlGP56 <- mriGWAS(genotype
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 
-write.table(cbind(qtl42,   qtl56,   qtl70), "Analysis/qtls_fatDlean_gwas.txt", sep="\t")
+write.table(cbind(qtl42,   qtl56,   qtl70),   "Analysis/qtls_fatDlean_gwas.txt",   sep="\t")
 write.table(cbind(qtlPH42, qtlPH56, qtlPH70), "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
 write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
 
 qtls <- read.table("Analysis/qtls_fatDlean_gwas.txt", sep="\t", colClasses=c("character",rep("numeric",3)), header=TRUE)
 
-image(x=1:nrow(qtls), y=(1:3)-0.5, as.matrix(qtls),oldstyle=TRUE, breaks=c(0,3,6,12,30,100), col=c("white",gray.colors(4)[4:1]))
-grid(3)
-box()
+image(x = 1:nrow(qtls), y=(1:3)-0.5, as.matrix(qtls), oldstyle=TRUE, breaks=c(0,3,6,12,30,100), col=c("white",gray.colors(4)[4:1]))
+grid(3); box()
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 chrcolors <- rep(c("black","orange"),length(unique(map[,"Chr"])))
@@ -76,13 +75,26 @@ dev.off()
 map[which(qtls[,"qtl42"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl56"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl70"] > -log10(0.01/nrow(qtls))),]
-#  Regions found in QTL mapping:
-# Chr   Start     Stop   42 56 70
-#  3  32392808  54702204  V  V  V
-#  4 143353391 143419321  V
-#  9  70272613 103351100     V  V
-# 16  69339204  71889002  V  V  V
-#  X  74247872  74247872  V
+
+getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "42d", marker = "UNC5048297"){
+  ind           <- colnames(genotypes[marker,!is.na(genotypes[marker,])])
+  genotype      <- as.factor(t(genotypes[marker,!is.na(genotypes[marker,])]))
+  littersize    <- as.numeric(phenotypes[ind, "WG2"])
+  phenotype     <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
+  tryCatch(res  <- anova(lm(phenotype ~ littersize + genotype)), error = function(e){ res <<- NA })
+  varExplained  <- res[2, "Sum Sq"] / sum((phenotype - mean(phenotype, na.rm=TRUE))^2, na.rm=TRUE)
+  return(round(varExplained * 100, digits=1))
+}
+
+topMarkerPerChromosome <- function(qtls, map, pheno.col="qtl42"){
+  topmarkers <- NULL
+  for(chr in unique(map[,"Chr"])){
+    markers <- rownames(map[which(map[,"Chr"] == chr),])
+    topmarkers <- c(topmarkers, rownames(qtls[markers,][which.max(qtls[markers,pheno.col]),])[1])
+  }
+  names(topmarkers) <- unique(map[,"Chr"])
+  return(topmarkers)
+}
 
 mriGWAS_Cof <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){                                            # Use the chromosome 3 locus as cofactor
   pvalues <- NULL
@@ -101,7 +113,7 @@ mriGWAS_Cof <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(geno
 }
 qtl42cof   <- mriGWAS_Cof(genotypes, phenotypes, "42d")
 plot(qtl42cof, t='h', col=chrcolors[map[,"Chr"]],main="Fat/Lean QTL profile Day 70", xlab="Marker", ylab="-log10(p-value)")
-  
+
 chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 setwd("E:/Mouse/DNA/DiversityArray/")
 chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)

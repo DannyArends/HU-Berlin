@@ -15,7 +15,7 @@ plot(dendrogram, type="triangle", main="Dendrogram All Chicken", xlab="", center
 plot(phylotree, type="fan", main="Fan Phylo All Chicken")
 
 indPop1 <- paste0("X", chipids[which(chipids[,"popPk"]=="IBNHxx"),"ID_Chip"])                       # Individuals belonging to the first strain
-indPop2 <- paste0("X", chipids[which(chipids[,"popPk"]=="IB77xx"),"ID_Chip"])                       # Individuals belonging to the first strain
+indPop2 <- paste0("X", chipids[which(chipids[,"popPk"]=="IB77xx"),"ID_Chip"])                       # Individuals belonging to the second strain
 
 nGenoPop1 <- apply(calldata[,indPop1],1,function(x){return(length(na.omit(unique(x))))})            # Number of genotypes in population 1
 nGenoPop2 <- apply(calldata[,indPop2],1,function(x){return(length(na.omit(unique(x))))})            # Number of genotypes in population 2

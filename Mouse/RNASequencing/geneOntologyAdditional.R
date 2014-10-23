@@ -1,4 +1,4 @@
-# geneOntology.R
+# geneOntologyAdditional.R
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Oct, 2014

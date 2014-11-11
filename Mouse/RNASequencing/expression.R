@@ -12,15 +12,16 @@ biocLite(c("GenomicAlignments", "GenomicFeatures", "Rsamtools"))
 library("GenomicAlignments")
 library("GenomicFeatures")
 library("Rsamtools")
+library("preprocessCore")
 
-#setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 chrominfo <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
 sampleIDs <- read.table("FASTQ/sampledescription.txt",sep="\t", header=TRUE)
 
 mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 exonsByGene   <- exonsBy(mouse, by = "gene")
-infiles       <- list.files(pattern="recalibrated.bam$", full=TRUE)
+infiles       <- list.files(path = "./Analysis", pattern="recalibrated.bam$", full=TRUE)
 bamfiles      <- BamFileList(infiles, yieldSize = 1000000, asMates=TRUE)
 se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
@@ -33,7 +34,7 @@ namez <- rownames(assay(se))
 #N = Total mapped reads in the experiment
 #L = gene length in base-pairs for a gene
 
-exonicGeneSizes <- lapply(exonsByGene, function(x){sum(width(reduce(x)))})
+exonicGeneSizes <- lapply(exonsByGene, function(x){ sum(width(reduce(x))) })
 N <- apply(assay(se), 2, sum)
 
 n <- 1
@@ -49,6 +50,9 @@ colnames(RPKM) <- colnames(assay(se))
 rownames(RPKM) <- rownames(assay(se))
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
+rawreads <- assay(se)
+
+write.table(rawreads, file="RawReads.txt", sep="\t")
 write.table(RPKM, file="RPKM.txt", sep="\t")
 
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC

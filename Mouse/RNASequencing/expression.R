@@ -28,6 +28,15 @@ se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEn
 head(assay(se))
 
 namez <- rownames(assay(se))
+rawreads <- assay(se)
+
+write.table(rawreads, file="RawReads.txt", sep="\t")
+rawreads <- read.table("RawReads.txt", sep="\t", check.names=FALSE)
+
+rawreads[rawreads == 0] <- NA                                 # Change 0 reads to NA
+rawreadsQnorm <- normalize.quantiles(as.matrix(rawreads))
+rawreadsQnorm[is.na(rawreadsQnorm)] <- 0                      # Change NA to 0 reads
+
 
 #RPKM = (10^9 * C)/(N * L)
 #C = Number of reads mapped to a gene
@@ -35,29 +44,32 @@ namez <- rownames(assay(se))
 #L = gene length in base-pairs for a gene
 
 exonicGeneSizes <- lapply(exonsByGene, function(x){ sum(width(reduce(x))) })
-N <- apply(assay(se), 2, sum)
+N <- apply(rawreadsQnorm, 2, sum)
 
 n <- 1
-RPKM <- t(apply(assay(se), 1, function(x){
+RPKM <- t(apply(rawreadsQnorm, 1, function(x){
   RPKM <- (10^9 * x) / (N * as.numeric(exonicGeneSizes[n]))
   n <<- n + 1
   return(round(RPKM, d = 3))
 }))
 
-corenames <- as.character(sampleIDs[match(as.numeric(unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))), sampleIDs$Lib_id), "Core.name"])
-corenames <- lapply(strsplit(corenames,"_"),"[",1)
-colnames(RPKM) <- colnames(assay(se))
-rownames(RPKM) <- rownames(assay(se))
+colnames(RPKM) <- colnames(rawreads)
+rownames(RPKM) <- rownames(rawreads)
 cat("We called expressions for", nrow(RPKM), "genes\n")
 
-rawreads <- assay(se)
+write.table(RPKM, file="Analysis/RPKMnorm.txt", sep="\t")
 
-write.table(rawreads, file="RawReads.txt", sep="\t")
-write.table(RPKM, file="RPKM.txt", sep="\t")
+## Comparison to MPI (Broken because of weird names)
 
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC
 cat("MPI called expressions for", nrow(RPKM_MPI), "genes\n")
-RPKM_MPI <- RPKM_MPI[, unlist(lapply(colnames(RPKM), grep, colnames(RPKM_MPI)))]
+
+corenames <- as.character(sampleIDs[match(as.numeric(unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))), sampleIDs$Lib_id), "core_name"])
+corenames <- unlist(lapply(strsplit(corenames,"_"),"[",1))
+
+shortnames <- unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))
+
+RPKM_MPI <- RPKM_MPI[, unlist(lapply(corenames, grep, colnames(RPKM_MPI)))]
 
 RPKM_MPI <- RPKM_MPI[which(rownames(RPKM_MPI) %in% rownames(RPKM)),]
 RPKM_GAB <- RPKM[which(rownames(RPKM) %in% rownames(RPKM_MPI)),]

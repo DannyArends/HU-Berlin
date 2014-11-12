@@ -9,7 +9,7 @@ library(biomaRt)                                                                
 library(topGO)                                                                                          # topGO package
   
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-RPKM <- read.table("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
+RPKM <- read.table("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
 ASEB6N  <- read.csv("ASE_matB6Nsnps_5reads.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
 ASEBFMI <- read.csv("ASE_matBFMIsnps_5reads.txt", sep="\t", header=TRUE, colClasses="character", check.names=FALSE)
 
@@ -83,27 +83,27 @@ pval <- apply(cbind(LD1,LD2),1,function(x){ return(t.test(as.numeric(x[1:3]), as
 
 goSwitchedGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched != 0), "ensembl_gene_id"])
 goSwitched   <- GenTable(goSwitchedGO[[1]], classicFisher = goSwitchedGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goSwitched, "GO_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goSwitched, "GO_Switched_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goMaternalGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == -1), "ensembl_gene_id"])
 goMaternal <- GenTable(goMaternalGO[[1]], classicFisher = goMaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goMaternal, "GO_Maternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goMaternal, "GO_Maternal_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goPaternalGO <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(switched == 1), "ensembl_gene_id"])
 goPaternal   <- GenTable(goPaternalGO[[1]], classicFisher = goPaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goPaternal, "GO_Paternal.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goPaternal, "GO_Paternal_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goBFMIGO     <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysBFMI == 1), "ensembl_gene_id"])
 goBFMI   <- GenTable(goBFMIGO[[1]], classicFisher = goBFMIGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goBFMI, "GO_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goBFMI, "GO_BFMI_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goB6NGO      <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(alwaysB6N == 1), "ensembl_gene_id"])
 goB6N   <- GenTable(goB6NGO[[1]], classicFisher = goB6NGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goB6N, "GO_B6N.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goB6N, "GO_B6N_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 goDEGO       <- doGO(RPKM[, "ensembl_gene_id"], RPKM[which(pval < 0.005), "ensembl_gene_id"])
 goDE   <- GenTable(goDEGO[[1]], classicFisher = goDEGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
-write.table(goDE, "GO_DiffExp_0.005.txt", sep="\t", row.names=FALSE, quote=FALSE)
+write.table(goDE, "GO_DiffExp_0.005_norm.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 write.table(RPKM[which(switched == 1), ],   "Expression_Switched.txt", sep="\t", row.names=FALSE, quote=FALSE)
 write.table(RPKM[which(alwaysBFMI == 1), ], "Expression_BFMI.txt", sep="\t", row.names=FALSE, quote=FALSE)

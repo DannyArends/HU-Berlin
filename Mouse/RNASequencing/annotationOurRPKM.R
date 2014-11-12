@@ -22,7 +22,7 @@ STARTSTOP     <- unique(c(STARTSTOP, unique(snps[grepl("STOP", snps$FuncClass),"
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 
-RPKM <- read.csv("Analysis/RPKM.txt", sep="\t", header=TRUE, check.names=FALSE, stringsAsFactors = FALSE)                                # RNA-Seq RPKM data
+RPKM <- read.csv("Analysis/RPKMnorm.txt", sep="\t", header=TRUE, check.names=FALSE, stringsAsFactors = FALSE)                                # RNA-Seq RPKM data
 annotation <- read.csv("FastQ/sampledescription.txt", sep="\t", header=TRUE)                                                             # Sample annotation
 RPKM <- RPKM[, -2]                                                                                                                       # Throw away the second column
 colnamesShort <- unlist(lapply(strsplit(colnames(RPKM),"_"),"[",1))
@@ -50,7 +50,9 @@ if(!file.exists("bioMart/BiomartAnnotation.txt")){
 }
 
 RPKM <- RPKM[,-c(11,12)]                                                                                              # Remove the quadriceps samples
-RPKM <- RPKM[-c(32151), ]                                                                                                 # Remove the essentially constant error in t.test
+RPKM <- RPKM[-c(28048, 32151, 35810), ]                                                                                             # Remove the essentially constant error in t.test
+
+RPKM[is.na(RPKM)] <- 0                                                                                                # Reset the NA's to 0
 
 which(rownames(RPKM) == "ENSMUSG00000091771")
 
@@ -203,5 +205,5 @@ updatedData[which(updatedData$ensembl_gene_id %in% SPLICE), "SpliceSite"] <- 1
 updatedData <- cbind(updatedData, "Stop/Start"    = rep(0, nrow(updatedData)))
 updatedData[which(updatedData$ensembl_gene_id %in% STARTSTOP), "Stop/Start"] <- 1
 
-write.table(updatedData, file="Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", row.names=FALSE)
+write.table(updatedData, file="Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", row.names=FALSE)
 

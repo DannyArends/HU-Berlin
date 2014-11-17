@@ -62,7 +62,7 @@ doAnalysis <- function(maternal, m1, m2, m3){
     if(maternal[snp,"FORMAT"] == "GT:AD:DP:GQ:PL"){
       v1 <- strsplit(m1[snp,"SAMPLE"], ":") ; v2 <- strsplit(m2[snp,"SAMPLE"], ":") ; v3 <- strsplit(m3[snp,"SAMPLE"], ":")
       v1Reads <- as.numeric(unlist(v1[[1]][3])) ; v2Reads <- as.numeric(unlist(v2[[1]][3])) ; v3Reads <- as.numeric(unlist(v3[[1]][3]))
-      if(v1Reads > 5 && v2Reads > 5 && v3Reads > 5){                                                        # Minimum of 5 reads (combined for the alleles)
+      if(v1Reads > 10 && v2Reads > 10 && v3Reads > 10){                                                     # Minimum of 10 reads (combined for the alleles)
         v1ReadsA <- as.numeric(unlist(strsplit(unlist(v1[[1]][2]),",")))
         v2ReadsA <- as.numeric(unlist(strsplit(unlist(v2[[1]][2]),",")))
         v3ReadsA <- as.numeric(unlist(strsplit(unlist(v3[[1]][2]),",")))
@@ -100,8 +100,8 @@ doAnalysis <- function(maternal, m1, m2, m3){
 matB6Nsnps <- doAnalysis(matB6, matB6_1, matB6_2, matB6_3)
 matBFMIsnps <- doAnalysis(matBFMI, matBFMI_1, matBFMI_2, matBFMI_3)
 
-write.table(matB6Nsnps, file="maternalB6snps_5reads.txt", sep="\t", row.names=FALSE)                                  # Also available for 10 reads per individual
-write.table(matBFMIsnps, file="maternalBFMIsnps_5reads.txt", sep="\t", row.names=FALSE)                               # Also available for 10 reads per individual
+write.table(matB6Nsnps, file="maternalB6snps_10reads.txt", sep="\t", row.names=FALSE)                                  # Also available for 10 reads per individual
+write.table(matBFMIsnps, file="maternalBFMIsnps_10reads.txt", sep="\t", row.names=FALSE)                               # Also available for 10 reads per individual
 
 ### PLOT
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")

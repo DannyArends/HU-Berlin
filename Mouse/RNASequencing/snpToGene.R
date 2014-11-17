@@ -5,11 +5,11 @@
 # first written Sep, 2014
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-matB6Nsnps  <- read.csv("maternalB6snps_5reads.txt", sep="\t", header=TRUE)                                   # SNPs detected in the maternal B6N F1 cross
-matBFMIsnps <- read.csv("maternalBFMIsnps_5reads.txt", sep="\t", header=TRUE)                                 # SNPs detected in the maternal BFMI F1 cross
-RPKM        <- read.csv("Analysis/BFMI_RPKM_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
+matB6Nsnps  <- read.csv("maternalB6snps_10reads.txt", sep="\t", header=TRUE)                                        # SNPs detected in the maternal B6N F1 cross
+matBFMIsnps <- read.csv("maternalBFMIsnps_10reads.txt", sep="\t", header=TRUE)                                      # SNPs detected in the maternal BFMI F1 cross
+RPKM        <- read.csv("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
 
-GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                   # Gene models
+GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                       # Gene models
 EXONS <- GTF[which(GTF[,3]=="exon"),]
 
 datastr <- strsplit(as.character(EXONS[,9]), "; ")
@@ -56,6 +56,145 @@ names(BFMIsummary) <- uniqueGenes
 B6Nsummary  <- summarizeImprintedSNPsInGene(uniqueGenes, geneExonsCoupling, matB6Nsnps)
 names(B6Nsummary) <- uniqueGenes
 
+###
+BFMIshort <- NULL
+for(x in 1:length(BFMIsummary)){
+  if(!is.null(BFMIsummary[[x]])) BFMIshort <- c(BFMIshort, BFMIsummary[x])
+}
+
+B6Nshort <- NULL
+for(x in 1:length(B6Nsummary)){
+  if(!is.null(B6Nsummary[[x]])) B6Nshort <- c(B6Nshort, B6Nsummary[x])
+}
+
+cat("Found",length(BFMIshort),"genes with usable",sum(unlist(lapply(BFMIshort,nrow))),"SNPs in matBFMI\n")         # Found 3681 genes with usable 20536 SNPs in matBFMI
+cat("Found",length(B6Nshort), "genes with usable",sum(unlist(lapply(B6Nshort,nrow))), "SNPs in matBFMI\n")         # Found 3503 genes with usable 19384 SNPs in matBFMI
+
+getASEgenes <- function(CROSSsummary, cutoff = 0.35) {
+  v <- NULL
+  for(x in 1:length(CROSSsummary)){ v <- c(v, mean(CROSSsummary[[x]][,"ImprintingScore"])); }
+  hist(v)
+  cat("Found", length(which(v > cutoff)),"ASE genes (cutoff =",cutoff,")\n")
+  return(CROSSsummary[which(v > cutoff)])
+}
+
+B6Nase  <- getASEgenes(B6Nshort)                                                                                  # Found 59 ASE genes (cutoff = 0.35)
+BFMIase <- getASEgenes(BFMIshort)                                                                                 # Found 93 ASE genes (cutoff = 0.35)
+
+ASEmatrix <- NULL
+for(x in 1:length(B6Nase)){
+  ASEmatrix <- rbind(ASEmatrix, cbind(ensembl_gene_id = names(B6Nase[x]), cross = "matB6N", B6Nase[[x]]))
+}
+for(x in 1:length(BFMIase)){
+  ASEmatrix <- rbind(ASEmatrix, cbind(ensembl_gene_id = names(BFMIase[x]), cross = "matBFMI", BFMIase[[x]]))
+}
+
+inRPKM <- match(ASEmatrix[,"ensembl_gene_id"],RPKM[,"ensembl_gene_id"])
+
+refMean <- apply(ASEmatrix[,c("R1","R2","R3")],1,mean)
+altMean <- apply(ASEmatrix[,c("A1","A2","A3")],1,mean)
+
+ASEmatrix[,c("R1","R2","R3")] <- apply(ASEmatrix[,c("R1","R2","R3")], 2, function(x){round(x*100,2)})
+ASEmatrix[,c("A1","A2","A3")] <- apply(ASEmatrix[,c("A1","A2","A3")], 2, function(x){round(x*100,2)})
+
+ASEmatrix <- cbind(ensembl_gene_id = ASEmatrix[,"ensembl_gene_id"], cross =  ASEmatrix[,"cross"],  RPKM[inRPKM, c("mgi_symbol","mgi_description")], ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean * 100, 2))
+
+write.table(ASEmatrix, "ASE_10reads_noImputation.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+matB6Nsnps  <- read.csv("maternalB6snps_10reads.txt", sep="\t", header=TRUE, colClasses="character")                                        # SNPs detected in the maternal B6N F1 cross
+matBFMIsnps <- read.csv("maternalBFMIsnps_10reads.txt", sep="\t", header=TRUE, colClasses="character")                                      # SNPs detected in the maternal BFMI F1 cross
+ASEmatrix <- read.table("ASE_10reads_noImputation.txt",sep="\t", header=TRUE, colClasses="character")
+
+matB6Nfiles <- c("5070_CGATGT_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5071_CCGTCC_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5072_TAGCTT_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam")
+matBFMIfiles <- c("5073_TTAGGC_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5074_GATCAG_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5075_ATGTCA_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam")
+
+####
+
+NoOtherSide <- names(which(table(ASEmatrix[,"ID"]) == 1))
+
+recovered <- 0
+imputed <- 0
+notimputed <- 0
+
+impM <- NULL
+for(r in which(ASEmatrix[,"ID"] %in% NoOtherSide)){                                                   # Only the ones which are not duplicated need to be imputed
+  chr <- ASEmatrix[r,"Chr"]
+  pos <- ASEmatrix[r,"Loc"]
+  if(ASEmatrix[r,"cross"] == "matBFMI"){
+    inB6N <- which(as.character(matB6Nsnps[,"ID"]) == as.character(ASEmatrix[r,"ID"]))
+    if(length(inB6N) > 0){                                                                            # No imputation, it was below the threshold
+      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matB6N", ASEmatrix[r,"mgi_symbol"],ASEmatrix[r,"mgi_description"], matB6Nsnps[inB6N,], ASEmatrix[r,"Exon"], "", ""))
+      recovered <- recovered + 1
+    }else{                                                                                            # NEED TO IMPUTE, So look at the coverage
+      coverage <- NULL
+      for(infile in matB6Nfiles){
+        cmd <- paste0("samtools mpileup -r ",chr,":",pos,"-",pos," Analysis/",infile)
+        coverage <- c(coverage, as.numeric(strsplit(system(cmd, intern=TRUE)[1],"\t")[[1]][4]))
+      }
+      naCoverage <- which(is.na(coverage))
+      if(length(naCoverage) > 0) coverage[naCoverage] <- 0
+      info <- rep("", 12)
+      if(sum(coverage > 10) == 3){ # Enough coverage
+        info <- c(rep("BFMI", 3), rep("",9))
+        if(ASEmatrix[r,"Detected"] == "BFMIsnp"){ info <- c(rep("B6N", 3), rep("",9)) }
+        imputed <- imputed + 1
+      }else{ notimputed <- notimputed + 1 }                                                            # Coverage too low
+      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matB6N", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
+      ASEmatrix[r,"ID"], ASEmatrix[r,"Chr"], ASEmatrix[r,"Loc"], ASEmatrix[r,"dbSNP"], info, ASEmatrix[r,"Detected"], ASEmatrix[r,"Exon"], "", ""))
+      cat(coverage,"\n")
+    }
+  }
+  if(ASEmatrix[r,"cross"] == "matB6N"){
+    inBFMI <- which(as.character(matBFMIsnps[,"ID"]) == as.character(ASEmatrix[r,"ID"]))
+    if(length(inBFMI) > 0){                                                                            # No imputation, it was below the threshold
+      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], matBFMIsnps[inBFMI,], ASEmatrix[r,"Exon"], "", ""))
+      recovered <- recovered + 1
+    }else{                                                                                             # NEED TO IMPUTE, So look at the coverage
+      coverage <- NULL
+      for(infile in matBFMIfiles){
+        cmd <- paste0("samtools mpileup -r ",chr,":",pos,"-",pos," Analysis/",infile)
+        coverage <- c(coverage, as.numeric(strsplit(system(cmd, intern=TRUE)[1],"\t")[[1]][4]))
+      }
+      naCoverage <- which(is.na(coverage))
+      if(length(naCoverage) > 0) coverage[naCoverage] <- 0
+      info <- rep("", 12)
+      if(sum(coverage > 10) == 3){                                                                     # Enough coverage
+        info <- c(rep("BFMI", 3), rep("",9))
+        if(ASEmatrix[r,"Detected"] == "BFMIsnp"){ info <- c(rep("B6N", 3), rep("",9)) }
+        imputed <- imputed + 1
+      }else{ notimputed <- notimputed + 1 }                                                            # Coverage too low
+      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
+      ASEmatrix[r,"ID"], ASEmatrix[r,"Chr"], ASEmatrix[r,"Loc"], ASEmatrix[r,"dbSNP"], info, ASEmatrix[r,"Detected"], ASEmatrix[r,"Exon"], "", ""))
+      cat(coverage,"\n")
+    }
+  }
+}
+cat("We recovered", recovered, "SNPs, which were below the threshold\n")              # We recovered 24 SNPs, which were below the threshold
+cat("We imputed", imputed, "SNPs since they had enough coverage\n")                   # We imputed 150 SNPs since they had enough coverage
+cat("We failed", notimputed, "SNPs since they had not enough coverage\n")             # We failed 35 SNPs since they had not enough coverage
+colnames(impM) <- colnames(ASEmatrix)
+
+write.table(impM, "ASE_10reads_imputation.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+#
+ASEmatrix <- read.table("ASE_10reads_noImputation.txt",sep="\t", header=TRUE)
+IMPmatrix <- read.table("ASE_10reads_imputation.txt",sep="\t", header=TRUE)
+
+refMean <- apply(IMPmatrix[,c("R1","R2","R3")],1,mean)
+altMean <- apply(IMPmatrix[,c("A1","A2","A3")],1,mean)
+
+IMPmatrix[,c("R1","R2","R3")] <- apply(IMPmatrix[,c("R1","R2","R3")],2,function(x){round(x*100,2)})
+IMPmatrix[,c("A1","A2","A3")] <- apply(IMPmatrix[,c("A1","A2","A3")],2,function(x){round(x*100,2)})
+
+IMPmatrix[,"refMean"] <- round(refMean * 100, 2)
+IMPmatrix[,"altMean"] <- round(altMean * 100, 2)
+
+ALLmatrix <- rbind(ASEmatrix,IMPmatrix)
+
+write.table(ALLmatrix, "ASE_10reads_combined.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+################# OLD #######################
 imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, ASEcutoff = 0.35){
   for(x in 1:length(BFMIsummary)){
     if(!is.null(BFMIsummary[[x]]) && is.null(B6Nsummary[[x]])){
@@ -90,12 +229,6 @@ imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, AS
 
 imputedData <- imputeReferenceASE(BFMIsummary, B6Nsummary, RPKM)                                                 # Impute the expressed genes (without a SNP)
 
-getShortList <- function(CROSSsummary, cutoff = 0.35) {
-  v <- NULL
-  for(x in 1:length(CROSSsummary)){ v <- c(v, mean(CROSSsummary[[x]][,"ImprintingScore"])); }
-  hist(v)
-  return(CROSSsummary[which(v > cutoff)])
-}
 
 BFMIase <- getShortList(imputedData[[1]])
 for(x in 1:length(BFMIase)){ write.table(BFMIase[[x]], paste0(names(BFMIase[x]),".BFMI.txt"),sep="\t", quote=FALSE); }

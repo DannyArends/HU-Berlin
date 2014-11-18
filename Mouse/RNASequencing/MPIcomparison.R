@@ -8,6 +8,8 @@
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 
+sampleIDs <- read.table("FASTQ/sampledescription.txt",sep="\t", header=TRUE)
+
 RPKM_MPI <- read.csv("MPI_RPKM_ANALYSIS/2014-07-04_BFMI_RPKM.txt", sep="\t", header=TRUE, row.names=1)       # RNA-Seq summary data from MDC
 cat("MPI called expressions for", nrow(RPKM_MPI), "genes\n")
 

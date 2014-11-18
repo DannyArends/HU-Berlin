@@ -97,7 +97,8 @@ altMean <- apply(ASEmatrix[,c("A1","A2","A3")],1,mean)
 ASEmatrix[,c("R1","R2","R3")] <- apply(ASEmatrix[,c("R1","R2","R3")], 2, function(x){round(x*100,2)})
 ASEmatrix[,c("A1","A2","A3")] <- apply(ASEmatrix[,c("A1","A2","A3")], 2, function(x){round(x*100,2)})
 
-ASEmatrix <- cbind(ensembl_gene_id = ASEmatrix[,"ensembl_gene_id"], cross =  ASEmatrix[,"cross"],  RPKM[inRPKM, c("mgi_symbol","mgi_description")], ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean * 100, 2))
+ASEmatrix <- cbind(ensembl_gene_id = ASEmatrix[,"ensembl_gene_id"], cross =  ASEmatrix[,"cross"],  RPKM[inRPKM, c("mgi_symbol","mgi_description")], 
+                   ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean * 100, 2))
 
 write.table(ASEmatrix, "ASE_10reads_noImputation.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -111,7 +112,13 @@ matBFMIfiles <- c("5073_TTAGGC_L006_P_trimmed.aligned.sorted.realigned.recalibra
 
 ####
 
-NoOtherSide <- names(which(table(ASEmatrix[,"ID"]) == 1))
+inMatBFMI <- unique(ASEmatrix[which(ASEmatrix[,"cross"] == "matBFMI"),"ID"])
+inMatB6N <- unique(ASEmatrix[which(ASEmatrix[,"cross"] == "matB6N"),"ID"])
+
+inBFMInotB6N <- inMatBFMI[which(!inMatBFMI %in% inMatB6N)]
+inB6NnotBFMI <- inMatB6N[which(!inMatB6N %in% inMatBFMI)]
+
+NoOtherSide <- c(as.character(inBFMInotB6N), as.character(inB6NnotBFMI))
 
 recovered <- 0
 imputed <- 0
@@ -121,10 +128,11 @@ impM <- NULL
 for(r in which(ASEmatrix[,"ID"] %in% NoOtherSide)){                                                   # Only the ones which are not duplicated need to be imputed
   chr <- ASEmatrix[r,"Chr"]
   pos <- ASEmatrix[r,"Loc"]
+  ensembl_id <- as.character(ASEmatrix[r,"ensembl_gene_id"])
   if(ASEmatrix[r,"cross"] == "matBFMI"){
     inB6N <- which(as.character(matB6Nsnps[,"ID"]) == as.character(ASEmatrix[r,"ID"]))
     if(length(inB6N) > 0){                                                                            # No imputation, it was below the threshold
-      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matB6N", ASEmatrix[r,"mgi_symbol"],ASEmatrix[r,"mgi_description"], matB6Nsnps[inB6N,], ASEmatrix[r,"Exon"], "", ""))
+      impM <- rbind(impM, c(ensembl_id, "matB6N", ASEmatrix[r,"mgi_symbol"],ASEmatrix[r,"mgi_description"], matB6Nsnps[inB6N,], ASEmatrix[r,"Exon"], "", ""))
       recovered <- recovered + 1
     }else{                                                                                            # NEED TO IMPUTE, So look at the coverage
       coverage <- NULL
@@ -140,7 +148,7 @@ for(r in which(ASEmatrix[,"ID"] %in% NoOtherSide)){                             
         if(ASEmatrix[r,"Detected"] == "BFMIsnp"){ info <- c(rep("B6N", 3), rep("",9)) }
         imputed <- imputed + 1
       }else{ notimputed <- notimputed + 1 }                                                            # Coverage too low
-      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matB6N", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
+      impM <- rbind(impM, c(ensembl_id, "matB6N", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
       ASEmatrix[r,"ID"], ASEmatrix[r,"Chr"], ASEmatrix[r,"Loc"], ASEmatrix[r,"dbSNP"], info, ASEmatrix[r,"Detected"], ASEmatrix[r,"Exon"], "", ""))
       cat(coverage,"\n")
     }
@@ -148,7 +156,7 @@ for(r in which(ASEmatrix[,"ID"] %in% NoOtherSide)){                             
   if(ASEmatrix[r,"cross"] == "matB6N"){
     inBFMI <- which(as.character(matBFMIsnps[,"ID"]) == as.character(ASEmatrix[r,"ID"]))
     if(length(inBFMI) > 0){                                                                            # No imputation, it was below the threshold
-      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], matBFMIsnps[inBFMI,], ASEmatrix[r,"Exon"], "", ""))
+      impM <- rbind(impM, c(ensembl_id, "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], matBFMIsnps[inBFMI,], ASEmatrix[r,"Exon"], "", ""))
       recovered <- recovered + 1
     }else{                                                                                             # NEED TO IMPUTE, So look at the coverage
       coverage <- NULL
@@ -164,7 +172,7 @@ for(r in which(ASEmatrix[,"ID"] %in% NoOtherSide)){                             
         if(ASEmatrix[r,"Detected"] == "BFMIsnp"){ info <- c(rep("B6N", 3), rep("",9)) }
         imputed <- imputed + 1
       }else{ notimputed <- notimputed + 1 }                                                            # Coverage too low
-      impM <- rbind(impM, c(ASEmatrix[r,"ensembl_gene_id"], "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
+      impM <- rbind(impM, c(ensembl_id, "matBFMI", ASEmatrix[r,"mgi_symbol"], ASEmatrix[r,"mgi_description"], 
       ASEmatrix[r,"ID"], ASEmatrix[r,"Chr"], ASEmatrix[r,"Loc"], ASEmatrix[r,"dbSNP"], info, ASEmatrix[r,"Detected"], ASEmatrix[r,"Exon"], "", ""))
       cat(coverage,"\n")
     }
@@ -193,6 +201,58 @@ IMPmatrix[,"altMean"] <- round(altMean * 100, 2)
 ALLmatrix <- rbind(ASEmatrix,IMPmatrix)
 
 write.table(ALLmatrix, "ASE_10reads_combined.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
+### Write the table out for the paper ###
+
+
+ALLmatrixLongIDs <- paste0(ALLmatrix[,"ID"],"_",ALLmatrix[,"mgi_symbol"])
+uniqueIDs <- unique(ALLmatrixLongIDs)
+columns <- c("snpID", "dbSNP", "Chr", "Loc", "SNPorigin", "ensembl_gene_id", "mgi_symbol", "mgi_description", "exon", "ref_B6N", "alt_B6N", "score_B6N", "ASE_B6N", "ref_BFMI", "alt_BFMI", "score_BFMI", "ASE_BFMI", "Class")
+
+paperMatrix <- matrix(NA, length(uniqueIDs), length(columns))
+colnames(paperMatrix) <- columns
+
+originalIDs <- unlist(lapply(lapply(strsplit(uniqueIDs,"_"),"[",c(1:2)),function(x){paste0(x[1],"_",x[2])}))
+
+paperMatrix[,"snpID"] <- as.character(originalIDs)
+staticLocs <- match(uniqueIDs, ALLmatrixLongIDs)
+paperMatrix[,"dbSNP"]             <- as.character(ALLmatrix[staticLocs, "dbSNP"])
+paperMatrix[,"Chr"]               <- ALLmatrix[staticLocs, "Chr"]
+paperMatrix[,"Loc"]               <- ALLmatrix[staticLocs, "Loc"]
+paperMatrix[,"SNPorigin"]         <- as.character(ALLmatrix[staticLocs, "Detected"])
+paperMatrix[,"ensembl_gene_id"]   <- as.character(ALLmatrix[staticLocs, "ensembl_gene_id"])
+paperMatrix[,"mgi_symbol"]        <- as.character(ALLmatrix[staticLocs, "mgi_symbol"])
+paperMatrix[,"mgi_description"]   <- as.character(ALLmatrix[staticLocs, "mgi_description"])
+paperMatrix[,"exon"]              <- as.character(ALLmatrix[staticLocs, "Exon"])
+
+
+for(r in 1:nrow(paperMatrix)){
+  ALLsubset <- ALLmatrix[which(ALLmatrix[,"ID"] == paperMatrix[r, "snpID"]),]
+  matB6N <- which(ALLsubset[,"cross"]=="matB6N")
+  paperMatrix[r,"ref_B6N"]   <- ALLsubset[matB6N, "refMean"][1]
+  paperMatrix[r,"alt_B6N"]   <- ALLsubset[matB6N, "altMean"][1]
+  paperMatrix[r,"score_B6N"] <- ALLsubset[matB6N, "ImprintingScore"][1]
+  imprB6N <- "NotConsistent"
+  if(ALLsubset[matB6N,"Origin1"] == ALLsubset[matB6N,"Origin2"] && ALLsubset[matB6N,"Origin1"] == ALLsubset[matB6N,"Origin3"]) imprB6N <- ALLsubset[matB6N,"Origin1"][1]
+  paperMatrix[r,"ASE_B6N"] <- as.character(imprB6N)
+  
+  matBFMI <- which(ALLsubset[,"cross"]=="matBFMI")
+  paperMatrix[r,"ref_BFMI"]   <- ALLsubset[matBFMI, "refMean"][1]
+  paperMatrix[r,"alt_BFMI"]   <- ALLsubset[matBFMI, "altMean"][1]
+  paperMatrix[r,"score_BFMI"] <- ALLsubset[matBFMI, "ImprintingScore"][1]
+  imprBFMI <- "NotConsistent"
+  if(ALLsubset[matBFMI,"Origin1"] == ALLsubset[matBFMI,"Origin2"] && ALLsubset[matBFMI,"Origin1"] == ALLsubset[matBFMI,"Origin3"]) imprBFMI <- ALLsubset[matBFMI,"Origin1"][1]
+  paperMatrix[r,"ASE_BFMI"] <- as.character(imprBFMI)
+  if(imprBFMI == "BFMI" && imprB6N == "BFMI") paperMatrix[r,"Class"] <- "BFMI"
+  if(imprBFMI == "B6N" && imprB6N == "B6N") paperMatrix[r,"Class"] <- "B6N"
+  if(imprBFMI == "B6N" && imprB6N == "BFMI") paperMatrix[r,"Class"] <- "Paternal"
+  if(imprBFMI == "BFMI" && imprB6N == "B6N") paperMatrix[r,"Class"] <- "Maternal"
+}
+
+paperMatrix[is.na(paperMatrix)] <- ""
+
+write.table(paperMatrix, "ASE_10reads_forPaper.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+
 
 ################# OLD #######################
 imputeReferenceASE <- function(BFMIsummary, B6Nsummary, RPKM, RPKMcutoff = 3, ASEcutoff = 0.35){

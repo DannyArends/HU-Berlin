@@ -7,7 +7,7 @@
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                               # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE)                              # Normal A, H, B genotypes
-genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE)                  # Phased by Beagle
+genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE)                  # Phased by Beagle, TODO: Leave out the homozygous individuals
 genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt", sep="\t", check.names=FALSE, na.strings="")       # Phased towards the grandparents
 
 setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                # Read in the phenotypes
@@ -23,9 +23,9 @@ genotypes   <- genotypes[,F2]
 genotypesPh <- genotypesPh[,F2]
 genotypesGP <- genotypesGP[,F2]
 
-mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){
-  pvalues <- NULL
-  for(x in 1:to){
+mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){                          # TODO: Add to the model: subfamily based on which F1 they come from
+  pvalues <- NULL                                                                                             # TODO: ASK SEBASTIAAN: Add to the model: season, when were they born
+  for(x in 1:to){                                                                                             # TODO: ASK SEBASTIAAN: Add to the model: litter number (1st litter versus second litter)
     ind           <- colnames(genotypes[x,!is.na(genotypes[x,])])
     genotype      <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))
     littersize    <- as.numeric(phenotypes[ind, "WG2"])

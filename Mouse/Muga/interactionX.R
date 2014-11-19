@@ -3,7 +3,7 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Aug, 2014
 # first written Aug, 2014
-
+                                                                                                              # TODO: Fat, Lean, Fat/Lean do an exhaustive search across all the chromosomes
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                               # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE, colClasses="character")      # Normal A, H, B genotypes

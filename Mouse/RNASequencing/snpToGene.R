@@ -68,7 +68,7 @@ for(x in 1:length(B6Nsummary)){
 }
 
 cat("Found",length(BFMIshort),"genes with usable",sum(unlist(lapply(BFMIshort,nrow))),"SNPs in matBFMI\n")         # Found 3681 genes with usable 20536 SNPs in matBFMI
-cat("Found",length(B6Nshort), "genes with usable",sum(unlist(lapply(B6Nshort,nrow))), "SNPs in matBFMI\n")         # Found 3503 genes with usable 19384 SNPs in matBFMI
+cat("Found",length(B6Nshort), "genes with usable",sum(unlist(lapply(B6Nshort,nrow))), "SNPs in matB6N\n")          # Found 3503 genes with usable 19384 SNPs in matB6N
 
 getASEgenes <- function(CROSSsummary, cutoff = 0.35) {
   v <- NULL
@@ -217,7 +217,7 @@ originalIDs <- unlist(lapply(lapply(strsplit(uniqueIDs,"_"),"[",c(1:2)),function
 paperMatrix[,"snpID"] <- as.character(originalIDs)
 staticLocs <- match(uniqueIDs, ALLmatrixLongIDs)
 paperMatrix[,"dbSNP"]             <- as.character(ALLmatrix[staticLocs, "dbSNP"])
-paperMatrix[,"Chr"]               <- ALLmatrix[staticLocs, "Chr"]
+paperMatrix[,"Chr"]               <- as.character(ALLmatrix[staticLocs, "Chr"])
 paperMatrix[,"Loc"]               <- ALLmatrix[staticLocs, "Loc"]
 paperMatrix[,"SNPorigin"]         <- as.character(ALLmatrix[staticLocs, "Detected"])
 paperMatrix[,"ensembl_gene_id"]   <- as.character(ALLmatrix[staticLocs, "ensembl_gene_id"])

@@ -56,13 +56,21 @@ rownames(B6Nm)     <- createNames(B6Nm)   ; rownames(B6Nf)     <- createNames(B6
 rownames(BFMIm)    <- createNames(BFMIm)  ; rownames(BFMIf)    <- createNames(BFMIf)
 rownames(matB6)    <- createNames(matB6)  ; rownames(matBFMI)  <- createNames(matBFMI)
 
+cat("SNPs matBFMI",nrow(matBFMI_1),nrow(matBFMI_2),nrow(matBFMI_3), nrow(matBFMI),"\n")
+cat("SNPs matBFMI on X/Y/MT:", length(c(which(matBFMI[,"CHROM"] == "X"), which(matBFMI[,"CHROM"] == "MT"), which(matBFMI[,"CHROM"] == "Y"))),"\n")
+cat("SNPs matBFMI",nrow(matB6_1),nrow(matB6_2),nrow(matB6_3), nrow(matB6),"\n")
+cat("SNPs matB6N on X/Y/MT:", length(c(which(matB6[,"CHROM"] == "X"), which(matB6[,"CHROM"] == "MT"), which(matB6[,"CHROM"] == "Y"))),"\n")
+
 doAnalysis <- function(maternal, m1, m2, m3){
   mmatrix <- NULL
   for(snp in rownames(maternal)){
+    cat(snp,"\n")
     if(maternal[snp,"FORMAT"] == "GT:AD:DP:GQ:PL"){
+      cat("format OK\n")
       v1 <- strsplit(m1[snp,"SAMPLE"], ":") ; v2 <- strsplit(m2[snp,"SAMPLE"], ":") ; v3 <- strsplit(m3[snp,"SAMPLE"], ":")
       v1Reads <- as.numeric(unlist(v1[[1]][3])) ; v2Reads <- as.numeric(unlist(v2[[1]][3])) ; v3Reads <- as.numeric(unlist(v3[[1]][3]))
       if(v1Reads > 10 && v2Reads > 10 && v3Reads > 10){                                                     # Minimum of 10 reads (combined for the alleles)
+        cat("reads OK\n")
         v1ReadsA <- as.numeric(unlist(strsplit(unlist(v1[[1]][2]),",")))
         v2ReadsA <- as.numeric(unlist(strsplit(unlist(v2[[1]][2]),",")))
         v3ReadsA <- as.numeric(unlist(strsplit(unlist(v3[[1]][2]),",")))
@@ -70,6 +78,7 @@ doAnalysis <- function(maternal, m1, m2, m3){
           inBFMI  <- c(which(rownames(BFMIm) ==  snp), which(rownames(BFMIf) ==  snp))                      # SNP in BFMI males/females
           inB6N   <- c(which(rownames(B6Nm) ==  snp), which(rownames(B6Nf) ==  snp))                        # SNP in B6N males/females
           if(length(inBFMI) == 2 && length(inB6N) == 0){                                                    # SNP found in BFMI, not B6N
+            cat("SNP in BFMI\n")
             r1 <- v1ReadsA/v1Reads; r2 <- v2ReadsA/v2Reads; r3 <- v3ReadsA/v3Reads
             impScore <- (abs(r1[2] - 0.5) + abs(r2[2] - 0.5) + abs(r3[2] - 0.5)) / 3
             cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", r1, r2, r3, ":", impScore, "\n")
@@ -80,6 +89,7 @@ doAnalysis <- function(maternal, m1, m2, m3){
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin, inBFMI, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore, "BFMIsnp"))
           }
           if(length(inBFMI) == 0 && length(inB6N) == 2){                                                    # SNP found in B6N, not BFMI
+            cat("SNP in B6N\n")
             r1 <- v1ReadsA/v1Reads; r2 <- v2ReadsA/v2Reads; r3 <- v3ReadsA/v3Reads
             impScore <- (abs(r1[2] - 0.5) + abs(r2[2] - 0.5) + abs(r3[2] - 0.5)) / 3
             cat(snp,": ", v1Reads, v2Reads, v3Reads,"->", r1, r2, r3, ":", impScore, "\n")
@@ -90,6 +100,8 @@ doAnalysis <- function(maternal, m1, m2, m3){
             mmatrix <- rbind(mmatrix, c(snp, maternal[snp,"CHROM"], maternal[snp,"POS"], maternal[snp,"ID"], origin,  inB6N, v1ReadsA/v1Reads, v2ReadsA/v2Reads, v3ReadsA/v3Reads, impScore, "B6Nsnp"))
           }
         }
+      }else{
+        cat("reads FAILED",v1Reads,v2Reads,v3Reads,"\n")
       }
     }
   }

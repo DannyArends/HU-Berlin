@@ -9,6 +9,11 @@ matB6Nsnps  <- read.csv("maternalB6snps_10reads.txt", sep="\t", header=TRUE)    
 matBFMIsnps <- read.csv("maternalBFMIsnps_10reads.txt", sep="\t", header=TRUE)                                      # SNPs detected in the maternal BFMI F1 cross
 RPKM        <- read.csv("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
 
+cat("There are", nrow(matB6Nsnps[-which(matB6Nsnps[,"Chr"] == "X" | matB6Nsnps[,"Chr"] == "MT"),]),"usable SNPs in matB6N\n")
+# There are 22187 usable SNPs in matB6N
+cat("There are", nrow(matBFMIsnps[-which(matBFMIsnps[,"Chr"] == "X" | matBFMIsnps[,"Chr"] == "MT"),]),"usable SNPs in matBFMI\n")
+# There are 24346 usable SNPs in matBFMI
+
 GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                       # Gene models
 EXONS <- GTF[which(GTF[,3]=="exon"),]
 
@@ -67,8 +72,13 @@ for(x in 1:length(B6Nsummary)){
   if(!is.null(B6Nsummary[[x]])) B6Nshort <- c(B6Nshort, B6Nsummary[x])
 }
 
-cat("Found",length(BFMIshort),"genes with usable",sum(unlist(lapply(BFMIshort,nrow))),"SNPs in matBFMI\n")         # Found 3681 genes with usable 20536 SNPs in matBFMI
-cat("Found",length(B6Nshort), "genes with usable",sum(unlist(lapply(B6Nshort,nrow))), "SNPs in matB6N\n")          # Found 3503 genes with usable 19384 SNPs in matB6N
+onXBFMI <- unlist(lapply(BFMIshort,function(x){if(x[1,"Chr"] == "X" || x[1,"Chr"] == "MT" ){ return(FALSE); }else{ return(TRUE); }}))
+BFMIshortAuto <- BFMIshort[which(onXBFMI)]
+onXB6N <- unlist(lapply(B6Nshort,function(x){if(x[1,"Chr"] == "X" || x[1,"Chr"] == "MT" ){ return(FALSE); }else{ return(TRUE); }}))
+B6NshortAuto <- B6Nshort[which(onXB6N)]
+
+cat("Found",length(B6NshortAuto), "genes with usable",sum(unlist(lapply(B6NshortAuto,nrow))), "SNPs in matB6N\n")          # Found 3503 genes with usable 19384 SNPs in matB6N
+cat("Found",length(BFMIshortAuto),"genes with usable",sum(unlist(lapply(BFMIshortAuto,nrow))),"SNPs in matBFMI\n")         # Found 3681 genes with usable 20536 SNPs in matBFMI
 
 getASEgenes <- function(CROSSsummary, cutoff = 0.35) {
   v <- NULL
@@ -78,8 +88,12 @@ getASEgenes <- function(CROSSsummary, cutoff = 0.35) {
   return(CROSSsummary[which(v > cutoff)])
 }
 
-B6Nase  <- getASEgenes(B6Nshort)                                                                                  # Found 59 ASE genes (cutoff = 0.35)
-BFMIase <- getASEgenes(BFMIshort)                                                                                 # Found 93 ASE genes (cutoff = 0.35)
+B6Nase  <- getASEgenes(B6NshortAuto)                                                                                  # Found 59 ASE genes (cutoff = 0.35)
+BFMIase <- getASEgenes(BFMIshortAuto)                                                                                 # Found 93 ASE genes (cutoff = 0.35)
+
+cat("Found",length(B6Nase),"ASE genes with",sum(unlist(lapply(B6Nase,nrow))),"SNPs in matB6N\n")                      # Found 55 genes with usable 144 SNPs in matB6N
+cat("Found",length(BFMIase), "ASE genes with",sum(unlist(lapply(BFMIase,nrow))), "SNPs in matBFMI\n")                 # Found 53 genes with usable 171 SNPs in matBFMI
+
 
 ASEmatrix <- NULL
 for(x in 1:length(B6Nase)){
@@ -100,12 +114,12 @@ ASEmatrix[,c("A1","A2","A3")] <- apply(ASEmatrix[,c("A1","A2","A3")], 2, functio
 ASEmatrix <- cbind(ensembl_gene_id = ASEmatrix[,"ensembl_gene_id"], cross =  ASEmatrix[,"cross"],  RPKM[inRPKM, c("mgi_symbol","mgi_description")], 
                    ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean * 100, 2))
 
-write.table(ASEmatrix, "ASE_10reads_noImputation.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(ASEmatrix, "ASE_10reads_noImputation_auto.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 matB6Nsnps  <- read.csv("maternalB6snps_10reads.txt", sep="\t", header=TRUE, colClasses="character")                                        # SNPs detected in the maternal B6N F1 cross
 matBFMIsnps <- read.csv("maternalBFMIsnps_10reads.txt", sep="\t", header=TRUE, colClasses="character")                                      # SNPs detected in the maternal BFMI F1 cross
-ASEmatrix <- read.table("ASE_10reads_noImputation.txt",sep="\t", header=TRUE, colClasses="character")
+ASEmatrix <- read.table("ASE_10reads_noImputation_auto.txt",sep="\t", header=TRUE, colClasses="character")
 
 matB6Nfiles <- c("5070_CGATGT_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5071_CCGTCC_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5072_TAGCTT_L005_P_trimmed.aligned.sorted.realigned.recalibrated.bam")
 matBFMIfiles <- c("5073_TTAGGC_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5074_GATCAG_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam", "5075_ATGTCA_L006_P_trimmed.aligned.sorted.realigned.recalibrated.bam")
@@ -183,11 +197,11 @@ cat("We imputed", imputed, "SNPs since they had enough coverage\n")             
 cat("We failed", notimputed, "SNPs since they had not enough coverage\n")             # We failed 35 SNPs since they had not enough coverage
 colnames(impM) <- colnames(ASEmatrix)
 
-write.table(impM, "ASE_10reads_imputation.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(impM, "ASE_10reads_imputation_auto.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 #
-ASEmatrix <- read.table("ASE_10reads_noImputation.txt",sep="\t", header=TRUE)
-IMPmatrix <- read.table("ASE_10reads_imputation.txt",sep="\t", header=TRUE)
+ASEmatrix <- read.table("ASE_10reads_noImputation_auto.txt",sep="\t", header=TRUE)
+IMPmatrix <- read.table("ASE_10reads_imputation_auto.txt",sep="\t", header=TRUE)
 
 refMean <- apply(IMPmatrix[,c("R1","R2","R3")],1,mean)
 altMean <- apply(IMPmatrix[,c("A1","A2","A3")],1,mean)
@@ -200,10 +214,13 @@ IMPmatrix[,"altMean"] <- round(altMean * 100, 2)
 
 ALLmatrix <- rbind(ASEmatrix,IMPmatrix)
 
-write.table(ALLmatrix, "ASE_10reads_combined.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(ALLmatrix, "ASE_10reads_combined_auto.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 ### Write the table out for the paper ###
 
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+
+ALLmatrix <- read.table("ASE_10reads_combined_auto.txt", sep = "\t",header=TRUE)
 
 ALLmatrixLongIDs <- paste0(ALLmatrix[,"ID"],"_",ALLmatrix[,"mgi_symbol"])
 uniqueIDs <- unique(ALLmatrixLongIDs)
@@ -251,7 +268,7 @@ for(r in 1:nrow(paperMatrix)){
 
 paperMatrix[is.na(paperMatrix)] <- ""
 
-write.table(paperMatrix, "ASE_10reads_forPaper.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(paperMatrix, "ASE_10reads_forPaper_auto.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 ################# OLD #######################

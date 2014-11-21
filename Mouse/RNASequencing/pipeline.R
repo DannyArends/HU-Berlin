@@ -102,6 +102,7 @@ outputVCF    <- paste0(fileBase, ".snps.vcf")
 settings     <- "-dontUseSoftClippedBases -stand_call_conf 20.0 -stand_emit_conf 20.0" 
 
 command <- paste0("java -Xmx4g -jar ", gatk, " -T HaplotypeCaller -R ", reference, " -I ", outputSIRBAM, "  --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF)
+cat(command,"\n")
 cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK HaplotypeCaller
 
 q("no")

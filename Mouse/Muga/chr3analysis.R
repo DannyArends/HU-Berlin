@@ -20,18 +20,26 @@ F2 <- F2[-which(F2=="6661459")]
 topMarker <- "UNC5048297"
 
 inThe1Group <- which(as.character(genotypes[topMarker,F2]) == 1)
+outGroup <- which(as.character(genotypes[topMarker,F2]) != 1)
+
+cat("Mean fat levels: AA / H and B: ", mean(as.numeric(phenotypes[F2,"mri56d_fat"])[inThe1Group], na.rm=TRUE), "/", mean(as.numeric(phenotypes[F2,"mri56d_fat"])[outGroup], na.rm=TRUE),"\n")
+
 genotypesIn1 <- genotypes[,F2[inThe1Group]]
 
-lowFAT  <- which(as.numeric(phenotypes[F2,"mri42d_fat"])[inThe1Group]  < 3.5)
+#FATres <- lm(as.numeric(phenotypes[F2,"mri42d_fat"]) ~ as.numeric(phenotypes[F2,"WG2"]))$residuals
+
+lowFAT  <- which(as.numeric(phenotypes[F2,"mri42d_fat"])[inThe1Group] < 3.5)
 highFAT <- which(as.numeric(phenotypes[F2,"mri42d_fat"])[inThe1Group] > 10)
 
-lowFATtable  <- apply(genotypesIn1[,lowFAT],1,table)
-highFATtable <- apply(genotypesIn1[,highFAT],1,table)
+cat("Group sizes low FAT/high FAT:", length(lowFAT), "/", length(highFAT),"\n")
+
+lowFATtable  <- apply(genotypesIn1[,lowFAT],  1, table)
+highFATtable <- apply(genotypesIn1[,highFAT], 1, table)
 
 lowFATnames  <- lapply(lowFATtable, names)
-lofFATngeno  <- unlist(lapply(lowFATtable, length))
+lowFATngeno  <- unlist(lapply(lowFATtable, length))
 
-lowFAT1geno  <- lowFATnames[which(lofFATngeno == 1)]
+lowFAT1geno  <- lowFATnames[which(lowFATngeno == 1)]
 highFATtable <- highFATtable[names(lowFAT1geno)]
 
 highFATtopgeno       <- lapply(highFATtable, which.max)

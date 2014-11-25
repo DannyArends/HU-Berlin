@@ -14,13 +14,13 @@ getSeason <- function(DATES) {
   return(ret)
 }
 
-setwd("E:/Mouse/DNA/MegaMuga/")                                                                               # Read in the data from the Mega Muga
+setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                              # Normal A, H, B genotypes
 genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("","AA","CC","TT","GG"))        # Phased by Beagle (only heterozygous)
 genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.names=FALSE, colClasses="character", na.strings=c(""))                            # Phased towards the grandparents
 
-setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                # Read in the phenotypes
+setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                                                                    # Read in the phenotypes
 phenotypedata <- read.csv("20140801_AIL1_666.txt", sep="\t", header=TRUE)
 
 phenos <- c("Vater", "W.dat", "W.Label", "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1", "GF2", "total.GF", "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",
@@ -32,7 +32,7 @@ F2 <- F2[-which(F2=="6661459")]                                                 
 
 phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                     # Add the season column to the matrix
 birthmonth <- unlist(lapply(strsplit(as.character(phenotypes[,"W.dat"]),".", fixed=TRUE),"[",2))
-phenotypes <- cbind(phenotypes, Birthmonth = birthmonth)                                                     # Add the birth month column to the matrix
+phenotypes <- cbind(phenotypes, Birthmonth = birthmonth)                                                      # Add the birth month column to the matrix
 
 
 onegenotype <- which(lapply(apply(genotypes[,F2], 1, table), length) == 1)                                    # Markers with only one genotype cannot be used in QTL mapping
@@ -50,14 +50,15 @@ cat("Left with", nrow(genotypesGP), "markers\n")                                
 mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){
   pvalues <- NULL
   for(x in 1:to){
-    ind            <- colnames(genotypes[x,!is.na(genotypes[x,])])
-    genotype       <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))
-    littersize     <- as.numeric(phenotypes[ind, "WG2"])
-    subfamily      <- as.factor(phenotypes[ind, "Vater"])
-    season         <- as.factor(phenotypes[ind, "Birthmonth"])
-    litternumber   <- as.factor(phenotypes[ind, "W.Label"])
+    ind            <- colnames(genotypes[x,!is.na(genotypes[x,])])                                                            # Which individuals have genotype data
 
-    phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
+    subfamily      <- as.factor(phenotypes[ind, "Vater"])                                                                     # Fixed effect: Subfamily structure (factor)
+    littersize     <- as.numeric(phenotypes[ind, "WG2"])                                                                      # Fixed effect: Size of the litter  (linear effect)
+    litternumber   <- as.factor(phenotypes[ind, "W.Label"])                                                                   # Fixed effect: Number of litter    (factor)
+    season         <- as.factor(phenotypes[ind, "Season"])                                                                    # Fixed effect: Season when born    (factor)
+    genotype       <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))                                                        # The genotype under investigation  (factor)
+
+    phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]      # Response: Fat / Lean
 
     tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA,5) })
     cat(x, round(-log10(res[-length(res)]),1),"\n")

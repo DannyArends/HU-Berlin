@@ -16,9 +16,9 @@ getSeason <- function(DATES) {
 
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                               # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
-genotypes   <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE)                              # Normal A, H, B genotypes
-genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE)                  # Phased by Beagle, TODO: Leave out the homozygous individuals
-genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt", sep="\t", check.names=FALSE, na.strings="")       # Phased towards the grandparents
+genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                              # Normal A, H, B genotypes
+genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("","AA","CC","TT","GG"))        # Phased by Beagle (only heterozygous)
+genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.names=FALSE, colClasses="character", na.strings=c(""))                            # Phased towards the grandparents
 
 setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                # Read in the phenotypes
 phenotypedata <- read.csv("20140801_AIL1_666.txt", sep="\t", header=TRUE)
@@ -30,49 +30,58 @@ phenotypes <- phenotypedata[which(rownames(phenotypedata) %in% colnames(genotype
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
 F2 <- F2[-which(F2=="6661459")]                                                                               # This individual has no genotype data
 
-updown <- apply(phenotypes[F2,c("mri42d_fat", "mri56d_fat", "mri70d_fat")], 1, function(x){ sign(cor(1:3, as.numeric(x))) })
+phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                     # Add the season column to the matrix
+birthmonth <- unlist(lapply(strsplit(as.character(phenotypes[,"W.dat"]),".", fixed=TRUE),"[",2))
+phenotypes <- cbind(phenotypes, Birthmonth = birthmonth)                                                     # Add the birth month column to the matrix
 
-loosingFat <- rep(NA, length(rownames(phenotypes)))
-names(loosingFat) <- rownames(phenotypes)
-loosingFat[names(updown)] <- updown
-phenotypes <- cbind(phenotypes, loosingFAT = loosingFat)
 
-phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))
+onegenotype <- which(lapply(apply(genotypes[,F2], 1, table), length) == 1)                                    # Markers with only one genotype cannot be used in QTL mapping
+genotypes   <- unique(genotypes[-onegenotype, F2])                                                            # Only take the F2 individuals, and the unique markers
+cat("Left with", nrow(genotypes), "markers\n")                                                                # == Left with 11677 markers
 
-genotypes   <- genotypes[,F2]
-genotypesPh <- genotypesPh[,F2]
-genotypesGP <- genotypesGP[,F2]
+onegenotype <- which(lapply(apply(genotypesPh[,F2], 1, table), length) == 1)                                  # Markers with only one genotype cannot be used in QTL mapping
+genotypesPh <- unique(genotypesPh[-onegenotype,F2])                                                           # Only take the F2 individuals, and the unique markers
+cat("Left with", nrow(genotypesPh), "markers\n")                                                              # == Left with 19468 markers
 
-mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){                          # TODO: Add to the model: subfamily based on which F1 they come from
-  pvalues <- NULL                                                                                             # TODO: ASK SEBASTIAAN: Add to the model: season, when were they born
-  for(x in 1:to){                                                                                             # TODO: ASK SEBASTIAAN: Add to the model: litter number (1st litter versus second litter)
+onegenotype <- which(lapply(apply(genotypesGP[,F2], 1, table), length) == 1)                                  # Markers with only one genotype cannot be used in QTL mapping
+genotypesGP <- unique(genotypesGP[-onegenotype,F2])                                                           # Only take the F2 individuals, and the unique markers
+cat("Left with", nrow(genotypesGP), "markers\n")                                                              # == Left with 7585 markers
+
+mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){
+  pvalues <- NULL
+  for(x in 1:to){
     ind            <- colnames(genotypes[x,!is.na(genotypes[x,])])
     genotype       <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))
     littersize     <- as.numeric(phenotypes[ind, "WG2"])
     subfamily      <- as.factor(phenotypes[ind, "Vater"])
-    season         <- as.factor(phenotypes[ind, "Season"])
+    season         <- as.factor(phenotypes[ind, "Birthmonth"])
     litternumber   <- as.factor(phenotypes[ind, "W.Label"])
-    #phenotype     <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
-    phenotype     <- phenotypes[ind, pheno.col]
-    tryCatch(res  <- anova(lm(phenotype ~ littersize + litternumber + subfamily + season + genotype))[[5]], error = function(e){ res <<- rep(NA,5) })
-    cat(x, res,"\n")
-    pvalues <- c(pvalues, res[5])
-  }
-  plot(-log10(pvalues),t='l')
-  names(pvalues) <- rownames(genotypes)[1:to]
-  return(-log10(pvalues))
-}
 
-qtlFAT  <- mriGWAS(genotypes,   phenotypes, "loosingFAT")
+    phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
+
+    tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA,5) })
+    cat(x, round(-log10(res[-length(res)]),1),"\n")
+    pvalues <- rbind(pvalues, res[-length(res)])
+  }
+
+  colnames(pvalues) <- c("subfamily", "l_size", "l_number", "season", "marker", "size:number")
+  rownames(pvalues) <- rownames(genotypes)[1:to]
+  return(round(-log10(pvalues), 3))
+}
 
 qtl42   <- mriGWAS(genotypes,   phenotypes, "42d") ; qtl56   <- mriGWAS(genotypes,   phenotypes, "56d") ; qtl70   <- mriGWAS(genotypes,   phenotypes, "70d")
 qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d") ; qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d") ; qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")
 qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d") ; qtlGP56 <- mriGWAS(genotypesGP, phenotypes, "56d") ; qtlGP70 <- mriGWAS(genotypesGP, phenotypes, "70d")
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+write.table(qtl42,   "Analysis/qtls_fatDlean42.txt",   sep="\t")
+write.table(qtl56,   "Analysis/qtls_fatDlean56.txt",   sep="\t")
+write.table(qtl70,   "Analysis/qtls_fatDlean70.txt",   sep="\t")
 
-write.table(cbind(qtl42,   qtl56,   qtl70),   "Analysis/qtls_fatDlean_gwas.txt",   sep="\t")
-write.table(cbind(qtlPH42, qtlPH56, qtlPH70), "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+write.table(qtlPH42, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+write.table(qtlPH56, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+write.table(qtlPH70, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+
 write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
 
 qtls <- read.table("Analysis/qtls_fatDlean_gwas.txt", sep="\t", colClasses=c("character",rep("numeric",3)), header=TRUE)
@@ -106,10 +115,14 @@ map[which(qtls[,"qtl70"] > -log10(0.01/nrow(qtls))),]
 getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "42d", marker = "UNC5048297"){
   ind           <- colnames(genotypes[marker,!is.na(genotypes[marker,])])
   genotype      <- as.factor(t(genotypes[marker,!is.na(genotypes[marker,])]))
-  littersize    <- as.numeric(phenotypes[ind, "WG2"])
+  littersize    <- as.factor(phenotypes[ind, "WG2"])
+  subfamily     <- as.factor(phenotypes[ind, "Vater"])
+  season        <- as.factor(phenotypes[ind, "Season"])
+  litternumber  <- as.factor(phenotypes[ind, "W.Label"])
   phenotype     <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
-  tryCatch(res  <- anova(lm(phenotype ~ littersize + genotype)), error = function(e){ res <<- NA })
-  varExplained  <- res[2, "Sum Sq"] / sum((phenotype - mean(phenotype, na.rm=TRUE))^2, na.rm=TRUE)
+  tryCatch(res  <- anova(lm(phenotype ~ littersize + litternumber + subfamily + season + genotype + littersize:litternumber)), error = function(e){ res <<- NA })
+  varExplained  <- res[, "Sum Sq"] / sum((phenotype - mean(phenotype, na.rm=TRUE))^2, na.rm=TRUE)
+  names(varExplained) <- c("l_size","l_number","subfamily", "season", "marker", "Int", "Left")
   return(round(varExplained * 100, digits=1))
 }
 

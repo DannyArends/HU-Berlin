@@ -8,13 +8,17 @@ referenceDir  <- "genomes"
 referenceName <- "Mus_musculus.GRCm38.74.dna"
 reference     <- paste0(referenceDir, "/", referenceName, ".fasta")
 knownsnps     <- paste0(referenceDir, "/mgp.v3.snps.rsIDdbSNPv137.vcf")                                # Reference SNPs, download from: ftp://ftp-mouse.sanger.ac.uk/
+mpileup       <- "~/Github/samtools/samtools mpileup"
 
 for(fileBase in fileBases){
   outputSIRBAM  <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.recalibrated.bam")
-  outputVCF     <- paste0(fileBase, ".snps.v2.vcf")
+  outputBCF     <- paste0(fileBase, ".bcf")
+  outputVarBCF  <- paste0(fileBase, "var.bcf")
+  outputVCF     <- paste0(fileBase, ".snps.bcftools.vcf")
   logname       <- paste0(fileBase, ".snps.log")
-  settings      <- "-stand_call_conf 20.0 -stand_emit_conf 15.0"                                         # Slightly lowered stand_emit_conf to get more DP at a SNP
 
-  command <- paste0("nohup java -Xmx4g -jar ", gatk, " -T UnifiedGenotyper -R ", reference, " -I ", outputSIRBAM, "  --dbsnp ", knownsnps, " ", settings, " -o ", outputVCF, " > ", logname ," &")
+  command <- paste0("nohup ", mpileup, " -g -f ",reference," ", outputSIRBAM, " -o ", outputBCF, " &")
+  cat(command,"\n")
+  command <- paste0("nohup bcftools call -c ", outputBCF, " | ~/Github/bcftools/vcfutils.pl varFilter -d 10 - > ", outputVCF, " &")
   cat(command,"\n")
 }

@@ -2,7 +2,7 @@
 growth <- phenotypes[F2, c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71")]
 
 plot(c(1, 9), c(0,max(growth,na.rm=TRUE)), t='n', ylab="Bodyweight")
-apply(growth[aa, ],1,function(x){ points(x, t='l') })
+apply(growth,1,function(x){ points(x, t='l') })
 
 aa <- which(abs(apply(growth[,c(8:9)],1,function(x){x[2] - x[1]})) > 3)       # Which individuals grew more then 3 grams in the last day ?
 # 6661109 6661116 6661339 6661340 6661341 6661342 6661343 6662008

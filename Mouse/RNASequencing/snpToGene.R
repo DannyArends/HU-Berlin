@@ -24,7 +24,7 @@ addInfo <- matrix(NA, length(datastr), 2)
 for(x in 1:length(datastr)){ addInfo[x, ] <- c(strsplit(datastr[[x]][1]," ")[[1]][2], strsplit(datastr[[x]][lengths[x]]," ")[[1]][2]); }
 
 EXONS <- cbind(addInfo, EXONS)
-uniqueGenes <- unique(EXONS[,1])
+uniqueGenes <- as.character(unique(EXONS[,1]))
 
 geneExonsCoupling <- vector("list", length(uniqueGenes))                                                        # Create a list which enumerate the exons per gene
 x <- 1
@@ -106,13 +106,13 @@ for(x in 1:length(BFMIase)){
 inRPKM <- match(ASEmatrix[,"ensembl_gene_id"],RPKM[,"ensembl_gene_id"])
 
 refMean <- apply(ASEmatrix[,c("R1","R2","R3")],1,mean)
-altMean <- apply(ASEmatrix[,c("A1","A2","A3")],1,mean)
+altMean <- apply(ASEmatrix[,c("N1","N2","N3")],1,mean)
 
 ASEmatrix[,c("R1","R2","R3")] <- apply(ASEmatrix[,c("R1","R2","R3")], 2, function(x){round(x*100,2)})
-ASEmatrix[,c("A1","A2","A3")] <- apply(ASEmatrix[,c("A1","A2","A3")], 2, function(x){round(x*100,2)})
+ASEmatrix[,c("N1","N2","N3")] <- apply(ASEmatrix[,c("N1","N2","N3")], 2, function(x){round(x,0)})
 
 ASEmatrix <- cbind(ensembl_gene_id = ASEmatrix[,"ensembl_gene_id"], cross =  ASEmatrix[,"cross"],  RPKM[inRPKM, c("mgi_symbol","mgi_description")], 
-                   ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean * 100, 2))
+                   ASEmatrix[,-c(1:2)], refMean = round(refMean * 100, 2), altMean = round(altMean, 0))
 
 write.table(ASEmatrix, "ASE_10reads_noImputation_auto.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -204,13 +204,13 @@ ASEmatrix <- read.table("ASE_10reads_noImputation_auto.txt",sep="\t", header=TRU
 IMPmatrix <- read.table("ASE_10reads_imputation_auto.txt",sep="\t", header=TRUE)
 
 refMean <- apply(IMPmatrix[,c("R1","R2","R3")],1,mean)
-altMean <- apply(IMPmatrix[,c("A1","A2","A3")],1,mean)
+altMean <- apply(IMPmatrix[,c("N1","N2","N3")],1,mean)
 
 IMPmatrix[,c("R1","R2","R3")] <- apply(IMPmatrix[,c("R1","R2","R3")],2,function(x){round(x*100,2)})
-IMPmatrix[,c("A1","A2","A3")] <- apply(IMPmatrix[,c("A1","A2","A3")],2,function(x){round(x*100,2)})
+IMPmatrix[,c("N1","N2","N3")] <- apply(IMPmatrix[,c("N1","N2","N3")],2,function(x){round(x,0)})
 
 IMPmatrix[,"refMean"] <- round(refMean * 100, 2)
-IMPmatrix[,"altMean"] <- round(altMean * 100, 2)
+IMPmatrix[,"altMean"] <- round(altMean, 0)
 
 ALLmatrix <- rbind(ASEmatrix,IMPmatrix)
 
@@ -224,7 +224,8 @@ ALLmatrix <- read.table("ASE_10reads_combined_auto.txt", sep = "\t",header=TRUE)
 
 ALLmatrixLongIDs <- paste0(ALLmatrix[,"ID"],"_",ALLmatrix[,"mgi_symbol"])
 uniqueIDs <- unique(ALLmatrixLongIDs)
-columns <- c("snpID", "dbSNP", "Chr", "Loc", "SNPorigin", "ensembl_gene_id", "mgi_symbol", "mgi_description", "exon", "ref_B6N", "alt_B6N", "score_B6N", "ASE_B6N", "ref_BFMI", "alt_BFMI", "score_BFMI", "ASE_BFMI", "Class")
+columns <- c("snpID", "dbSNP", "Chr", "Loc", "SNPorigin", "ensembl_gene_id", "mgi_symbol", "mgi_description", "exon", "ratio_matB6N", 
+             "count_matB6N", "score_matB6N", "ASE_matB6N", "ratio_matBFMI", "count_matBFMI", "score_matBFMI", "ASE_matBFMI", "Class")
 
 paperMatrix <- matrix(NA, length(uniqueIDs), length(columns))
 colnames(paperMatrix) <- columns
@@ -246,20 +247,20 @@ paperMatrix[,"exon"]              <- as.character(ALLmatrix[staticLocs, "Exon"])
 for(r in 1:nrow(paperMatrix)){
   ALLsubset <- ALLmatrix[which(ALLmatrix[,"ID"] == paperMatrix[r, "snpID"]),]
   matB6N <- which(ALLsubset[,"cross"]=="matB6N")
-  paperMatrix[r,"ref_B6N"]   <- ALLsubset[matB6N, "refMean"][1]
-  paperMatrix[r,"alt_B6N"]   <- ALLsubset[matB6N, "altMean"][1]
-  paperMatrix[r,"score_B6N"] <- ALLsubset[matB6N, "ImprintingScore"][1]
+  paperMatrix[r,"ratio_matB6N"]   <- ALLsubset[matB6N, "refMean"][1]
+  paperMatrix[r,"count_matB6N"]   <- ALLsubset[matB6N, "altMean"][1]
+  paperMatrix[r,"score_matB6N"] <- ALLsubset[matB6N, "ImprintingScore"][1]
   imprB6N <- "NotConsistent"
   if(ALLsubset[matB6N,"Origin1"] == ALLsubset[matB6N,"Origin2"] && ALLsubset[matB6N,"Origin1"] == ALLsubset[matB6N,"Origin3"]) imprB6N <- ALLsubset[matB6N,"Origin1"][1]
-  paperMatrix[r,"ASE_B6N"] <- as.character(imprB6N)
+  paperMatrix[r,"ASE_matB6N"] <- as.character(imprB6N)
   
   matBFMI <- which(ALLsubset[,"cross"]=="matBFMI")
-  paperMatrix[r,"ref_BFMI"]   <- ALLsubset[matBFMI, "refMean"][1]
-  paperMatrix[r,"alt_BFMI"]   <- ALLsubset[matBFMI, "altMean"][1]
-  paperMatrix[r,"score_BFMI"] <- ALLsubset[matBFMI, "ImprintingScore"][1]
+  paperMatrix[r,"ratio_matBFMI"]   <- ALLsubset[matBFMI, "refMean"][1]
+  paperMatrix[r,"count_matBFMI"]   <- ALLsubset[matBFMI, "altMean"][1]
+  paperMatrix[r,"score_matBFMI"] <- ALLsubset[matBFMI, "ImprintingScore"][1]
   imprBFMI <- "NotConsistent"
   if(ALLsubset[matBFMI,"Origin1"] == ALLsubset[matBFMI,"Origin2"] && ALLsubset[matBFMI,"Origin1"] == ALLsubset[matBFMI,"Origin3"]) imprBFMI <- ALLsubset[matBFMI,"Origin1"][1]
-  paperMatrix[r,"ASE_BFMI"] <- as.character(imprBFMI)
+  paperMatrix[r,"ASE_matBFMI"] <- as.character(imprBFMI)
   if(imprBFMI == "BFMI" && imprB6N == "BFMI") paperMatrix[r,"Class"] <- "BFMI"
   if(imprBFMI == "B6N" && imprB6N == "B6N") paperMatrix[r,"Class"] <- "B6N"
   if(imprBFMI == "B6N" && imprB6N == "BFMI") paperMatrix[r,"Class"] <- "Paternal"

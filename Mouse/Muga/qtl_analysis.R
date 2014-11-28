@@ -47,7 +47,7 @@ onegenotype <- which(lapply(apply(genotypesGP[,F2], 1, table), length) == 1)    
 genotypesGP <- unique(genotypesGP[-onegenotype,F2])                                                           # Only take the F2 individuals, and the unique markers
 cat("Left with", nrow(genotypesGP), "markers\n")                                                              # == Left with 7585 markers
 
-mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes)){
+mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes), cof = ""){
   pvalues <- NULL
   for(x in 1:to){
     ind            <- colnames(genotypes[x,!is.na(genotypes[x,])])                                                            # Which individuals have genotype data
@@ -59,29 +59,43 @@ mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotype
     genotype       <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))                                                        # The genotype under investigation  (factor)
 
     phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]      # Response: Fat / Lean
-
-    tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA,5) })
+    if(cof == ""){
+      tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA, 7) })
+    }else{
+      covar        <- as.factor(t(genotypes[cof, ind]))
+      tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + covar + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA, 8) })
+    }
     cat(x, round(-log10(res[-length(res)]),1),"\n")
     pvalues <- rbind(pvalues, res[-length(res)])
   }
-
-  colnames(pvalues) <- c("subfamily", "l_size", "l_number", "season", "marker", "size:number")
+  if(cof == ""){
+    colnames(pvalues) <- c("subfamily", "l_size", "l_number", "season", "marker", "size:number")
+  }else{
+    colnames(pvalues) <- c("subfamily", "l_size", "l_number", "season", cof, "marker", "size:number")
+  }
   rownames(pvalues) <- rownames(genotypes)[1:to]
   return(round(-log10(pvalues), 3))
 }
 
-qtl42   <- mriGWAS(genotypes,   phenotypes, "42d") ; qtl56   <- mriGWAS(genotypes,   phenotypes, "56d") ; qtl70   <- mriGWAS(genotypes,   phenotypes, "70d")
-qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d") ; qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d") ; qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")
-qtlGP42 <- mriGWAS(genotypesGP, phenotypes, "42d") ; qtlGP56 <- mriGWAS(genotypesGP, phenotypes, "56d") ; qtlGP70 <- mriGWAS(genotypesGP, phenotypes, "70d")
+qtl42   <- mriGWAS(genotypes,   phenotypes, "42d") ; qtl56   <- mriGWAS(genotypes,   phenotypes, "56d") ; qtl70   <- mriGWAS(genotypes,   phenotypes, "70d")  # Normal GWAS (A, H, B)
+qtlPH42 <- mriGWAS(genotypesPh, phenotypes, "42d") ; qtlPH56 <- mriGWAS(genotypesPh, phenotypes, "56d") ; qtlPH70 <- mriGWAS(genotypesPh, phenotypes, "70d")  # GWAS on the H0 versus H1
+
+qtl42C   <- mriGWAS(genotypes,   phenotypes, "42d", cof = "UNC5048297") ;
+qtl56C   <- mriGWAS(genotypes,   phenotypes, "56d", cof = "UNC5048297") ;
+qtl70C   <- mriGWAS(genotypes,   phenotypes, "70d", cof = "UNC5048297") ;
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 write.table(qtl42,   "Analysis/qtls_fatDlean42.txt",   sep="\t")
 write.table(qtl56,   "Analysis/qtls_fatDlean56.txt",   sep="\t")
 write.table(qtl70,   "Analysis/qtls_fatDlean70.txt",   sep="\t")
 
-write.table(qtlPH42, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
-write.table(qtlPH56, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
-write.table(qtlPH70, "Analysis/qtls_fatDlean_gwasPH.txt", sep="\t")
+write.table(qtl42C,   "Analysis/qtls_fatDlean42_UNC5048297.txt",   sep="\t")
+write.table(qtl56C,   "Analysis/qtls_fatDlean56_UNC5048297.txt",   sep="\t")
+write.table(qtl70C,   "Analysis/qtls_fatDlean70_UNC5048297.txt",   sep="\t")
+
+write.table(qtlPH42, "Analysis/qtls_fatDlean42_PH.txt", sep="\t")
+write.table(qtlPH56, "Analysis/qtls_fatDlean56_PH.txt", sep="\t")
+write.table(qtlPH70, "Analysis/qtls_fatDlean70_PH.txt", sep="\t")
 
 write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
 

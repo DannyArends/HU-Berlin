@@ -189,12 +189,14 @@ abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
 
 aa <- apply(matrixform, 1,function(x){
   xloc <- match(as.character(x["CHROM"]), chromosomes); yloc <- as.numeric(x["POS"])
-    col <- "gray60"
+    col <- "white"
+    if(x["matB6N"]=="B6N")  col <- "gray60"
     if(x["matB6N"]=="BFMI") col <- "gold1"
-    points(x=xloc-0.2, y=yloc, pch="-", col=col, cex=2.0)
-    col <- "gray60"
+    if(col != "white") points(x=xloc-0.2, y=yloc, pch="-", col=col, cex=2.0)
+    col <- "white"
+    if(x["matBFMI"]=="B6N")  col <- "gray60"
     if(x["matBFMI"]=="BFMI") col <- "gold1"
-    points(x=xloc+0.2, y=yloc, pch="-", col=col, cex=2.0)
+    if(col != "white") points(x=xloc+0.2, y=yloc, pch="-", col=col, cex=2.0)
 })
 
 cnt <- 1
@@ -206,4 +208,72 @@ aa <- apply(chrInfo,1,function(x){
 axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1, cex.axis=1.5)
 axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=1.2, las=1)
 legend("topright", c("BFMI allele expressed", "B6N allele expressed"), fill=c("gold1","gray60"), cex=1.2)
+
+library(biomaRt)                                                                                        # Biomart package
+library(topGO)                                                                                          # topGO package
+  
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+allgenes <- RPKM[, "ensembl_gene_id"]
+
+if(!file.exists("GeneOntology/GOannotation.txt")){
+  bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                              # Biomart for mouse genes
+  biomartResults <- NULL
+  for(x in seq(1, length(allgenes), 1000)){                                                             # Do 1000 per time, just to please biomaRt
+    xend <- min((x + 1000),length(allgenes))                                                            # Don't walk passed the end of the array
+    cat("Retrieving", x, "/", xend,"\n")
+    res.biomart <- getBM(c("ensembl_gene_id","go_id"),                                                  # Use biomart to retrieve GO terms
+                          filters="ensembl_gene_id", values=allgenes[x:xend], mart=bio.mart)
+    biomartResults <- rbind(biomartResults, res.biomart)
+  }
+  write.table(biomartResults, file="GeneOntology/GOannotation.txt", sep="\t", row.names=FALSE)
+}else{
+  cat("Loading biomaRt gene ontology annotation from disk\n")
+  biomartResults <- read.table("GeneOntology/GOannotation.txt", sep="\t", header=TRUE)
+}
+
+if(!file.exists("GeneOntology/geneid2go.map")){                                                                      # Create the ENSG to GO map only if it doesn't exists
+  cat("", file="GeneOntology/geneid2go.map")
+  for(ensid in unique(biomartResults[,"ensembl_gene_id"])){
+    idxes <- which(biomartResults[,"ensembl_gene_id"] == ensid)
+    goids <- biomartResults[idxes,"go_id"]
+    emptygo <- which(goids=="")
+    if(length(emptygo) > 0) goids <- goids[-emptygo]
+    if(length(goids) > 0) cat(ensid,"\t", paste(goids, collapse=", "),"\n", file="GeneOntology/geneid2go.map", append=TRUE, sep="")
+  }
+}
+
+# Do gene ontology
+doGO <- function(allgenes, selected){
+  genelist <- rep(0, length(allgenes))                                                                # Create a gene list
+  names(genelist) <- allgenes                                                                         # Add the names
+  genelist[selected] <- 1                                                                             # Set the switched genes to 1
+
+  geneID2GO     <- readMappings(file = "GeneOntology/geneid2go.map")
+  GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)
+  resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+
+  #pdf("GeneOntologyTree.pdf")
+    showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
+  #dev.off()
+  return(list(GOdata,resultFisher))
+}
+
+ASEgenesGO <- doGO(allgenes, unique(matrixform[,"ensembl_gene_id"]))
+ASEgenes   <- GenTable(ASEgenesGO[[1]], classicFisher = ASEgenesGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 20)
+
+maternal <- which(matrixform[,"matB6N"] == "B6N" &  matrixform[,"matBFMI"] == "BFMI")
+ASEmaternalGO <- doGO(allgenes, unique(matrixform[maternal, "ensembl_gene_id"]))
+ASEmaternal   <- GenTable(ASEmaternalGO[[1]], classicFisher = ASEmaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 20)
+
+paternal <- which(matrixform[,"matB6N"] == "BFMI" &  matrixform[,"matBFMI"] == "B6N")
+ASEpaternalGO <- doGO(allgenes, unique(matrixform[paternal, "ensembl_gene_id"]))
+ASEpaternal   <- GenTable(ASEpaternalGO[[1]], classicFisher = ASEpaternalGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 20)
+
+alwaysBFMI <- which(matrixform[,"matB6N"] == "BFMI" &  matrixform[,"matBFMI"] == "BFMI")
+ASEbfmiGO <- doGO(allgenes, unique(matrixform[alwaysBFMI, "ensembl_gene_id"]))
+ASEbfmi   <- GenTable(ASEbfmiGO[[1]], classicFisher = ASEbfmiGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 20)
+
+alwaysB6N <- which(matrixform[,"matB6N"] == "B6N" &  matrixform[,"matBFMI"] == "B6N")
+ASEb6nGO <- doGO(allgenes, unique(matrixform[alwaysB6N, "ensembl_gene_id"]))
+ASEb6n   <- GenTable(ASEb6nGO[[1]], classicFisher = ASEb6nGO[[2]], orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 20)
 

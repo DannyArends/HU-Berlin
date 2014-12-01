@@ -34,7 +34,6 @@ phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))       
 birthmonth <- unlist(lapply(strsplit(as.character(phenotypes[,"W.dat"]),".", fixed=TRUE),"[",2))
 phenotypes <- cbind(phenotypes, Birthmonth = birthmonth)                                                      # Add the birth month column to the matrix
 
-
 onegenotype <- which(lapply(apply(genotypes[,F2], 1, table), length) == 1)                                    # Markers with only one genotype cannot be used in QTL mapping
 genotypes   <- unique(genotypes[-onegenotype, F2])                                                            # Only take the F2 individuals, and the unique markers
 cat("Left with", nrow(genotypes), "markers\n")                                                                # == Left with 11677 markers
@@ -97,16 +96,61 @@ write.table(qtlPH42, "Analysis/qtls_fatDlean42_PH.txt", sep="\t")
 write.table(qtlPH56, "Analysis/qtls_fatDlean56_PH.txt", sep="\t")
 write.table(qtlPH70, "Analysis/qtls_fatDlean70_PH.txt", sep="\t")
 
-write.table(cbind(qtlGP42, qtlGP56, qtlGP70), "Analysis/qtls_fatDlean_gwasGP.txt", sep="\t")
+noChr3QTL <- which(as.character(genotypes["UNC5048297",F2]) != "A")
 
-qtls <- read.table("Analysis/qtls_fatDlean_gwas.txt", sep="\t", colClasses=c("character",rep("numeric",3)), header=TRUE)
+qtl42NoChr3IND   <- mriGWAS(genotypes[,F2[noChr3QTL]],   phenotypes[F2[noChr3QTL],], "42d") ;
+write.table(qtl42NoChr3IND, "Analysis/qtls_fatDlean42_NoChr3IND.txt", sep="\t")
+
+setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+qtl42 <- read.table("Analysis/qtls_fatDlean42.txt",   sep="\t")
+qtl56 <- read.table("Analysis/qtls_fatDlean56.txt",   sep="\t")
+qtl70 <- read.table("Analysis/qtls_fatDlean70.txt",   sep="\t")
+
+chrcolors <- rep(c("black","orange"),length(unique(map[,"Chr"])))
+names(chrcolors) <- unique(map[,"Chr"])
+
+png("Plots/QTL_FatdLean_Day42.png", width=1024, height=768)
+  plot(qtl42[,"marker"], t='h', col=chrcolors[map[rownames(qtl42),"Chr"]], main = "QTL profile Fat/Lean day 42", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl42)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl42)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl42)), col="green", lty=2)
+dev.off()
+
+png("Plots/QTL_FatdLean_Day56.png", width=1024, height=768)
+  plot(qtl56[,"marker"], t='h', col=chrcolors[map[rownames(qtl56),"Chr"]], main = "QTL profile Fat/Lean day 56", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl56)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl56)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl56)), col="green", lty=2)
+dev.off()
+
+png("Plots/QTL_FatdLean_Day70.png", width=1024, height=768)  
+  plot(qtl70[,"marker"], t='h', col=chrcolors[map[rownames(qtl70),"Chr"]], main = "QTL profile Fat/Lean day 70", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl70)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl70)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl70)), col="green", lty=2)
+dev.off()
+
+qtl42C <- read.table("Analysis/qtls_fatDlean42_UNC5048297.txt",   sep="\t")
+qtl56C <- read.table("Analysis/qtls_fatDlean56_UNC5048297.txt",   sep="\t")
+qtl70C <- read.table("Analysis/qtls_fatDlean70_UNC5048297.txt",   sep="\t")
+
+png("Plots/QTL_FatdLean_Day42_COF.png", width=1024, height=768)
+  plot(qtl42C[,"marker"], t='h', col=chrcolors[map[rownames(qtl42C),"Chr"]], main = "QTL profile Fat/Lean day 42 (Cofactor)", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl42C)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl42C)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl42C)), col="green", lty=2)
+dev.off()
+
+png("Plots/QTL_FatdLean_Day56_COF.png", width=1024, height=768)
+  plot(qtl56C[,"marker"], t='h', col=chrcolors[map[rownames(qtl56C),"Chr"]], main = "QTL profile Fat/Lean day 56 (Cofactor)", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl56C)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl56C)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl56C)), col="green", lty=2)
+dev.off()
+
+png("Plots/QTL_FatdLean_Day70_COF.png", width=1024, height=768)  
+  plot(qtl70C[,"marker"], t='h', col=chrcolors[map[rownames(qtl70C),"Chr"]], main = "QTL profile Fat/Lean day 70 (Cofactor)", ylab="LOD")
+  abline(h = -log10(0.1/nrow(qtl70C)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtl70C)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtl70C)), col="green", lty=2)
+dev.off()
+
+
+######
+
 
 image(x = 1:nrow(qtls), y=(1:3)-0.5, as.matrix(qtls), oldstyle=TRUE, breaks=c(0,3,6,12,30,100), col=c("white",gray.colors(4)[4:1]))
 grid(3); box()
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
-chrcolors <- rep(c("black","orange"),length(unique(map[,"Chr"])))
-names(chrcolors) <- unique(map[,"Chr"])
 
 png("Plots/QTL_FatdLean_Day42.png", width=1024, height=768)
   plot(qtls[,"qtl42"], t='h', col=chrcolors[map[,"Chr"]],main="Fat/Lean QTL profile Day 42", xlab="Marker", ylab="-log10(p-value)")

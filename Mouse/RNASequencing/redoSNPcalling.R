@@ -1,3 +1,9 @@
+# SNP calling using the population VCF (only homozygous)
+#
+# copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
+# last modified Dec, 2014
+# first written Dec, 2014
+
 fileBases <- c("5068_GAGTGG_L004_", "5069_AGTCAA_L004_",                                # BFMI samples
                "4868_GCCAAT_L001_", "5067_ATCACG_L004_",                                # B6N samples
                "5070_CGATGT_L005_", "5071_CCGTCC_L005_", "5072_TAGCTT_L005_",           # maternal B6N samples

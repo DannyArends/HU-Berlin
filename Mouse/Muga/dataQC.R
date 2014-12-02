@@ -1,3 +1,8 @@
+# data Quality control
+#
+# copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
+# last modified Dec, 2014
+# first written Dec, 2014
 
 growth <- phenotypes[F2, c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71")]
 

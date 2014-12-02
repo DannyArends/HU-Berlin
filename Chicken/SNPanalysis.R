@@ -26,9 +26,9 @@ calldata <- calldata[mightBeDifferent,]
 genoInP1 <- apply(calldata[,indPop1], 1, function(x){return(as.numeric(na.omit(unique(x))))})       # Genotypes in strain 1
 genoInP2 <- apply(calldata[,indPop2], 1, function(x){return(as.numeric(na.omit(unique(x))))})       # Genotypes in strain 2
 
-# Differences, we need to take care of the hetrozygotes individuals:
+# Differences, we need to take care of the heterozygous individuals:
 # 2 2 2 2 2 2 2 versus 0 0 0 0 0 0 0 0 0
-# 2 2 2 2 2 2 2 versus 0 0 0 0 0 1 0 0 0
+# 2 2 2 2 2 2 2 versus 0 0 0 1 0 1 0 1 0
 # 2 2 1 2 1 1 2 versus 0 0 0 0 0 0 0 0 0
 different <- rep(FALSE, nrow(calldata))
 for(x in 1:nrow(calldata)){

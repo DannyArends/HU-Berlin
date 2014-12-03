@@ -64,27 +64,71 @@ colnames(matBFMI_1) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","
 colnames(matBFMI_2) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 colnames(matBFMI_3) <- c("CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","SAMPLE")
 
-getRatio <- function(X){
+getRatio <- function(X, genos){
   X_1 <- strsplit(X[rownames(genos)[x],"INFO"], ";")
   X_1r <- as.numeric(unlist(strsplit(gsub("DP4=","",unlist(X_1)[which(grepl("DP4", unlist(X_1)))]),",")))
   X_1alt <- sum(X_1r[3:4]) ; X_1all <- sum(X_1r[1:4]) ; X_1rat <- X_1alt / X_1all
   return(X_1rat)
 }
 
+SNPs <- NULL
 cnt <- 0
 for(x in 1:nrow(genos)){
   inB6N <- rownames(genos)[x] %in% rownames(matB6)
   inBFMI <- rownames(genos)[x] %in% rownames(matBFMI)
   if(inB6N && inBFMI){
-    b6rat <- c(getRatio(matB6_1), getRatio(matB6_2), getRatio(matB6_3))
-    bfrat <- c(getRatio(matBFMI_1), getRatio(matBFMI_2), getRatio(matBFMI_3))
+    b6rat <- c(getRatio(matB6_1,genos), getRatio(matB6_2,genos), getRatio(matB6_3,genos))
+    bfrat <- c(getRatio(matBFMI_1,genos), getRatio(matBFMI_2,genos), getRatio(matBFMI_3,genos))
     if(sum(b6rat < 0.5) == 3 || sum(b6rat > 0.5) == 3){
       if(sum(bfrat < 0.5) == 3 || sum(bfrat > 0.5) == 3){
         if(abs(mean(b6rat) - mean(bfrat)) > 0.2){
           cat(rownames(genos)[x], mean(b6rat), mean(bfrat), "\n")
           cnt <- cnt + 1
+          SNPs <- rbind(SNPs, c(rownames(genos)[x], matB6_1[rownames(genos)[x],"CHROM"], matB6_1[rownames(genos)[x],"POS"], mean(b6rat), mean(bfrat)))
         }
       }
     }
   }
 }
+colnames(SNPs) <- c("snpID", "CHROM", "POS", "matB6Nratio", "matBFMIratio")
+
+
+geneSNPCoupling <- vector("list", length(uniqueGenes))
+x <- 1
+for(gene in geneExonsCoupling){                                                                               # Summarize all SNPs from a direction per gene
+  onChr <- as.character(SNPs[,"CHROM"]) == as.character(unique(gene[,3]))
+  for(exon in 1:nrow(gene)){
+    exonStart <- as.numeric(gene[exon,6])
+    exonEnd <- as.numeric(gene[exon,7])
+    inEXON <- which(SNPs[onChr,"POS"] >= exonStart & SNPs[onChr,"POS"] <= exonEnd)
+    if(length(inEXON) > 0){
+      geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], as.matrix(SNPs[onChr,])[inEXON,])
+      geneSNPCoupling[[x]] <- geneSNPCoupling[[x]][!duplicated(geneSNPCoupling[[x]][,"snpID"]),]
+    }
+    #names(geneSNPCoupling)[x] <- as.character(unique(gene[,1]))
+  }
+  
+  if(!is.null(geneSNPCoupling[[x]])){
+    if(is.null(nrow(geneSNPCoupling[[x]]))) geneSNPCoupling[[x]] <- t(as.matrix(geneSNPCoupling[[x]]))
+    cat(x, as.character(unique(gene[,1])), "found", nrow(geneSNPCoupling[[x]]), ncol(geneSNPCoupling[[x]]), "SNPs in gene\n")
+  }
+  x <- x + 1
+}
+
+names(geneSNPCoupling) <- uniqueGenes
+
+geneSNPCoupling$ENSMUSG00000040102 <- t(as.matrix(SNPs[18,]))
+geneSNPCoupling$ENSMUSG00000024370 <- t(as.matrix(SNPs[54,]))
+
+geneSNPshort <- NULL
+for(x in 1:length(geneSNPCoupling)){
+  if(!is.null(geneSNPCoupling[[x]])) geneSNPshort <- c(geneSNPshort, geneSNPCoupling[x])
+}
+
+matrixform <- NULL
+for(x in 1:length(geneSNPshort)){
+  additionalgeneInfo <- RPKM[which(RPKM[,"ensembl_gene_id"] == names(geneSNPshort)[x]), -c(1)]
+  matrixform <- rbind(matrixform, cbind(ensembl_gene_id = names(geneSNPshort)[x], cbind(geneSNPshort[[x]]), additionalgeneInfo))
+}
+
+write.table(matrixform,"RPKM+ASE_RATIOS.txt", sep="\t", quote=FALSE,row.names=FALSE)

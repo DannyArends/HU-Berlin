@@ -47,13 +47,24 @@ probs <- matrix(NA, nrow(vcfdata), length(samples))
 colnames(genos) <- samples ; rownames(genos) <- createNames(vcfdata)
 colnames(probs) <- samples ; rownames(probs) <- createNames(vcfdata)
 
+onAutosomes <- length(which(!(vcfdata[,"CHROM"] == "X" | vcfdata[,"CHROM"] == "Y" | vcfdata[,"CHROM"] == "MT")))
+
+cat("Called",onAutosomes,"/",dim(vcfdata)[1],"variants (autosomes / all)\n")
+
 for(s in samples){ 
   genos[,s] <- getGenotypes(vcfdata[,s])
   probs[,s] <- getMaxProb(vcfdata[,s])
 }
 
-probInParents <- which(apply(probs[,parents], 1,function(x){ sum(x > 50) == 4 }))
+confidenceThreshold <- 50
+
+probInParents <- which(apply(probs[,parents], 1,function(x){ sum(x > confidenceThreshold) == 4 }))
 genos <- genos[probInParents, ] ; probs <- probs[probInParents, ]
+
+chroms <- unlist(lapply(strsplit(rownames(genos),":"),"[",1))
+onAutosomes <- length(which(!(chroms == "X" | chroms == "Y" | chroms == "MT")))
+
+cat("Detected",onAutosomes,"/",dim(genos)[1],"variants\n")
 
 difGenoInParents <- which(apply(genos[,parents], 1,function(x){ 
   if(any(x == "0/1")) return(FALSE)
@@ -62,21 +73,23 @@ difGenoInParents <- which(apply(genos[,parents], 1,function(x){
 }))
 
 genos <- genos[difGenoInParents, ] ; probs <- probs[difGenoInParents, ]
+chroms <- unlist(lapply(strsplit(rownames(genos),":"),"[",1))
+onAutosomes <- length(which(!(chroms == "X" | chroms == "Y" | chroms == "MT")))
+cat("Detected",onAutosomes,"/",dim(genos)[1],"variants usable for ASE\n")
 
-genos[which(probs < 50)] <- NA
+genos[which(probs < confidenceThreshold)] <- NA
 
 showsASE <- apply(genos, 1, function(x){
   naB6N <- is.na(x[matB6N])
   naBFMI <- is.na(x[matBFMI])
+  showASE <- FALSE
   if(sum(naB6N) < 2){
-    if(any(x[matB6N][!naB6N] == "0/1")) return(FALSE)
-    return(TRUE)
+    if(!any(x[matB6N][!naB6N] == "0/1")) showASE <- TRUE
   }
   if(sum(naBFMI) < 2){
-    if(any(x[matBFMI][!naBFMI] == "0/1")) return(FALSE)
-    return(TRUE)
+    if(!any(x[matBFMI][!naBFMI] == "0/1")) showASE <- TRUE
   }
-  return(FALSE)
+  return(showASE)
 })
 
 genos <- genos[unlist(showsASE), ]
@@ -115,6 +128,10 @@ hasASE <- which(apply(genos[,c("matB6N", "matBFMI")],1,function(x){
 }))
 
 genos <- genos[hasASE,]
+chroms <- unlist(lapply(strsplit(rownames(genos),":"),"[",1))
+onAutosomes <- length(which(!(chroms == "X" | chroms == "Y" | chroms == "MT")))
+
+cat("Detected",onAutosomes,"/",dim(genos)[1],"variants that show consistent ASE\n")
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
 RPKM        <- read.csv("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
@@ -141,6 +158,8 @@ for(gene in uniqueGenes){
   x <- x + 1
 }
 
+names(geneExonsCoupling) <- uniqueGenes
+
 geneSNPCoupling <- vector("list", length(uniqueGenes))
 x <- 1
 for(gene in geneExonsCoupling){                                                                               # Summarize all SNPs from a direction per gene
@@ -148,7 +167,7 @@ for(gene in geneExonsCoupling){                                                 
   for(exon in 1:nrow(gene)){
     exonStart <- as.numeric(gene[exon,6])
     exonEnd <- as.numeric(gene[exon,7])
-    inEXON <- which(genos[onChr,"POS"] >= exonStart & genos[onChr,"POS"] <= exonEnd)
+    inEXON <- which(as.numeric(genos[onChr,"POS"]) >= exonStart & as.numeric(genos[onChr,"POS"]) <= exonEnd)
     if(length(inEXON) > 0){
       geneSNPCoupling[[x]] <- rbind(geneSNPCoupling[[x]], cbind(snpID = rownames(genos[onChr,][inEXON,]), genos[onChr,][inEXON,], Exon=exon))
       geneSNPCoupling[[x]] <- geneSNPCoupling[[x]][!duplicated(geneSNPCoupling[[x]][,"snpID"]),]
@@ -166,21 +185,33 @@ for(x in 1:length(geneSNPCoupling)){
   if(!is.null(geneSNPCoupling[[x]])) geneSNPshort <- c(geneSNPshort, geneSNPCoupling[x])
 }
 
-consistentASE <- which(unlist(lapply(geneSNPshort, function(x){
-  if(length(table(as.character(x[,"matB6N"]))) == 1 || length(table(as.character(x[,"matBFMI"]))) == 1) return(TRUE)
-  return(FALSE)
-})))
+#consistentASE <- which(unlist(lapply(geneSNPshort, function(x){
+#  if(length(table(as.character(x[,"matB6N"]))) == 1 && names(table(as.character(x[,"matB6N"]))) != "MIX" && names(table(as.character(x[,"matB6N"]))) != "-") return(TRUE)
+#  if(length(table(as.character(x[,"matBFMI"]))) == 1 && names(table(as.character(x[,"matBFMI"]))) != "MIX" && names(table(as.character(x[,"matBFMI"]))) != "-")  return(TRUE)
+#  return(FALSE)
+#})))
 
-geneSNPshort <- geneSNPshort[consistentASE]
+geneSNPshortConsistent <- geneSNPshort #[consistentASE]
 
 matrixform <- NULL
-for(x in 1:length(geneSNPshort)){
-  additionalgeneInfo <- RPKM[which(RPKM[,"ensembl_gene_id"] == names(geneSNPshort)[x]), -c(1)]
-  matrixform <- rbind(matrixform, cbind(ensembl_gene_id = names(geneSNPshort)[x], cbind(geneSNPshort[[x]]), additionalgeneInfo))
+for(x in 1:length(geneSNPshortConsistent)){
+  additionalgeneInfo <- RPKM[which(RPKM[,"ensembl_gene_id"] == names(geneSNPshortConsistent)[x]), -c(1)]
+  matrixform <- rbind(matrixform, cbind(ensembl_gene_id = names(geneSNPshortConsistent)[x], cbind(geneSNPshortConsistent[[x]]), additionalgeneInfo))
 }
 
+onAutosomes <- which(!(matrixform[,"CHROM"] == "X" | matrixform[,"CHROM"] == "Y" | matrixform[,"CHROM"] == "MT"))
+cat("Detected",length(unique(matrixform[onAutosomes,"snpID"])), "/", length(unique(matrixform[,"snpID"])),
+    "variants in", length(unique(matrixform[onAutosomes,"ensembl_gene_id"])), "/", length(unique(matrixform[,"ensembl_gene_id"])),"\n")
+
 matrixform[,samples] <- apply(matrixform[,samples],2,function(x){gsub("/", "|", x)})
-write.table(matrixform,"RPKM+ASE.txt", sep="\t", quote=FALSE,row.names=FALSE)
+write.table(matrixform,"RPKM+ASE_Threshold50.txt", sep="\t", quote=FALSE,row.names=FALSE)
+
+filteredmatrix <- matrixform[-which(matrixform[,"CHROM"] == "X" | matrixform[,"CHROM"] == "MT"),]
+filteredmatrix <- filteredmatrix[unique(c(which(as.numeric(filteredmatrix[,"Mean.BFMI860.12xB6N.L"]) > 0.5), 
+                                          which(as.numeric(filteredmatrix[,"Mean.B6NxBFMI860.12.L"]) > 0.5))),]
+filteredmatrix[,"Mean.BFMI860.12xB6N.L"] <- round(as.numeric(filteredmatrix[,"Mean.BFMI860.12xB6N.L"]), 3)
+filteredmatrix[,"Mean.B6NxBFMI860.12.L"] <- round(as.numeric(filteredmatrix[,"Mean.B6NxBFMI860.12.L"]), 3)
+write.table(filteredmatrix,"RPKM+ASE_Threshold50_FilteredX_EXP.txt", sep="\t", quote=FALSE,row.names=FALSE)
 
 # ASE plots
 chromosomes  <- as.character(c(1:19, "X", "Y", "MT"))

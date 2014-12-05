@@ -92,7 +92,6 @@ for(x in 1:nrow(genos)){
 }
 colnames(SNPs) <- c("snpID", "CHROM", "POS", "matB6Nratio", "matBFMIratio")
 
-
 geneSNPCoupling <- vector("list", length(uniqueGenes))
 x <- 1
 for(gene in geneExonsCoupling){                                                                               # Summarize all SNPs from a direction per gene

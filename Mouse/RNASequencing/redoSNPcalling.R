@@ -24,6 +24,42 @@ for(fileBase in fileBases){
 cat(paste0("nohup ", mpileup, " -g -f ",reference," ", paste(outputSIRBAMs, collapse=" "), " -o population.bcf &"), "\n")
 cat(paste0("nohup bcftools call -c population.bcf | ~/Github/bcftools/vcfutils.pl varFilter -d 10 - > population.vcf &"), "\n")
 
+##### Create the Gene Exon List
+
+setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
+RPKM        <- read.csv("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
+
+GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                       # Gene models
+EXONS <- GTF[which(GTF[,3]=="exon"),]
+
+datastr <- strsplit(as.character(EXONS[,9]), "; ")
+lengths <- unlist(lapply(datastr, length))
+
+addInfo <- matrix(NA, length(datastr), 2)
+for(x in 1:length(datastr)){ addInfo[x, ] <- c(strsplit(datastr[[x]][1]," ")[[1]][2], strsplit(datastr[[x]][lengths[x]]," ")[[1]][2]); }
+
+EXONS <- cbind(addInfo, EXONS)
+uniqueGenes <- as.character(unique(EXONS[,1]))
+
+geneExonsCoupling <- vector("list", length(uniqueGenes))                                                        # Create a list which enumerate the exons per gene
+x <- 1
+for(gene in uniqueGenes){
+  geneExons <- which(EXONS[,1] == gene)
+  possibleExons <- EXONS[geneExons[!duplicated(EXONS[geneExons,2])], -11]
+  geneExonsCoupling[[x]] <- possibleExons
+  cat(x, "Gene", gene, "has", nrow(geneExonsCoupling[[x]]), "/", length(geneExons),"Exons\n")
+  x <- x + 1
+}
+
+names(geneExonsCoupling) <- uniqueGenes
+
+##### Some helper functions
+
+
+getDP <- function(x){
+  v1 <- strsplit(x, ";")
+  as.numeric(unlist(strsplit(gsub("DP=","",unlist(v1)[grep("DP=", unlist(v1))]),",")))
+}
 
 createNames <- function(x){ paste0(x[,1],":", x[,2],"_", x[,5]) }
 getGenotypes <- function(x){ unlist(lapply(strsplit(x, ":"),"[",1)) }
@@ -32,6 +68,8 @@ getMaxProb <- function(x){
   p <- getProbabilities(x)
   unlist(lapply(strsplit(p, ","),function(i){max(as.numeric(i))}))
 }
+
+##### Analysis of the SNPs
 
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/ReAnalysisSNPs")
 vcfdata <- read.table("population.vcf", colClasses="character")
@@ -42,15 +80,16 @@ matB6N  <- c("5070","5071","5072")
 matBFMI <- c("5073","5074","5075")
 samples <- c("5068","5069","4868","5067","5070","5071","5072","5073","5074","5075")
 
+DPs <- unlist(lapply(vcfdata[,"INFO"], getDP))
+vcfdata <- vcfdata[DPs > 100,]
+
+onAutosomes <- length(which(!(vcfdata[,"CHROM"] == "X" | vcfdata[,"CHROM"] == "Y" | vcfdata[,"CHROM"] == "MT")))
+cat("Called",onAutosomes,"/",dim(vcfdata)[1],"variants (autosomes / all)\n")
+
 genos <- matrix(NA, nrow(vcfdata), length(samples))
 probs <- matrix(NA, nrow(vcfdata), length(samples))
 colnames(genos) <- samples ; rownames(genos) <- createNames(vcfdata)
 colnames(probs) <- samples ; rownames(probs) <- createNames(vcfdata)
-
-onAutosomes <- length(which(!(vcfdata[,"CHROM"] == "X" | vcfdata[,"CHROM"] == "Y" | vcfdata[,"CHROM"] == "MT")))
-
-cat("Called",onAutosomes,"/",dim(vcfdata)[1],"variants (autosomes / all)\n")
-
 for(s in samples){ 
   genos[,s] <- getGenotypes(vcfdata[,s])
   probs[,s] <- getMaxProb(vcfdata[,s])
@@ -133,33 +172,6 @@ onAutosomes <- length(which(!(chroms == "X" | chroms == "Y" | chroms == "MT")))
 
 cat("Detected",onAutosomes,"/",dim(genos)[1],"variants that show consistent ASE\n")
 
-setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/")
-RPKM        <- read.csv("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", header=TRUE, colClasses="character")   # RPKM values from RNA-Seq
-
-GTF <- read.table("GTF/Mus_musculus.GRCm38.76.gtf", sep="\t")                                                       # Gene models
-EXONS <- GTF[which(GTF[,3]=="exon"),]
-
-datastr <- strsplit(as.character(EXONS[,9]), "; ")
-lengths <- unlist(lapply(datastr, length))
-
-addInfo <- matrix(NA, length(datastr), 2)
-for(x in 1:length(datastr)){ addInfo[x, ] <- c(strsplit(datastr[[x]][1]," ")[[1]][2], strsplit(datastr[[x]][lengths[x]]," ")[[1]][2]); }
-
-EXONS <- cbind(addInfo, EXONS)
-uniqueGenes <- as.character(unique(EXONS[,1]))
-
-geneExonsCoupling <- vector("list", length(uniqueGenes))                                                        # Create a list which enumerate the exons per gene
-x <- 1
-for(gene in uniqueGenes){
-  geneExons <- which(EXONS[,1] == gene)
-  possibleExons <- EXONS[geneExons[!duplicated(EXONS[geneExons,2])], -11]
-  geneExonsCoupling[[x]] <- possibleExons
-  cat(x, "Gene", gene, "has", nrow(geneExonsCoupling[[x]]), "/", length(geneExons),"Exons\n")
-  x <- x + 1
-}
-
-names(geneExonsCoupling) <- uniqueGenes
-
 geneSNPCoupling <- vector("list", length(uniqueGenes))
 x <- 1
 for(gene in geneExonsCoupling){                                                                               # Summarize all SNPs from a direction per gene
@@ -204,14 +216,14 @@ cat("Detected",length(unique(matrixform[onAutosomes,"snpID"])), "/", length(uniq
     "variants in", length(unique(matrixform[onAutosomes,"ensembl_gene_id"])), "/", length(unique(matrixform[,"ensembl_gene_id"])),"\n")
 
 matrixform[,samples] <- apply(matrixform[,samples],2,function(x){gsub("/", "|", x)})
-write.table(matrixform,"RPKM+ASE_Threshold50.txt", sep="\t", quote=FALSE,row.names=FALSE)
+write.table(matrixform,"RPKM+ASE_min100reads_Threshold50.txt", sep="\t", quote=FALSE,row.names=FALSE)
 
 filteredmatrix <- matrixform[-which(matrixform[,"CHROM"] == "X" | matrixform[,"CHROM"] == "MT"),]
 filteredmatrix <- filteredmatrix[unique(c(which(as.numeric(filteredmatrix[,"Mean.BFMI860.12xB6N.L"]) > 0.5), 
                                           which(as.numeric(filteredmatrix[,"Mean.B6NxBFMI860.12.L"]) > 0.5))),]
 filteredmatrix[,"Mean.BFMI860.12xB6N.L"] <- round(as.numeric(filteredmatrix[,"Mean.BFMI860.12xB6N.L"]), 3)
 filteredmatrix[,"Mean.B6NxBFMI860.12.L"] <- round(as.numeric(filteredmatrix[,"Mean.B6NxBFMI860.12.L"]), 3)
-write.table(filteredmatrix,"RPKM+ASE_Threshold50_FilteredX_EXP.txt", sep="\t", quote=FALSE,row.names=FALSE)
+write.table(filteredmatrix,"RPKM+ASE_min100reads_Threshold50_FilteredX_EXP.txt", sep="\t", quote=FALSE,row.names=FALSE)
 
 # ASE plots
 chromosomes  <- as.character(c(1:19, "X", "Y", "MT"))

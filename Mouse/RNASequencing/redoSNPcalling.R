@@ -233,7 +233,7 @@ chrInfo  <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 markers  <- read.table("Annotation/GeneticMarkers.txt", sep="\t", header=TRUE)
 mlength  <- max(chrInfo[,"Length"])
 
-plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Allele Specific Expression", sub="maternal B6N (left, B6N♀ x BFMI♂) versus maternal BFMI (right, BFMI♀ x B6N♂)", yaxt="n", xlab="", ylab="", xaxt="n")
+plot(y=c(0, mlength), x=c(1,nrow(chrInfo)), t='n', main="Allele Specific Expression", sub="maternal B6N (left, BFMI♂ x B6N♀) versus maternal BFMI (right, B6N♂ x BFMI♀)", yaxt="n", xlab="", ylab="", xaxt="n")
 abline(h=seq(0, mlength, 10000000), col = "lightgray", lty = "dotted")
 
 aa <- apply(matrixform, 1,function(x){

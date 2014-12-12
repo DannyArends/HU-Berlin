@@ -21,7 +21,12 @@ for(filename in c(lowfat,highfat)){
 fatdata <- cbind(mdata[,c("ProbeName", "Sequence")], fatdata)
 colnames(fatdata) <- c("ProbeName", "Sequence", group1, group2)
 
-### Data is now structured, lets start out analysis
+### Create fasta file
+
+# Code see CJ
+
+# blastn -task blastn -query E:\Chicken\RNA\Arrays_for_fat-2011-01\Analysis\probes.fasta -db Gallus_gallus.Galgal4.74.dna.db -perc_identity 95 -outfmt 6 -evalue 0.1 -num_alignments 5 -out E:\Chicken\RNA\Arrays_for_fat-2011-01\Analysis\ProbeLocations.txt
+
 
 ### Quality control !!!
 

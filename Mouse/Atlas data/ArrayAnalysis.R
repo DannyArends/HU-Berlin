@@ -142,16 +142,24 @@ arraydata <- cbind(arraydata, GF_F1   = round(apply(arraydata[,GF_F1],1,mean), 2
 heatmap(cor(arraydata[DEtissue, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between tissues
 heatmap(cor(arraydata[DEstrain, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between strains
 
-alldata <- NULL
-cnt <- 1
-ensgenes <- unique(annotationmatrix[,"ensembl_gene_id"])
-for(x in ensgenes){
-  annotsubset <- annotationmatrix[which(annotationmatrix[,"ensembl_gene_id"] == x),]
-  cat(paste0(cnt, "/", length(ensgenes), ", Gene:"), x, ", Probes:", dim(annotsubset)[1], "\n")
-  probeinformation <- NULL
-  for(x in as.character(annotsubset[,"ProbeName"])){
-    probeinformation <- rbind(probeinformation, arraydata[which(arraydata[,"ProbeName"] == x),])
+if(!file.exists("Analysis/geneexpression.txt")){
+  alldata <- NULL
+  cnt <- 1
+  ensgenes <- unique(annotationmatrix[,"ensembl_gene_id"])
+  for(x in ensgenes){
+    annotsubset <- annotationmatrix[which(annotationmatrix[,"ensembl_gene_id"] == x),]
+    cat(paste0(cnt, "/", length(ensgenes), ", Gene:"), x, ", Probes:", dim(annotsubset)[1], "\n")
+    probeinformation <- NULL
+    for(x in as.character(annotsubset[,"ProbeName"])){
+      probeinformation <- rbind(probeinformation, arraydata[which(arraydata[,"ProbeName"] == x),])
+    }
+    alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
+    cnt <- cnt + 1
   }
-  alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
-  cnt <- cnt + 1
+  write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)
+}else{
+  cat("Loading gene expression data from disk\n")
+  alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
 }
+
+

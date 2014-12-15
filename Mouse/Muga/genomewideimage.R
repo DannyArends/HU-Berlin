@@ -36,8 +36,7 @@ enough <- apply(genotypes,1,function(x){
 })
 genotypes <- genotypes[which(enough),]
 BFMI <- BFMI[which(enough)]
-cat("Left with", nrow(genotypes),",BFMI:", length(BFMI), "markers\n")                                                  # == Left with 11677 markers
-
+cat("Left with", nrow(genotypes),",BFMI:", length(BFMI), "markers\n")                                                  # == Left with 8852 markers
 
 nind <- length(genotypes) + 1
 numericgenotypes <- t(apply(cbind(BFMI, genotypes), 1, function(x){ return(as.numeric(x[2:nind] == x[1])) }))
@@ -57,6 +56,8 @@ otherS <- sort(phenotypes[colnames(genotypes[,other]),"mri70d_fat"],index.return
 
 rmap <- map[rownames(numericgenotypes),]
 
+setwd("E:/Mouse/DNA/MegaMuga/Analysis/Images")      
+
 for(chr in unique(rmap[rownames(numericgenotypes),"Chr"])){
   onChr <- rownames(rmap[which(rmap[,"Chr"] == chr),])
   ngeno <- numericgenotypes[onChr,]
@@ -66,7 +67,7 @@ for(chr in unique(rmap[rownames(numericgenotypes),"Chr"])){
       image(x=1:nrow(ngeno), y=1:nind, ngeno[, c(other[otherS$ix], heavy[heavyS$ix])], yaxt = "n", xaxt = "n", col=c("yellow", "gray","red"), ylab="", xlab="")
       abline(v = 1:nrow(ngeno) + 0.5, col="white", lwd = 0.5)
       abline(h = 1:nind + 1, col="white", lwd = 0.5)
-      abline(h = length(other)+1, col="black", lwd = 5)
+      abline(h = length(other)+1, col="black", lwd = 12)
       axis(1, at = 1:nrow(ngeno), as.character(mlabels[onChr]), las=2, cex.axis=0.9)
       axis(2, at = (1:(nind-1) + 0.5), phenotypes[c(other[otherS$ix], heavy[heavyS$ix]),"Vater"], las=2, cex.axis=0.9)
       box()

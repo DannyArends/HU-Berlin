@@ -55,7 +55,7 @@ for(r in 1:nrow(regions)){
   markersInRegions <- c(markersInRegions, paste(unlist(markers[inregion,"markerID"]),collapse=", "))
 }
 
-write.table(cbind(regions,markersInRegions), file="Analysis/BFMI861-S1andBFMI860-12vsALL_MarkersInRegions.txt", sep="\t", row.names=FALSE)
+write.table(cbind(regions,markersInRegions), file="Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_MarkersInRegions.txt", sep="\t", row.names=FALSE)
 
 query.regions <- paste(regions[,"Chr"],regions[,"Start"],regions[,"End"], sep=":")                                  # Regions encoded for biomart
 

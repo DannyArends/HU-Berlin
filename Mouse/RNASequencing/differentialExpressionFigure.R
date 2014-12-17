@@ -63,7 +63,7 @@ png("MaternalOriginOurAnalysis_norm_above1RPKM.png", width = 2000, height = 1000
   })
 
   axis(1,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
-  axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
+  axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7, las=2)
   legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
 dev.off()
 

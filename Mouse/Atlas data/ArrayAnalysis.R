@@ -161,5 +161,3 @@ if(!file.exists("Analysis/geneexpression.txt")){
   cat("Loading gene expression data from disk\n")
   alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
 }
-
-

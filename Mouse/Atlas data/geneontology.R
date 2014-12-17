@@ -48,13 +48,26 @@ if(!file.exists("Annotation/geneid2go.map")){                                   
   }
 }
 
-genelist <- rep(0, length(allgenes))                                                                # Create a gene list
-names(genelist) <- allgenes                                                                         # Add the names
-genelist[alldata[DEtissue,"ensembl_gene_id"]] <- 1                                                  # Set the tissue genes to 1
+tissueDE        <- alldata[DEtissue,]
+geneID2GO         <- readMappings(file = "Annotation/geneid2go.map")
 
-geneID2GO     <- readMappings(file = "Annotation/geneid2go.map")
-GOdata        <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)
-resultFisher  <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+genelist          <- rep(0, length(allgenes))                                                         # Create a gene list
+names(genelist)   <- allgenes                                                                         # Add the names
+upinHT            <- tissueDE[which(as.numeric(tissueDE[,"HT"]) > as.numeric(tissueDE[,"GF"])),"ensembl_gene_id"]
+genelist[upinHT]  <- 1
+
+GOdata            <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)
+resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
+GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 
+genelist          <- rep(0, length(allgenes))                                                         # Create a gene list
+names(genelist)   <- allgenes                                                                         # Add the names
+upinGF            <- tissueDE[which(as.numeric(tissueDE[,"GF"]) > as.numeric(tissueDE[,"HT"])),"ensembl_gene_id"]
+genelist[upinGF]  <- 1
+
+GOdata            <- new("topGOdata", ontology = "BP", allGenes = as.factor(genelist), annot = annFUN.gene2GO, gene2GO = geneID2GO)
+resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
+GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
 

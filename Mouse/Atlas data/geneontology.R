@@ -112,5 +112,5 @@ for(x in 1:nrow(GOstrain)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".txt"), sep="\t", row.names=FALSE)
-  createGOplot(datasubset, GOstrain, x, arrays, colfunc, "GO/Strain/")
+  createGOplot(datasubset, GOstrain, x, arrays, colfunc, "GO/Strain/")                            # We might want to split this by tissue to make the effects more clear
 }

@@ -48,6 +48,17 @@ if(!file.exists("Annotation/geneid2go.map")){                                   
   }
 }
 
+colfunc       <- colorRampPalette(c("white", "black"))
+
+createGOplot <- function(datasubset, GOstrain, x, arrays, colfunc){
+  dataonly <- as.matrix(datasubset[,arrays[,"AtlasID"]])
+  rownames(dataonly) <- datasubset[,"mgi_symbol"]
+  colnames(dataonly) <- apply(arrays[,c("Strain","Tissue")], 1, paste0, collapse="_")
+  png(paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".png"))
+    heatmap(dataonly, col=colfunc(40))
+  dev.off()
+}
+
 geneID2GO     <- readMappings(file = "Annotation/geneid2go.map")
 topDiffGenes  <- function(x){ return(x < 1e-12) }                                                 # High threshold for tissue analysis
 
@@ -65,6 +76,7 @@ for(x in 1:nrow(GOHT)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/HT/",gsub("GO:","",GOHT[x,"GO.ID"]),"-",GOHT[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
 }
 
 ### Gene ontology of Gonadal fat
@@ -81,6 +93,7 @@ for(x in 1:nrow(GOGF)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/GF/",gsub("GO:","",GOGF[x,"GO.ID"]),"-",GOGF[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
 }
 
 ### Gene ontology of strain differences
@@ -93,10 +106,11 @@ GOdata            <- new("topGOdata", ontology = "BP", allGenes = genelist, gene
 resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
 GOstrain <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+
 for(x in 1:nrow(GOstrain)){
   allGenesGOHT  <- genesInTerm(GOdata, whichGO = GOstrain[x,"GO.ID"])[[1]]
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
 }
-

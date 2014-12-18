@@ -50,11 +50,11 @@ if(!file.exists("Annotation/geneid2go.map")){                                   
 
 colfunc       <- colorRampPalette(c("white", "black"))
 
-createGOplot <- function(datasubset, GOstrain, x, arrays, colfunc){
+createGOplot <- function(datasubset, GOtable, x, arrays, colfunc, folder){
   dataonly <- as.matrix(datasubset[,arrays[,"AtlasID"]])
   rownames(dataonly) <- datasubset[,"mgi_symbol"]
   colnames(dataonly) <- apply(arrays[,c("Strain","Tissue")], 1, paste0, collapse="_")
-  png(paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".png"))
+  png(paste0(folder, gsub("GO:","",GOtable[x,"GO.ID"]),"-",GOtable[x,"Term"],".png"))
     heatmap(dataonly, col=colfunc(40))
   dev.off()
 }
@@ -76,7 +76,7 @@ for(x in 1:nrow(GOHT)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/HT/",gsub("GO:","",GOHT[x,"GO.ID"]),"-",GOHT[x,"Term"],".txt"), sep="\t", row.names=FALSE)
-  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
+  createGOplot(datasubset, GOHT, x, arrays, colfunc, "GO/HT/")
 }
 
 ### Gene ontology of Gonadal fat
@@ -93,7 +93,7 @@ for(x in 1:nrow(GOGF)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/GF/",gsub("GO:","",GOGF[x,"GO.ID"]),"-",GOGF[x,"Term"],".txt"), sep="\t", row.names=FALSE)
-  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
+  createGOplot(datasubset, GOGF, x, arrays, colfunc, "GO/GF/")
 }
 
 ### Gene ontology of strain differences
@@ -112,5 +112,5 @@ for(x in 1:nrow(GOstrain)){
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
   write.table(datasubset, file=paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".txt"), sep="\t", row.names=FALSE)
-  createGOplot(datasubset, GOstrain, x, arrays, colfunc)
+  createGOplot(datasubset, GOstrain, x, arrays, colfunc, "GO/Strain/")
 }

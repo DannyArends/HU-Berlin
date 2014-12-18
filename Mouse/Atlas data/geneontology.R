@@ -59,7 +59,13 @@ genelist[which(alldata[,"HT"] < alldata[,"GF"])] <- 1                           
 GOdata            <- new("topGOdata", ontology = "BP", allGenes = genelist, geneSel = topDiffGenes, annot = annFUN.gene2GO, gene2GO = geneID2GO)
 resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+GOHT <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+for(x in 1:nrow(GOHT)){
+  allGenesGOHT  <- genesInTerm(GOdata, whichGO = GOHT[x,"GO.ID"])[[1]]
+  genesToGOHT   <- names(which(topDiffGenes(genelist)))
+  datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
+  write.table(datasubset, file=paste0("GO/HT/",gsub("GO:","",GOHT[x,"GO.ID"]),"-",GOHT[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+}
 
 ### Gene ontology of Gonadal fat
 genelist          <- alldata[,"Tissue_P"]                                                         # Create a gene list
@@ -69,7 +75,13 @@ genelist[which(alldata[,"GF"] < alldata[,"HT"])] <- 1                           
 GOdata            <- new("topGOdata", ontology = "BP", allGenes = genelist, geneSel = topDiffGenes, annot = annFUN.gene2GO, gene2GO = geneID2GO)
 resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+GOGF <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+for(x in 1:nrow(GOGF)){
+  allGenesGOHT  <- genesInTerm(GOdata, whichGO = GOGF[x,"GO.ID"])[[1]]
+  genesToGOHT   <- names(which(topDiffGenes(genelist)))
+  datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
+  write.table(datasubset, file=paste0("GO/GF/",gsub("GO:","",GOGF[x,"GO.ID"]),"-",GOGF[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+}
 
 ### Gene ontology of strain differences
 topDiffGenes <- function(x){ return(x < 1e-4) }                                                   # Lower threshold for strain analysis
@@ -80,4 +92,11 @@ names(genelist)   <- alldata[,"ensembl_gene_id"]                                
 GOdata            <- new("topGOdata", ontology = "BP", allGenes = genelist, geneSel = topDiffGenes, annot = annFUN.gene2GO, gene2GO = geneID2GO)
 resultFisher      <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
 showSigOfNodes(GOdata, topGO::score(resultFisher), firstSigNodes = 5, useInfo = 'all')
-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+GOstrain <- GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 10)
+for(x in 1:nrow(GOstrain)){
+  allGenesGOHT  <- genesInTerm(GOdata, whichGO = GOstrain[x,"GO.ID"])[[1]]
+  genesToGOHT   <- names(which(topDiffGenes(genelist)))
+  datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
+  write.table(datasubset, file=paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+}
+

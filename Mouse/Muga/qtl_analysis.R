@@ -150,38 +150,21 @@ dev.off()
 image(x = 1:nrow(qtls), y=(1:3)-0.5, as.matrix(qtls), oldstyle=TRUE, breaks=c(0,3,6,12,30,100), col=c("white",gray.colors(4)[4:1]))
 grid(3); box()
 
-setwd("E:/Mouse/ClassicalPhenotypes/AIL")
-
-png("Plots/QTL_FatdLean_Day42.png", width=1024, height=768)
-  plot(qtls[,"qtl42"], t='h', col=chrcolors[map[,"Chr"]],main="Fat/Lean QTL profile Day 42", xlab="Marker", ylab="-log10(p-value)")
-  abline(h = -log10(0.1/nrow(qtls)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtls)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtls)), col="green", lty=2)
-dev.off()
-
-png("Plots/QTL_FatdLean_Day56.png", width=1024, height=768)
-  plot(qtls[,"qtl56"], t='h', col=chrcolors[map[,"Chr"]],main="Fat/Lean QTL profile Day 56", xlab="Marker", ylab="-log10(p-value)")
-  abline(h = -log10(0.1/nrow(qtls)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtls)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtls)), col="green", lty=2)
-dev.off()
-
-png("Plots/QTL_FatdLean_Day70.png", width=1024, height=768)
-  plot(qtls[,"qtl70"], t='h', col=chrcolors[map[,"Chr"]],main="Fat/Lean QTL profile Day 70", xlab="Marker", ylab="-log10(p-value)")
-  abline(h = -log10(0.1/nrow(qtls)), col="orange", lty=2); abline(h = -log10(0.05/nrow(qtls)), col="gold", lty=2); abline(h = -log10(0.01/nrow(qtls)), col="green", lty=2)
-dev.off()
-
 map[which(qtls[,"qtl42"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl56"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl70"] > -log10(0.01/nrow(qtls))),]
 
 getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "42d", marker = "UNC5048297"){
   ind           <- colnames(genotypes[marker,!is.na(genotypes[marker,])])
-  
+
   genotype      <- as.factor(t(genotypes[marker,!is.na(genotypes[marker,])]))
   littersize    <- as.factor(phenotypes[ind, "WG2"])
   subfamily     <- as.factor(phenotypes[ind, "Vater"])
   season        <- as.factor(phenotypes[ind, "Season"])
   litternumber  <- as.factor(phenotypes[ind, "W.Label"])
-  
+
   phenotype     <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
-  
+
   tryCatch(res  <- anova(lm(phenotype ~ littersize + litternumber + subfamily + season + genotype + littersize:litternumber)), error = function(e){ res <<- NA })
   varExplained  <- res[, "Sum Sq"] / sum((phenotype - mean(phenotype, na.rm=TRUE))^2, na.rm=TRUE)
   names(varExplained) <- c("l_size","l_number","subfamily", "season", "marker", "Int", "Left")

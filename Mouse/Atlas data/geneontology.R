@@ -62,6 +62,8 @@ createGOplot <- function(datasubset, GOtable, x, arrays, colfunc, folder){
 geneID2GO     <- readMappings(file = "Annotation/geneid2go.map")
 topDiffGenes  <- function(x){ return(x < 1e-12) }                                                 # High threshold for tissue analysis
 
+### TODO: After we create the datasubset variable, some probes might NOT show the pattern we're interested in, we need to filter for tissue_p < threshold
+
 ### Gene ontology of Hypothalamus
 genelist          <- alldata[,"Tissue_P"]                                                         # Create a gene list
 names(genelist)   <- alldata[,"ensembl_gene_id"]                                                  # Add the names
@@ -111,6 +113,6 @@ for(x in 1:nrow(GOstrain)){
   allGenesGOHT  <- genesInTerm(GOdata, whichGO = GOstrain[x,"GO.ID"])[[1]]
   genesToGOHT   <- names(which(topDiffGenes(genelist)))
   datasubset    <- alldata[which(alldata[,"ensembl_gene_id"] %in% genesToGOHT[which(genesToGOHT %in% allGenesGOHT)]),]
-  write.table(datasubset, file=paste0("GO/Strain/",gsub("GO:","",GOstrain[x,"GO.ID"]),"-",GOstrain[x,"Term"],".txt"), sep="\t", row.names=FALSE)
+  write.table(datasubset, file = paste0("GO/Strain/", gsub("GO:","",GOstrain[x,"GO.ID"]), "-", GOstrain[x,"Term"], ".txt"), sep="\t", row.names=FALSE)
   createGOplot(datasubset, GOstrain, x, arrays, colfunc, "GO/Strain/")                            # We might want to split this by tissue to make the effects more clear
 }

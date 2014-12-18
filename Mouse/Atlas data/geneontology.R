@@ -13,8 +13,8 @@ alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
 
 DEthreshold <- 0.1 / nrow(alldata)
 
-DEstrain    <- which(as.numeric(alldata[,"Strain_P"]) < DEthreshold)    # Update the strain affected probes, since the ordering has changed
-DEtissue    <- which(as.numeric(alldata[,"Tissue_P"]) < DEthreshold)    # Update the tissue affected probes, since the ordering has changed
+DEstrain    <- which(as.numeric(alldata[,"Strain_P"]) < DEthreshold)
+DEtissue    <- which(as.numeric(alldata[,"Tissue_P"]) < DEthreshold)
 
 cat("Found", length(DEtissue), "probes differentially expressed between tissues\n")
 cat("Found", length(DEstrain), "probes differentially expressed between strains\n")

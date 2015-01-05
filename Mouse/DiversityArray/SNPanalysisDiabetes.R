@@ -122,6 +122,6 @@ for(snp in 1:nrow(SNPdata)){
 }
 cat("Found", length(dSNP), "SNPs equal between 861-S1 and 860-12, but different in other BFMI\n")
 
-Comparison3OUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, mouseS1], SNPdata[dSNP, mouse86012[1]], SNPdata[dSNP, nonSMice])  # Create the ouput (subset the whole SNP arrays)
-colnames(Comparison3OUT) <- c(colnames(SNPdata)[1:8], "BFMI861-S1", "BFMI860-12", nonSensitive)                            # Add a comprehensive header
+Comparison3OUT <- cbind(SNPdata[dSNP,1:8], SNPdata[dSNP, mouseS1], SNPdata[dSNP, mouse86012[1]], SNPdata[dSNP, nonSMice], SNPdata[dSNP, "X8613087"])  # Create the ouput (subset the whole SNP arrays)
+colnames(Comparison3OUT) <- c(colnames(SNPdata)[1:8], "BFMI861-S1", "BFMI860-12", nonSensitive, "BFMI861-S2")                            # Add a comprehensive header
 write.table(Comparison3OUT, file="Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", sep="\t", row.names = FALSE)

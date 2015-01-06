@@ -57,6 +57,7 @@ nonDMice <- NULL
 for(mouseLine in nonDiabetic){
   nonDMice <- c(nonDMice, rownames(annotation[which(annotation[,"Line"] == mouseLine),])[1])      # The mouseID of a non-diabetic mouse
 }
+nonDMice[3] <- "X86022339"
 
 isDMouse <- rownames(annotation[which(annotation[,"Line"] == isDiabetic),])[1]                    # The mouseID of the diabetic mouse
 

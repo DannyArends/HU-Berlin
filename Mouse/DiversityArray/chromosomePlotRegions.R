@@ -48,7 +48,7 @@ axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
 axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 
 dev.off()
-
+snpOUT861S1  <- read.table("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
 regions861S1 <- read.table("Analysis/Diabetes/BFMI861-S1vsALL_MarkersInRegions.txt", sep="\t", header=TRUE, colClasses=c("character"))
 
 png(file="Analysis/Figures/RegionComparison_BFMI861-S1andBFMI860-12_vs_BFMI861-S1.png",width=1200, height=800)

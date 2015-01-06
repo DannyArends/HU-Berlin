@@ -48,3 +48,30 @@ axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
 axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 
 dev.off()
+
+regions861S1 <- read.table("Analysis/Diabetes/BFMI861-S1vsALL_MarkersInRegions.txt", sep="\t", header=TRUE, colClasses=c("character"))
+
+png(file="Analysis/Figures/RegionComparison_BFMI861-S1andBFMI860-12_vs_BFMI861-S1.png",width=1200, height=800)
+
+plot(c(0, mlength), c(1,nrow(chrInfo)), t='n', main="Comparison of regions", sub="Genotype errors: BFMI861-S2 and BFMI861-S1", yaxt="n", ylab="Chromosome", xlab="Length (Mb)", xaxt="n")
+cnt <- 1
+aa <- apply(chrInfo,1,function(x){
+  lines(c(0,x["Length"]), c(cnt, cnt), type="l", col="black", lty=1)
+  cnt <<- cnt + 1
+})
+
+aa <- apply(regions, 1, function(x){
+  yloc <- match(x["Chr"], chromosomes); xlocS <- x["Start"]; xlocE <- x["End"]
+  lines(c(as.numeric(xlocS)-2500000,as.numeric(xlocE)+2500000), c(yloc, yloc)+0.1, type="l", col="red", lty=1,lwd=5)
+})
+
+aa <- apply(regions861S1, 1, function(x){
+  yloc <- match(x["Chr"], chromosomes); xlocS <- x["Start"]; xlocE <- x["End"]
+  lines(c(as.numeric(xlocS)-2500000,as.numeric(xlocE)+2500000), c(yloc, yloc)-0.1, type="l", col="blue", lty=1,lwd=5)
+})
+
+axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
+axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
+legend("topright",c("BFMI861-S1 == BFMI860-12", "BFMI861-S1"), lty=1, lwd=5, col=c("red","blue"))
+
+dev.off()

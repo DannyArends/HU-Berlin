@@ -53,7 +53,7 @@ findRegions <- function(snps, snpInRegion = 35, maxDistance = 4000000){
 regions <- findRegions(snpOUT)
 write.table(regions, "Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_Regions.txt", sep="\t", row.names=FALSE)
 regions861S1 <- findRegions(snps861S1)
-write.table(regions, "Analysis/Diabetes/BFMI861-S1vsALL_Regions.txt", sep="\t", row.names=FALSE)
+write.table(regions861S1, "Analysis/Diabetes/BFMI861-S1vsALL_Regions.txt", sep="\t", row.names=FALSE)
 
 # Which markers that we have in the LAB are in the regions we defined
 findMarkersInRegions <- function(regions){

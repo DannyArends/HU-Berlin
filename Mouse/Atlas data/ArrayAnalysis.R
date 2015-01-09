@@ -43,6 +43,9 @@ if(!file.exists("Analysis/probes.fasta")){
 # Load the locations of the probes and filter them so that we only keep the unique matching probes
 locations <- read.csv("Analysis/probelocations.txt", sep = "\t", header=FALSE)
 colnames(locations) <- c("ProbeName", "Chr", "Ident", "Length", "U1", "U2", "U3", "Match", "Start", "Stop", "evalue", "Score")
+
+locations <- locations[-which(locations[,"Score"] < 80),]                                                                           # Match is not good enough to be considered as duplicate ( evalue < 80 )
+
 dupprobes <- unique(locations[which(duplicated(locations[,"ProbeName"])),"ProbeName"])                                              # Probes which have multiple matches
 locations <- locations[which(!(locations[,"ProbeName"] %in% dupprobes)),]                                                           # No additional matches, probes should match only 1 time
 cat("Found", nrow(locations), "probes that align only once to the reference genome\n")                                              # Found 46143 probes that align only once to the reference genome

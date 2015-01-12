@@ -11,13 +11,30 @@ library(biomaRt)
 setwd("E:/Mouse/RNA/ArrayDesign/Atlas data")
 arrays <- read.table("Annotation/arrays.txt", header=TRUE, sep="\t", colClasses="character")
 
-arraydata <- NULL
-for(filename in arrays[,"Filename"]){
-  marray <- read.csv(paste0("Analyseergebnisse/",filename), sep = "\t", skip = 9, header = TRUE)
-  arraydata <- cbind(arraydata, marray$gProcessedSignal)
+if(!file.exists("Analysis/arraydata.txt")){
+  cat("Loading raw data from disk\n")
+  rawdata <- NULL
+  for(filename in arrays[,"Filename"]){
+    marray <- read.csv(paste0("Analyseergebnisse/",filename), sep = "\t", skip = 9, header = TRUE)
+    rawdata <- cbind(rawdata, marray$gProcessedSignal)
+  }
+  rawdata <- cbind(marray[,c("ProbeName", "Sequence")], rawdata)
+  colnames(rawdata) <- c("ProbeName", "Sequence", arrays[,"AtlasID"])
+
+  #Some probes are on the array multiple times, so let's de-duplicate them (we take the average expression over the similar probes)
+  uniqueprobes <- unique(rawdata[,"ProbeName"])
+  arraydata <- matrix(NA,length(uniqueprobes), (ncol(rawdata)-1), dimnames = list(uniqueprobes, colnames(rawdata)[-1]))
+  cat("De-duplicating probes\n")
+  for(probe in uniqueprobes){
+    prows <- which(rawdata[,"ProbeName"] == probe)
+    probeseq <- rawdata[prows,"Sequence"][1]
+    arraydata[probe, ] <- c(as.character(probeseq), apply(rawdata[which(rawdata[,"ProbeName"] == probe), arrays[,"AtlasID"]], 2, mean))
+  }
+  arraydata <- data.frame(arraydata)
+  write.table(arraydata, file="Analysis/arraydata.txt", sep="\t", row.names=TRUE)
+}else{
+  arraydata <- read.table("Analysis/arraydata.txt", sep="\t", header=TRUE, row.names=1)
 }
-arraydata <- cbind(marray[,c("ProbeName", "Sequence")], arraydata)
-colnames(arraydata) <- c("ProbeName", "Sequence", arrays[,"AtlasID"])
 
 # Preprocessing
 arraydata[,arrays[,"AtlasID"]] <- log2(arraydata[,arrays[,"AtlasID"]])                              # Log2 transformation
@@ -32,7 +49,7 @@ if(!file.exists("Analysis/probes.fasta")){
   cat("", file="Analysis/probes.fasta")
   for(x in 1:nrow(arraydata)){
     if(as.character(arraydata[x,"Sequence"]) != ""){
-      cat(">", as.character(arraydata[x,"ProbeName"]), "\n", sep = "", file="Analysis/probes.fasta", append=TRUE)
+      cat(">", rownames(arraydata)[x], "\n", sep = "", file="Analysis/probes.fasta", append=TRUE)
       cat(as.character(arraydata[x,"Sequence"]),"\n", sep = "", file="Analysis/probes.fasta", append=TRUE)
     }
   }
@@ -47,8 +64,9 @@ colnames(locations) <- c("ProbeName", "Chr", "Ident", "Length", "U1", "U2", "U3"
 locations <- locations[-which(locations[,"Score"] < 80),]                                                                           # Match is not good enough to be considered as duplicate ( evalue < 80 )
 
 dupprobes <- unique(locations[which(duplicated(locations[,"ProbeName"])),"ProbeName"])                                              # Probes which have multiple matches
-locations <- locations[which(!(locations[,"ProbeName"] %in% dupprobes)),]                                                           # No additional matches, probes should match only 1 time
-cat("Found", nrow(locations), "probes that align only once to the reference genome\n")                                              # Found 46143 probes that align only once to the reference genome
+bestlocs <- locations[which(!duplicated(locations[,"ProbeName"])),]                                                                 # Only look up each probes once (best match)
+#locations <- locations[which(!(locations[,"ProbeName"] %in% dupprobes)),]                                                           # No additional matches, probes should match only 1 time
+#cat("Found", nrow(locations), "probes that align only once to the reference genome\n")                                              # Found 46143 probes that align only once to the reference genome
 
 mart      <- useMart("ensembl", "mmusculus_gene_ensembl")
 
@@ -79,16 +97,16 @@ if(!file.exists("Analysis/EXONS.txt")){
 # Match our probes to known exons within the genes
 if(!file.exists("Annotation/probeannotation.txt")){
   annotationmatrix <- NULL
-  for(x in 1:nrow(locations)){
-    inEXON <- which(as.character(allexons[,"chromosome_name"]) == as.character(locations[x,"Chr"]) &                                            # In which exons ?
-                    allexons[,"exon_chrom_start"] < locations[x,"Start"] & allexons[,"exon_chrom_end"] > locations[x,"Stop"])
+  for(x in 1:nrow(bestlocs)){
+    inEXON <- which(as.character(allexons[,"chromosome_name"]) == as.character(bestlocs[x,"Chr"]) &                                            # In which exons ?
+                    allexons[,"exon_chrom_start"] < bestlocs[x,"Start"] & allexons[,"exon_chrom_end"] > bestlocs[x,"Stop"])
 
     annotation <- allgenes[which(as.character(allgenes[,"ensembl_gene_id"]) %in% as.character(unique(allexons[inEXON,"ensembl_gene_id"]))), ]   # In which genes ?
     if(dim(annotation)[1] > 0){
-      annotationmatrix <- rbind(annotationmatrix , cbind(ProbeName = locations[x,"ProbeName"], ProbeChr = locations[x,"Chr"], ProbeStart = locations[x,"Start"], ProbeStop = locations[x,"Stop"], annotation))
+      annotationmatrix <- rbind(annotationmatrix , cbind(ProbeName = bestlocs[x,"ProbeName"], ProbeChr = bestlocs[x,"Chr"], ProbeStart = bestlocs[x,"Start"], ProbeStop = bestlocs[x,"Stop"], annotation))
     }
     if(x %% 100 == 0){    # Print some progress report every 100 probes
-      cat("Done", paste0(x,"/",nrow(locations),", matched"), length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")
+      cat("Done", paste0(x,"/",nrow(bestlocs),", matched"), length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")
     }
   }
   cat("Matched", length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")  # Matched 34012 probes to 20897 genes

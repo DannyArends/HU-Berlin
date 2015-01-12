@@ -126,7 +126,7 @@ colnames(pvalues) <- c("Tissue_P", "Strain_P")
 arraydata         <- cbind(arraydata, pvalues)
 
 # Filter only probes that match genes in the genome
-arraydata <- arraydata[which(arraydata[,"ProbeName"] %in% annotationmatrix[,"ProbeName"]),]
+arraydata <- arraydata[which(rownames(arraydata) %in% annotationmatrix[,"ProbeName"]),]
 
 # Filter for differentially expressed probes
 DEthreshold <- 0.1 / nrow(arraydata)
@@ -163,6 +163,9 @@ arraydata <- cbind(arraydata, GF_F1   = round(apply(arraydata[,GF_F1],1,mean), 2
 heatmap(cor(arraydata[DEtissue, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between tissues
 heatmap(cor(arraydata[DEstrain, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between strains
 
+# Add the information about which probe are MultiMapping
+annotationmatrix <- cbind(annotationmatrix, MultiMap = annotationmatrix[,"ProbeName"] %in% dupprobes)
+
 if(!file.exists("Analysis/geneexpression.txt")){
   alldata <- NULL
   cnt <- 1
@@ -172,7 +175,7 @@ if(!file.exists("Analysis/geneexpression.txt")){
     cat(paste0(cnt, "/", length(ensgenes), ", Gene:"), x, ", Probes:", dim(annotsubset)[1], "\n")
     probeinformation <- NULL
     for(x in as.character(annotsubset[,"ProbeName"])){
-      probeinformation <- rbind(probeinformation, arraydata[which(arraydata[,"ProbeName"] == x),])
+      probeinformation <- rbind(probeinformation, arraydata[which(rownames(arraydata) == x),])
     }
     alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
     cnt <- cnt + 1

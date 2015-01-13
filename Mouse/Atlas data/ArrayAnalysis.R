@@ -65,8 +65,6 @@ locations <- locations[-which(locations[,"Score"] < 80),]                       
 
 dupprobes <- unique(locations[which(duplicated(locations[,"ProbeName"])),"ProbeName"])                                              # Probes which have multiple matches
 bestlocs <- locations[which(!duplicated(locations[,"ProbeName"])),]                                                                 # Only look up each probes once (best match)
-#locations <- locations[which(!(locations[,"ProbeName"] %in% dupprobes)),]                                                           # No additional matches, probes should match only 1 time
-#cat("Found", nrow(locations), "probes that align only once to the reference genome\n")                                              # Found 46143 probes that align only once to the reference genome
 
 mart      <- useMart("ensembl", "mmusculus_gene_ensembl")
 

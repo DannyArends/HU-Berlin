@@ -107,7 +107,7 @@ if(!file.exists("Annotation/probeannotation.txt")){
       cat("Done", paste0(x,"/",nrow(bestlocs),", matched"), length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")
     }
   }
-  cat("Matched", length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")  # Matched 34012 probes to 20897 genes
+  cat("Matched", length(unique(annotationmatrix[,"ProbeName"])), "probes to", length(unique(annotationmatrix[,"ensembl_gene_id"])), "genes\n")
   write.table(annotationmatrix, file="Annotation/probeannotation.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading probe annotation from disk\n")

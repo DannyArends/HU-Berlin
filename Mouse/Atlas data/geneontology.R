@@ -11,6 +11,8 @@ setwd("E:/Mouse/RNA/ArrayDesign/Atlas data")
 arrays <- read.table("Annotation/arrays.txt", header=TRUE, sep="\t", colClasses="character")
 alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
 
+alldata <- alldata[!alldata[,"MultiMap"],]                                                              # Do not use the multi mapping probes
+
 DEthreshold <- 0.1 / nrow(alldata)
 
 DEstrain    <- which(as.numeric(alldata[,"Strain_P"]) < DEthreshold)

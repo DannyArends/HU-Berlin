@@ -10,8 +10,8 @@ library(preprocessCore)                                                         
 setwd("E:/Mouse/RNA/FV3")
 
 rawdata  <- read.table("RawData/expressions.txt", sep="\t", header=TRUE, row.names=1, check.names=FALSE)              # Load the expression data
-arrays      <- read.table("Annotation/arrays.txt", sep="\t", header=TRUE, row.names=1)                                # Arrays annotation
-probes      <- read.table("Annotation/illumina.txt", sep="\t", header=TRUE)                                           # Probe annotation
+arrays   <- read.table("Annotation/arrays.txt", sep="\t", header=TRUE, row.names=1)                                   # Arrays annotation
+probes   <- read.table("Annotation/illumina.txt", sep="\t", header=TRUE)                                              # Probe annotation
 
 # Create a fasta file with the probe sequences to blast against the reference genome
 if(!file.exists("Analysis/probes.fasta")){
@@ -83,3 +83,45 @@ if(!file.exists("Annotation/probeannotation.txt")){
   annotationmatrix <- read.table("Annotation/probeannotation.txt", sep="\t", header=TRUE)
 }
 
+# Add the information about which probe are MultiMapping
+annotationmatrix <- cbind(annotationmatrix, MultiMap = annotationmatrix[,"ProbeName"] %in% dupprobes)
+annotationmatrix <- cbind(annotationmatrix, Sequence = probes[match(annotationmatrix[,"ProbeName"], probes[,"Array_Address_Id"]),"SEQUENCE"])
+
+# QC of our probes
+boxplot(rawdata[,rownames(arrays)])
+
+rawdata <- rawdata[, -which(colnames(rawdata) == "1740174012_D")]                           # Misbehaving array 1740174012_D, expression = 10 x lower the expected
+arrays <- arrays[-which(rownames(arrays) == "1740174012_D"),]                               # Misbehaving array 1740174012_D, expression = 10 x lower the expected
+
+# Preprocessing
+rawdata[,rownames(arrays)] <- log2(rawdata[,rownames(arrays)])                              # Log2 transformation
+rawdata[,rownames(arrays)] <- normalize.quantiles(as.matrix(rawdata[,rownames(arrays)]))    # Quantile normalisation
+
+# QC of our probes
+boxplot(rawdata[,rownames(arrays)])
+heatmap(cor(rawdata[,rownames(arrays)], method="spearman"))
+
+if(!file.exists("Analysis/geneexpression.txt")){
+  alldata <- NULL
+  cnt <- 1
+  ensgenes <- as.character(unique(annotationmatrix[,"ensembl_gene_id"]))
+  for(x in ensgenes){
+    annotsubset <- annotationmatrix[which(annotationmatrix[,"ensembl_gene_id"] == x),]
+    cat(paste0(cnt, "/", length(ensgenes), ", Gene:"), x, ", Probes:", dim(annotsubset)[1], "\n")
+    probeinformation <- NULL
+    for(y in as.character(annotsubset[,"ProbeName"])){
+      idx <- which(rownames(rawdata) == y)
+      if(length(idx) > 0) probeinformation <- rbind(probeinformation, rawdata[idx,])
+    }
+    
+    if(!is.null(probeinformation)){
+      annotsubset <- annotsubset[annotsubset[,"ProbeName"]%in% rownames(probeinformation), ]
+      alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
+    }
+    cnt <- cnt + 1
+  }
+  write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)
+}else{
+  cat("Loading gene expression data from disk\n")
+  alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
+}

@@ -12,31 +12,20 @@ rawdata  <- read.table("RawData/expressions.txt", sep="\t", header=TRUE, row.nam
 arrays   <- read.table("Annotation/arrays.txt", sep="\t", header=TRUE, row.names=1)                                   # Arrays annotation
 probes   <- read.table("Annotation/illumina.txt", sep="\t", header=TRUE)                                              # Probe annotation
 
-
-# QC of our probes
-boxplot(rawdata[,rownames(arrays)])
-
-badarrays <- c("1562232038_E", "1562232037_A","1562232040_C", "1740174012_D", "1754402037_A")
-
-rawdata <- rawdata[, -which(colnames(rawdata) %in% badarrays)]                           # Misbehaving arrays
-arrays <- arrays[-which(rownames(arrays) %in% badarrays),]                               # Misbehaving arrays
+rawdata <- rawdata[, grep("1562232028", colnames(rawdata))]                           # Liver FF array
+arrays <- arrays[grep("1562232028", rownames(arrays)),]                               # Liver FF array
 
 # Preprocessing
 rawdata[,rownames(arrays)] <- log2(rawdata[,rownames(arrays)])                              # Log2 transformation
 rawdata[,rownames(arrays)] <- normalize.quantiles(as.matrix(rawdata[,rownames(arrays)]))    # Quantile normalisation
 
-write.table(cbind(decoder_ID = rownames(rawdata), rawdata), "Analysis/NormData.txt", sep = "\t", quote=FALSE, row.names=FALSE)
+write.table(cbind(decoder_ID = rownames(rawdata), rawdata), "Analysis/NormDataLiverArray.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 
-# QC of our probes
 boxplot(rawdata[,rownames(arrays)])
-corM <- cor(rawdata[,rownames(arrays)], method="spearman")
-rownames(corM) <- paste0(arrays[,"tissue"],"_",arrays[,"diet"],"_",arrays[,"line"])
-colnames(corM) <- arrays[,"tissue"]
-heatmap(corM)
 
 source("D:/Github/HU-Berlin/Mouse/FV3/createAnnotation.R")
 
-if(!file.exists("Analysis/geneexpression.txt")){
+if(!file.exists("Analysis/geneexpressionLiverArray.txt")){
   alldata <- NULL
   cnt <- 1
   ensgenes <- as.character(unique(annotationmatrix[,"ensembl_gene_id"]))
@@ -55,8 +44,20 @@ if(!file.exists("Analysis/geneexpression.txt")){
     }
     cnt <- cnt + 1
   }
-  write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)
+  write.table(alldata, file="Analysis/geneexpressionLiverArray.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading gene expression data from disk\n")
-  alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
+  alldata <- read.table("Analysis/geneexpressionLiverArray.txt", sep="\t", header=TRUE, check.names=FALSE)
 }
+
+B6 <- rownames(arrays[arrays[,"line"] == "B6",])
+BFMI <- rownames(arrays[arrays[,"line"] == "BFMI860",])
+
+pvalues <- apply(alldata[,c(B6,BFMI)], 1, function(x){
+    t.test(x[1:3], x[4:6])$p.value
+  }
+)
+
+alldata <- cbind(alldata, tTest = pvalues)
+
+cat(as.character(alldata[which(alldata[,"tTest"] < 0.005), "ensembl_gene_id"]), sep = "\n")

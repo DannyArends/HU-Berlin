@@ -25,8 +25,13 @@ pvalues <- t(apply(alldata[,rownames(FFliver)], 1, function(x){
   c(round(mB6,digits=2), round(mBFMI, digits=2), t.test(x[B6],x[BFMI])$p.value, mBFMI / mB6, scR)
 }))
 colnames(pvalues) <- c("B6", "BFMI", "Pvalue", "Ratio", "Ratio_Scale")
-pvalues <- cbind(ensembl_gene_id = as.character(alldata[,"ensembl_gene_id"]), mgi_symbol = as.character(alldata[,"mgi_symbol"]), pvalues)
+pvalues <- cbind(ProbeName = as.character(alldata[,"ProbeName"]), ensembl_gene_id = as.character(alldata[,"ensembl_gene_id"]), mgi_symbol = as.character(alldata[,"mgi_symbol"]), pvalues)
 
-top406 <- pvalues[sort(pvalues[,"Pvalue"],index.return=TRUE)$ix[1:406],]
-top400 <- top406[!duplicated(top406[,"ensembl_gene_id"]), ]
+top400 <- pvalues[sort(as.numeric(pvalues[,"Pvalue"]),index.return=TRUE)$ix[1:400],]
+top400 <- top400[!duplicated(top400[,"ensembl_gene_id"]), ]
 write.table(top400, file="Analysis/Helge_ensembl_top400.txt", sep="\t", row.names = FALSE, quote=FALSE)
+
+
+pvalues[which(pvalues[,"ProbeName"] == "1090142"),]
+
+alldata[which(alldata[,"ProbeName"] == "100070026"),]

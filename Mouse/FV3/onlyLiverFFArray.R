@@ -17,7 +17,9 @@ arrays <- arrays[grep("1562232028", rownames(arrays)),]                         
 
 # Preprocessing
 rawdata[,rownames(arrays)] <- log2(rawdata[,rownames(arrays)])                              # Log2 transformation
+boxplot(rawdata[,rownames(arrays)])
 rawdata[,rownames(arrays)] <- normalize.quantiles(as.matrix(rawdata[,rownames(arrays)]))    # Quantile normalisation
+boxplot(rawdata[,rownames(arrays)])
 
 write.table(cbind(decoder_ID = rownames(rawdata), rawdata), "Analysis/NormDataLiverArray.txt", sep = "\t", quote=FALSE, row.names=FALSE)
 

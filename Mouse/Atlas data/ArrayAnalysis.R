@@ -38,10 +38,12 @@ if(!file.exists("Analysis/arraydata.txt")){
 
 # Preprocessing
 arraydata[,arrays[,"AtlasID"]] <- log2(arraydata[,arrays[,"AtlasID"]])                              # Log2 transformation
+boxplot(arraydata[,arrays[,"AtlasID"]], las=2)
 arraydata[,arrays[,"AtlasID"]] <- normalize.quantiles(as.matrix(arraydata[,arrays[,"AtlasID"]]))    # Quantile normalisation
+boxplot(arraydata[,arrays[,"AtlasID"]], las=2)
 
 # QC of our probes
-boxplot(arraydata[,arrays[,"AtlasID"]])
+boxplot(arraydata[,arrays[,"AtlasID"]], las=2)
 heatmap(cor(arraydata[,arrays[,"AtlasID"]], method="spearman"))
 
 # Create a fasta file with the probe sequences to blast against the reference genome

@@ -33,4 +33,16 @@ sequences <- read.alignment("Analysis/UpstreamSequences0.05.aln")
 
 
 ### Check for motives in the upstream of the aligned sequences
+library(rtfbs)
 
+ms <- read.ms("Analysis/UpstreamSequences0.05.fasta")
+tmp <- groupByGC.ms(ms, 1)
+for (i in 1:length(tmp)){
+  mm <- build.mm(tmp[[i]], 40)
+  sreal <- score.ms(tmp[[i]], pwm, mm)
+  ss <- simulate.ms(mm, sum(lengths.ms(ms)))
+  ssim <- score.ms(ss, pwm, mm)
+  fdrMap <- calc.fdr(tmp[[i]], sreal, ss, ssim)
+  makeFdrPlot(fdrMap)
+  output.sites(sreal, fdrScoreMap=fdrMap, fdrThreshold = 0.05)
+}

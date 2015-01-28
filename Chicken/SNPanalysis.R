@@ -20,6 +20,8 @@ indPop2 <- paste0("X", chipids[which(chipids[,"popPk"]=="IB77xx"),"ID_Chip"])   
 nGenoPop1 <- apply(calldata[,indPop1],1,function(x){return(length(na.omit(unique(x))))})            # Number of genotypes in population 1
 nGenoPop2 <- apply(calldata[,indPop2],1,function(x){return(length(na.omit(unique(x))))})            # Number of genotypes in population 2
 
+length(which(nGenoPop1 == 1))
+
 mightBeDifferent <- which((nGenoPop1 + nGenoPop2) > 1 & (nGenoPop1 + nGenoPop2) < 4)                # Might be different between the two RI strains
 
 calldata <- calldata[mightBeDifferent,]

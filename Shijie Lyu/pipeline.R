@@ -114,4 +114,11 @@ execute(command)                                                            # Ca
 command <- paste0("java -Xmx4g -jar ", gatk, " -T AnalyzeCovariates -R ", reference, " -before ", covfile1, " -after ", covfile2, " -U ALLOW_N_CIGAR_READS -plots ", plotfile)
 execute(command)                                                            # Call the GATK AnalyzeCovariates
 
-q("no")
+
+### SNP calling
+s1 <- "sample_6929P_trimmed.aligned.sorted.realigned.recalibrated.bam"
+s2 <- "sample_6954P_trimmed.aligned.sorted.realigned.recalibrated.bam"
+command <- paste0("java -Xmx4g -jar ", gatk," -T HaplotypeCaller -R ", reference," -I ", s1," -I ", s2," --dbsnp ",knownsnps," -stand_call_conf 30 -stand_emit_conf 10 -L ", outputSNPS," -o output.raw.snps.indels.vcf")
+execute(command)
+
+#q("no")

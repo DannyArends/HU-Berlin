@@ -1,5 +1,5 @@
 source("http://www.bioconductor.org/biocLite.R")
-biocLite(c("beadarray", "limma", "GEOquery", "illuminaMousev1.db", "illuminaMousev2.db", "illuminaMousev3.db", "BeadArrayUseCases"))
+biocLite(c("beadarray", "limma", "GEOquery", "illuminaMousev1.db", "illuminaMousev2.db", "BeadArrayUseCases"))
 biocLite(c("GOstats", "GenomicRanges", "Biostrings"))
 
 library(beadarray)
@@ -15,7 +15,7 @@ axis(2)
 axis(1, 1:12, labs , las = 2)
 
 ### Read in the Illumina array data on the muscle tissue
-mydata <- readIllumina(dir = "5022073007", useImages = FALSE, metricsFile = "5022073007/Metrics.txt", illuminaAnnotation = "Mousev1")
+mydata <- readIllumina(dir = "5022073007", useImages = FALSE, illuminaAnnotation = "Mousev1")
 
 ### Show some raw data
 mydata@sectionData
@@ -45,7 +45,12 @@ outlierplot(mydata, array = 1, main = paste(sectionNames(mydata)[1], "outliers")
 #  mydata <- setWeights(mydata, wts = BASHoutput$wts, array = x)
 #}
 
-datasumm <- summarize(BLData = mydata)
+datasumm <- summarize(BLData = mydata, useSampleFac = TRUE)
+
 grnchannel <- new("illuminaChannel", transFun = greenChannelTransform  , outlierFun = illuminaOutlierMethod , exprFun = function(x) mean(x, na.rm = TRUE), varFun = function(x) sd(x,na.rm = TRUE), channelName = "G")
 grnchannel.log <- new("illuminaChannel", transFun = logGreenChannelTransform , outlierFun = illuminaOutlierMethod , exprFun = function(x) mean(x, na.rm = TRUE), varFun = function(x) sd(x,na.rm = TRUE), channelName = "G")
-datasumm <- summarize(BLData = mydata, useSampleFac = FALSE , channelList = list(grnchannel, grnchannel.log))
+
+datasumm.all <- summarize(BLData = mydata, useSampleFac = FALSE , channelList = list(grnchannel, grnchannel.log))
+
+
+exprs(datasumm)[1:10,]

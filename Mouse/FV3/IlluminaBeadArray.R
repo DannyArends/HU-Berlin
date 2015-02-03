@@ -73,3 +73,16 @@ normdata <- normdata[which(rownames(normdata) %in% annotationmatrix[,"ProbeName"
 
 alldata <- cbind(annotationmatrix[match(rownames(normdata), annotationmatrix[,"ProbeName"]),], normdata)
 write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)
+
+FFB6liver <- arrays[which(arrays[,"tissue"] == "liver" & arrays[,"diet"] == "FF" & arrays[,"line"] == "B6"), ]
+FFB6brain <- arrays[which(arrays[,"tissue"] == "brain" & arrays[,"diet"] == "FF" & arrays[,"line"] == "B6"), ]
+
+meanLiver <- apply(alldata[,rownames(FFB6liver)],1,mean)
+meanBrain <- apply(alldata[,rownames(FFB6brain)],1,mean)
+
+cat(as.character(unique(alldata[sort(meanLiver,index.return=TRUE)$ix[1:100],"ensembl_gene_id"])),sep="\n")
+cat(as.character(unique(alldata[sort(meanBrain,index.return=TRUE)$ix[1:100],"ensembl_gene_id"])),sep="\n")
+
+
+
+

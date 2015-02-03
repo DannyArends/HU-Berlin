@@ -22,11 +22,30 @@ for(beadarray in unique(arrays[,"array"])){
   axis(2)
   axis(1, 1:12, labs , las = 2)
   
-  mydata <- readIllumina(dir = paste0("RawData/", beadarray), useImages = FALSE, illuminaAnnotation = "Mousev1")
+  mydata <- readIllumina(dir = paste0("RawData/", beadarray), useImages = FALSE, illuminaAnnotation = "Mouse")
   boxplot(mydata, transFun = logGreenChannelTransform ,col= "green", ylab = expression(log[2](intensity)), las = 2, outline = FALSE , main = paste0(sectionNames(mydata)[1], " MAQC data"))
   datasumm.c <- summarize(BLData = mydata, useSampleFac = TRUE, sampleFac=as.character(unlist(mydata@sectionData$SampleGroup)))
+  write.table(exprs(datasumm.c), file = paste0("Intermediate/summary",beadarray,".txt"), sep="\t", row.names=TRUE)
 }
 
-exprs(datasumm.c)[1:10,]
+alldata <- vector("list", length(unique(arrays[,"array"])))
+cnt <- 1
+for(beadarray in unique(arrays[,"array"])){
+  datasumm <- read.table(paste0("summary",beadarray,".txt"), sep="\t", check.names=FALSE)
+  alldata[[cnt]] <- datasumm
+  cnt <- cnt+1
+}
+allprobes <- unique(unlist(lapply(alldata,function(x){rownames(x)})))
 
-suggestAnnotation(mydata, verbose = TRUE)
+alldata <- matrix(NA, length(allprobes), length(rownames(arrays)), dimnames=list(allprobes, rownames(arrays)))
+for(beadarray in unique(arrays[,"array"])){
+  datasumm <- read.table(paste0("summary",beadarray,".txt"), sep="\t", check.names=FALSE)
+  for(x in 1:ncol(datasumm)){
+    alldata[rownames(datasumm), colnames(datasumm)[x]] <- datasumm[,x]
+  }
+}
+write.table(alldata, file="Intermediate/summaryArrays.txt", sep ="\t", row.names=TRUE)
+
+setwd("E:/Mouse/RNA/FV3")
+rawdata <- read.table("Intermediate/summaryArrays.txt", sep = "\t", header=TRUE, check.names=FALSE)
+annotationmatrix <- read.table("Annotation/probeannotation.txt", sep="\t", header=TRUE)

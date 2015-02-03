@@ -7,6 +7,7 @@
 library(biomaRt)                                                                                                      # Biomart - Used to annotate probes
 
 setwd("E:/Mouse/RNA/FV3")
+probes   <- read.csv("Annotation/GPL6105-11577.txt", sep="\t", header=TRUE)                                         # Old Illumina probe annotation
 
 # Create a fasta file with the probe sequences to blast against the reference genome
 if(!file.exists("Analysis/probes.fasta")){

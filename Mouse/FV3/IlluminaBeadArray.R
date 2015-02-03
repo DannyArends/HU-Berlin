@@ -71,5 +71,5 @@ rownames(normdata) <- rownames(rawdata)
 
 normdata <- normdata[which(rownames(normdata) %in% annotationmatrix[,"ProbeName"]),]
 
-alldata <- cbind(annotationmatrix[match(rownames(normdata), annotationmatrix[,"ProbeName"]),], normdata)[1:10,]
+alldata <- cbind(annotationmatrix[match(rownames(normdata), annotationmatrix[,"ProbeName"]),], normdata)
 write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)

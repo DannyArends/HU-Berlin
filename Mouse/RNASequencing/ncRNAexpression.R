@@ -25,8 +25,9 @@ library("GenomicAlignments")
 library("GenomicFeatures")
 library("Rsamtools")
 library("preprocessCore")
+library("BiocParallel")
 
-setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
+#setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI")
 # Chromosome info structure, holding the number of chromosomes, their names and the length per chromosome
 chrominfo     <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
 
@@ -34,12 +35,15 @@ chrominfo     <- read.table("GTF/MouseChrInfo.txt", sep="\t", header=TRUE, colCl
 mouse         <- makeTranscriptDbFromGFF("GTF/Mus_musculus.GRCm38.76.gtf", format = "gtf", exonRankAttributeName="exon_number", 
                                          species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
 
-transcriptsBy <- exonsBy(mouse, by = "exon")
-infiles       <- list.files(path = "./Analysis", pattern="recalibrated.bam$", full=TRUE)
-bamfiles      <- BamFileList(infiles, yieldSize = 1000000, asMates=TRUE)
-se            <- summarizeOverlaps(exonsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
+transcriptsByGene <- transcriptsBy(mouse, by = "exon")
+infiles           <- list.files(path = "./", pattern="recalibrated.bam$", full=TRUE)
+bamfiles          <- BamFileList(infiles, yieldSize = 100000, asMates=TRUE)
+
+register(MulticoreParam(workers=4))
+
+se                <- summarizeOverlaps(transcriptsByGene, bamfiles, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
 
 head(assay(se))                                                                             # Show the first 10 lines of the data matrix
 rawreads <- assay(se)                                                                       # Extract the raw-reads per gene
 
-write.table(rawreads, file="Analysis/RawReadsPerExon.txt", sep="\t")                               # Save the raw reads to a file
+write.table(rawreads, file=paste0("RawReadsPerExon.txt"), sep="\t")                               # Save the raw reads to a file

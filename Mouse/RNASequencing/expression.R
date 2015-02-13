@@ -5,8 +5,8 @@
 # first written Aug, 2014
 
 # Install needed packages form bioconductor.org (only needs to be done once)
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("GenomicAlignments", "GenomicFeatures", "Rsamtools"))
+#source("http://bioconductor.org/biocLite.R")
+biocLite(c("GenomicAlignments", "GenomicFeatures", "Rsamtools","preprocessCore"))
 
 library("GenomicAlignments")
 library("GenomicFeatures")

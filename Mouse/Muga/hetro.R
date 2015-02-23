@@ -1,4 +1,4 @@
-# 
+# Analysis of missing hetrozygosity in the Mega Muga array
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Feb, 2015
@@ -34,8 +34,8 @@ genotypes <- genotypes[,F2]
 he <- apply(genotypes, 1, function(x){ sum(x == "H", na.rm=TRUE) })                                                                 # Calculate the number of heterozygous alleles
 ho <- apply(genotypes, 1, function(x){ sum(x != "H", na.rm=TRUE) })                                                                 # Calculate the number of homozygous alleles
 
-window.size <- 1500000
-step.size <- 1000000
+window.size <- 750000
+step.size <- 750000/2
 nperms <- 1000
 
 bins <- NULL
@@ -68,6 +68,41 @@ for(chr in chromosomes){
 colnames(bins)[which(colnames(bins) == "")] <- paste0("P" , 1:length(which(colnames(bins) == "")))
 permutationmatrix <- apply(bins[,grep("^P", colnames(bins))],2,as.numeric)
 
+bin.thresholds <- t(apply(permutationmatrix,1,function(x){
+  return(c(mean(x) + 5 * sd(x), mean(x) - 5 * sd(x)))
+}))
+
+ratio.above <- which(bins[,"Score"] > bin.thresholds[,1])
+ratio.below <- which(bins[,"Score"] < bin.thresholds[,2])
+
+regions.above <- apply(bins[ratio.above,1:3], 1, paste0, collapse=":")
+regions.below <- apply(bins[ratio.below,1:3], 1, paste0, collapse=":")
+
+bm.above <- getBM(attributes = c("ensembl_gene_id", "entrezgene", "mgi_id","mgi_symbol", "chromosome_name", "start_position", "end_position"), filters = c("chromosomal_region", "biotype"), values = list(regions.above,"protein_coding"), mart = bio.mart)
+bm.below <- getBM(attributes = c("ensembl_gene_id", "entrezgene", "mgi_id","mgi_symbol", "chromosome_name", "start_position", "end_position"), filters = c("chromosomal_region", "biotype"), values = list(regions.below,"protein_coding"), mart = bio.mart)
+
+cat("Found",length(unique(bm.above[,"ensembl_gene_id"])), "genes in hyper-heterozygous regions\n")
+cat("Found",length(unique(bm.below[,"ensembl_gene_id"])), "genes in hypo-heterozygous regions\n")
+
+cat(unique(bm.above[,"ensembl_gene_id"]),sep="\n")
+cat(unique(bm.below[,"ensembl_gene_id"]),sep="\n")
+
+### HWE
+
+ps <- apply(genotypes, 1, function(x){
+  obsAA <- sum(x == "A", na.rm=TRUE) ; obsH <- sum(x == "H", na.rm=TRUE); obsBB <- sum(x == "B", na.rm=TRUE)
+  P <- (2 * obsAA + obsH) / (2 * ( obsAA + obsH + obsBB))
+  Q <- (1 - P)
+  n <- sum(!is.na(genotypes[1,]))
+  expAA <- (P^2) * n; expH <- 2 * P * Q * n; expBB <- (Q^2) * n
+  chisq <- ((obsAA - expAA)^2 / expAA) + ((obsH - expH)^2 / expH) + ((obsBB - expBB)^2 / expBB)
+  pchisq(chisq, 1, lower=FALSE)
+})
+
+
+
+
+
 boxplot(t(permutationmatrix))
 points(bins[,"Score"], col="green")
 
@@ -96,8 +131,17 @@ aa <- apply(bins,1,function(x){
   cnt <<- cnt + 1
 })
 
+cnt <- 1
+aa <- lapply(-log10(ps), function(x){
+  xloc <- match(as.character(map[cnt,"Chr"]), chromosomes); yloc <- as.numeric(map[cnt,"Mb_NCBI38"])
+  if(!is.nan(x) && x > 5) points(x=xloc+0.1, y=yloc, pch="-", cex=1.0)
+  cnt <<- cnt + 1
+})
+
 axis(1,chrinfo[,1], at=c(1:nrow(chrinfo)), las = 1, cex.axis = 1.5)
 axis(2, seq(0, max.length, 10000000)/1000000, at = seq(0,  max.length, 10000000), cex.axis = 1.2, las = 1)
+
+#### OLD
 
 regions.red <- apply(bins[which(co=="red"),1:3], 1, paste0, collapse=":")
 regions.green <- apply(bins[which(co=="green"),1:3], 1, paste0, collapse=":")

@@ -4,9 +4,8 @@
 # last modified Feb, 2015
 # first written Feb, 2015
 setwd("E:/Horse/DNA/Kabadiner/")
-                                                                                                  # Read in the data from the Mega Muga
-map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
-genotypes <- genotypes[,F2]
+
+
 
 he <- apply(genotypes, 1, function(x){ sum(x == "H", na.rm=TRUE) })                                                                 # Calculate the number of heterozygous alleles
 ho <- apply(genotypes, 1, function(x){ sum(x != "H", na.rm=TRUE) })                                                                 # Calculate the number of homozygous alleles

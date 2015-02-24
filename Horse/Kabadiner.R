@@ -24,6 +24,18 @@ colnames(phenotypes) <- gsub(".GType", "", colnames(phenotypes))
 colnames(calledgeno) <- gsub(".GType", "", colnames(calledgeno))
 colnames(genotypes)  <- gsub(".Top.Alleles", "", colnames(genotypes))
 
+### Data QC
+tables          <- apply(genotypes, 1, table)
+nonInformative  <- which(unlist(lapply(tables,length)) < 2)   ## Non informative, since we only have 1 genotype
+genotypes       <- genotypes[-nonInformative, ]
+calledgeno      <- calledgeno[-nonInformative, ]
+map             <- map[-nonInformative, ]
+
+notDuplicated <- which(!duplicated(calledgeno))                ## Duplicated markers
+genotypes     <- genotypes[notDuplicated, ]
+map           <- map[notDuplicated, ]
+cat("Left with", nrow(genotypes), "markers\n")
+
 ## Some basic QG plots of all the individuals relatedness
 numgeno <- apply(genotypes, 2, function(x){as.numeric(as.factor(x))})
 dendrogram <- as.dendrogram(hclust(dist(t(numgeno), method = "manhattan")))
@@ -64,18 +76,6 @@ kabadiner <- colnames(phenotypes)[which(phenotypes[6,] == "Kab")]
 genotypes   <- genotypes[,kabadiner]
 calledgeno  <- calledgeno[,kabadiner]
 phenotypes  <- phenotypes[,kabadiner]
-
-### Data QC
-tables          <- apply(genotypes, 1, table)
-nonInformative  <- which(unlist(lapply(tables,length)) < 2)   ## Non informative, since we only have 1 genotype
-genotypes       <- genotypes[-nonInformative, ]
-calledgeno      <- calledgeno[-nonInformative, ]
-map             <- map[-nonInformative, ]
-
-notDuplicated <- which(!duplicated(calledgeno))                ## Duplicated markers
-genotypes     <- genotypes[notDuplicated, ]
-map           <- map[notDuplicated, ]
-cat("Left with", nrow(genotypes), "markers\n")
 
 ### Chromosome plot to show the location of SNPs
 chromosomes  <- as.character(c(1:31, "X", "Y", "MT"))

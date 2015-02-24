@@ -4,15 +4,7 @@
 # last modified Aug, 2014
 # first written Aug, 2014
 
-getSeason <- function(DATES) {
-  mmonths <- as.numeric(unlist(lapply(strsplit(as.character(DATES),".", fixed=TRUE),"[",2)))
-  ret <- rep(NA, length(mmonths))
-  ret[mmonths >= 3 & mmonths <= 5] <- "Spring"
-  ret[mmonths >= 6 & mmonths <= 8] <- "Summer"
-  ret[mmonths >= 9 & mmonths <= 11] <- "Fall"
-  ret[mmonths == 12 | mmonths == 1 | mmonths == 2] <- "Winter"
-  return(ret)
-}
+source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
 
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
@@ -20,15 +12,9 @@ genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.
 genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("","AA","CC","TT","GG"))        # Phased by Beagle (only heterozygous)
 genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.names=FALSE, colClasses="character", na.strings=c(""))                            # Phased towards the grandparents
 
-setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                                                                    # Read in the phenotypes
-phenotypedata <- read.csv("20140801_AIL1_666.txt", sep="\t", header=TRUE)
+phenotypes <- read.csv("Phenotypes/MatchedPhenotypes.txt", sep="\t", header=TRUE)
 
-phenos <- c("Vater", "W.dat", "W.Label", "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1", "GF2", "total.GF", "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",
-            "mri42d_fat", "mri42d_lean", "mri42d_3", "mri42d_4", "mri56d_fat", "mri56d_lean", "mri56d_3", "mri56d_4", "mri70d_fat", "mri70d_lean", "mri70d_3", "mri70d_4", "WG", "WG2", "Farbe", "sex", "Gen.")
-            
-phenotypes <- phenotypedata[which(rownames(phenotypedata) %in% colnames(genotypes)), phenos]                  # Use only the phenotypes for which we have genotypes
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
-F2 <- F2[-which(F2=="6661459")]                                                                               # This individual has no genotype data
 
 phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                     # Add the season column to the matrix
 birthmonth <- unlist(lapply(strsplit(as.character(phenotypes[,"W.dat"]),".", fixed=TRUE),"[",2))

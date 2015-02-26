@@ -43,7 +43,7 @@ mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotype
     season         <- as.factor(phenotypes[ind, "Season"])                                                                    # Fixed effect: Season when born    (factor)
     genotype       <- as.factor(t(genotypes[x,!is.na(genotypes[x,])]))                                                        # The genotype under investigation  (factor)
 
-    phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]      # Response: Fat / Lean
+    phenotype      <- phenotypes[ind, paste0("mri",pheno.col,"_lean")] #/ phenotypes[ind, paste0("mri",pheno.col,"_lean")]      # Response: Fat / Lean
     if(cof == ""){
       tryCatch(res <- anova(lm(phenotype ~ subfamily + littersize + litternumber + season + genotype + littersize:litternumber))[[5]], error = function(e){ res <<- rep(NA, 7) })
     }else{
@@ -71,6 +71,8 @@ qtl70C   <- mriGWAS(genotypes,   phenotypes, "70d", cof = "UNC5048297") ;
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 write.table(qtl42,   "Analysis/qtls_fatDlean42.txt",   sep="\t")
+write.table(qtl42,   "Analysis/qtls_fat42.txt",   sep="\t")
+write.table(qtl42,   "Analysis/qtls_lean42.txt",   sep="\t")
 write.table(qtl56,   "Analysis/qtls_fatDlean56.txt",   sep="\t")
 write.table(qtl70,   "Analysis/qtls_fatDlean70.txt",   sep="\t")
 

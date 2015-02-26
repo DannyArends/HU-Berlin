@@ -36,7 +36,7 @@ ho <- apply(genotypes, 1, function(x){ sum(x != "H", na.rm=TRUE) })             
 
 window.size <- 750000
 step.size <- 750000/2
-nperms <- 1000
+nperms <- 10
 
 bins <- NULL
 for(chr in chromosomes){
@@ -98,10 +98,6 @@ ps <- apply(genotypes, 1, function(x){
   chisq <- ((obsAA - expAA)^2 / expAA) + ((obsH - expH)^2 / expH) + ((obsBB - expBB)^2 / expBB)
   pchisq(chisq, 1, lower=FALSE)
 })
-
-
-
-
 
 boxplot(t(permutationmatrix))
 points(bins[,"Score"], col="green")

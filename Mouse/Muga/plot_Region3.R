@@ -29,7 +29,7 @@ submap <- map[rownames(qtl42Fat[qtl42Fat[,"marker"] > 1,]), ]
 submap <- submap[submap[,"Chr"] == 3,]                                    #  & 
 submap <- submap[rownames(submap) %in% rownames(qtl42Fat),]
 
-op <- par(mfrow = c(2,1))
+#op <- par(mfrow = c(2,1))
 plot(c(0, max(as.numeric(submap[,2]))), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3", xaxt='n', las = 2, main= "MRI measurements (Day 42)")
 points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
 points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Lean[rownames(submap), "marker"], t = 'l', col = "blue")
@@ -41,12 +41,12 @@ axis(1, at=seq(0, max(as.numeric(submap[,2])), 10000000), seq(0, max(as.numeric(
 submap <- submap[as.numeric(submap[,"Mb_NCBI38"]) > 32500000 &  as.numeric(submap[,"Mb_NCBI38"]) < 40000000,]
 op <- par(mar = c(5, 4, 0, 2) + 0.1)
 
-plot(c(32500000, 40000000), y = c(-15, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30mb - 45 mb", xaxt='n', las = 2, main= "")
+plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "MRI measurements (Day 42)")
 points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
-#points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Lean[rownames(submap), "marker"], t = 'l', col = "blue")
+points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Lean[rownames(submap), "marker"], t = 'l', col = "blue")
 points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42FatLean[rownames(submap), "marker"], t = 'l', col = "green")
-points(x = as.numeric(submap[,"Mb_NCBI38"]), y = rep(4, nrow(submap)), pch="|", col = "black", cex=0.5)
-legend("topright", c("MRI fat mass", "Fat / Lean mass","Gene", "Gm/Riken Gene"), col=c("red","green","gray", "orange"), lwd=c(1,1,4,4))
+points(x = as.numeric(submap[,"Mb_NCBI38"]), y = rep(-1.3, nrow(submap)), pch="|", col = "black", cex=0.5)
+legend("topright", c("MRI fat mass", "MRI lean mass", "Fat / Lean mass"), col=c("red","blue","green"), lwd=1)
 axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
 
 for(x in 1:nrow(bm.above)){

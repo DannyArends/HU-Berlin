@@ -119,7 +119,16 @@ for(pheno in c("Performance")){ #c("Performance","WH","BU","RU")){
 }
 
 # Extract data from the QTL mapping analysis (LOD score above 6, which marker is it)
-map[which(-log10(pvalues[,2]) > 6),]
+above <- which(-log10(pvalues[,3]) > 6)
+p.adjust(pvalues[,3],"BH")[above]
+
+region.start <- min(map[(which(-log10(pvalues[,3]) > 6)-5):(which(-log10(pvalues[,3]) > 6)+5),"Position"])
+region.end <- max(map[(which(-log10(pvalues[,3]) > 6)-5):(which(-log10(pvalues[,3]) > 6)+5),"Position"])
+
+res.bio <- getBM(attributes = c("ensembl_gene_id","hsapiens_homolog_ensembl_gene", "external_gene_name","description", "chromosome_name", "start_position", "end_position"), 
+filters = c("chromosomal_region", "biotype"), values = list("14:41000000:43000000","protein_coding"), mart = bio.mart)
+
+write.table(res.bio, file="analysis/GenesNearTopSNP.txt",sep="\t",row.names=FALSE)
 
 ## Colors for the Manhattan plot
 cols <- rep(c("black","orange"),16)
@@ -128,8 +137,8 @@ names(cols) <- unique(map[,"Chr"])
 ## Manhattan plot
 for(pheno in c("Performance","WH","BU","RU")){
   pvalues <- read.table(paste0("analysis/",pheno,".txt"), sep="\t",header=TRUE)[,c(3:4)]
-  plot(pvalues[,2], t = 'h', col=cols[map[,"Chr"]])                                                                             # Uncorrected for multiple testing
-  abline(h=-log10(0.05/nrow(pvalues)), col="orange", lwd=1,lty=2) ; abline(h=-log10(0.01/nrow(pvalues)), col="green", lwd=1,lty=2)      # Significance thresholds
+  plot(pvalues[,2], t = 'h', col=cols[map[,"Chr"]], main="Endurance in Kabadina horses", ylab="LOD score", xlab="SNP")                                                                             # Uncorrected for multiple testing
+  abline(h=-log10(0.05/nrow(pvalues)), col="green", lwd=1,lty=2) ; abline(h=-log10(0.01/nrow(pvalues)), col="green", lwd=1,lty=2)      # Significance thresholds
 
 #  plot(-log10(p.adjust(pvalues[,2],"BH")),t='h', col=cols[map[,"Chr"]])                                                                 # BH corrected for multiple testing
 #  abline(h=-log10(0.05), col="orange", lwd=1,lty=2) ; abline(h=-log10(0.01), col="green", lwd=1,lty=2)                                  # Significance thresholds

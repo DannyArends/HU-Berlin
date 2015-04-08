@@ -8,10 +8,10 @@ source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
-genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                              # Normal A, H, B genotypes
-genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("","AA","CC","TT","GG","??"))   # Phased by Beagle (only heterozygous)
-genotypesFP <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("??"))                          # Phased by Beagle (ALL)
-genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.names=FALSE, colClasses="character", na.strings=c(""))                            # Phased towards the grandparents
+genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                                    # Normal A, H, B genotypes
+genotypesPh <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("", "AA", "CC", "TT", "GG", "??"))    # Phased by Beagle (only heterozygous)
+genotypesFP <- read.table("Analysis/genotypesPhasedBeagle.txt", sep="\t", check.names=FALSE, colClasses="character", na.strings=c("", "??"))                            # Phased by Beagle (ALL)
+genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.names=FALSE, colClasses="character", na.strings=c(""))                                  # Phased towards the grandparents
 
 phenotypes <- read.csv("Phenotypes/MatchedPhenotypes.txt", sep="\t", header=TRUE)
 

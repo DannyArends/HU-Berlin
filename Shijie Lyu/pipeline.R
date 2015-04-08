@@ -15,7 +15,7 @@ execute <- function(x, intern = FALSE){
 }
 
 referenceDir  <- "genomes"
-reference     <- paste0(referenceDir, "/Gallus_gallus.Galgal4.fasta")
+reference     <- paste0(referenceDir, "/Leptin_Mouse.fasta")
 
 ## Do not forget to index the fasta file
 #/opt/bwa-0.7.10/bwa index Gallus_gallus.Galgal4.fasta
@@ -39,12 +39,12 @@ cmdBase <- paste0("java -jar ", trimmomatic, "trimmomatic-0.32.jar PE")
 params  <- paste0("ILLUMINACLIP:", trimmomatic, "adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36")
 
 command <- paste(cmdBase, inputfiles[1], inputfiles[2], outputfiles[1], outputfiles[2], outputfiles[3], outputfiles[4], params)
-execute(command)
+#execute(command)
 
 ### BWA: Alignment against genome (2 to 8 hours), we pipe the output to the next step ###
 # -v 2  : Verbose level 2 only errors and warnings
 # -t 6  : Number of threads to use with BWA
-command     <- paste0("/opt/bwa-0.7.10/bwa mem -v 2 -t 6 ", reference," ", outputfiles[1], " ", outputfiles[3], " | ")
+command     <- paste0("/opt/bwa-0.7.10/bwa mem -v 2 -t 6 -A 3 -B 2 -U 4 -O 2 -E 0 -T 10 -a ", reference," ", outputfiles[1], " ", outputfiles[3], " | ")
 
 ### Convert SAM to BAM (1 hour), we pipe the output to the next step ###
 # -Sb : Input sam, output bam

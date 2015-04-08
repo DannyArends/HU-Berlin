@@ -56,7 +56,7 @@ otherS <- sort(phenotypes[colnames(genotypes[,other]),"mri70d_fat"],index.return
 
 rmap <- map[rownames(numericgenotypes),]
 
-setwd("E:/Mouse/DNA/MegaMuga/Analysis/Images")      
+setwd("E:/Mouse/DNA/MegaMuga/Analysis/Images2")      
 
 for(chr in unique(rmap[rownames(numericgenotypes),"Chr"])){
   onChr <- rownames(rmap[which(rmap[,"Chr"] == chr),])
@@ -69,7 +69,7 @@ for(chr in unique(rmap[rownames(numericgenotypes),"Chr"])){
       abline(h = 1:nind + 1, col="white", lwd = 0.5)
       abline(h = length(other)+1, col="black", lwd = 12)
       axis(1, at = 1:nrow(ngeno), as.character(mlabels[onChr]), las=2, cex.axis=0.9)
-      axis(2, at = (1:(nind-1) + 0.5), phenotypes[c(other[otherS$ix], heavy[heavyS$ix]),"Vater"], las=2, cex.axis=0.9)
+      axis(2, at = (1:(nind-1) + 0.5), rownames(phenotypes[c(other[otherS$ix], heavy[heavyS$ix]),]), las=2, cex.axis=0.9)
       box()
     dev.off()
   }

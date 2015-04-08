@@ -36,7 +36,7 @@ ho <- apply(genotypes, 1, function(x){ sum(x != "H", na.rm=TRUE) })             
 
 window.size <- 750000
 step.size <- 750000/2
-nperms <- 10
+nperms <- 1000
 
 bins <- NULL
 for(chr in chromosomes){
@@ -66,6 +66,14 @@ for(chr in chromosomes){
   bins <- rbind(bins, chr.bins)
 }
 colnames(bins)[which(colnames(bins) == "")] <- paste0("P" , 1:length(which(colnames(bins) == "")))
+write.table(bins,file="analysis/HeHoBins.txt", sep = "\t", row.names = FALSE)
+
+## Start form here, when we have the permutations
+library(biomaRt)
+bio.mart <- useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")                                            # Biomart for mouse genes
+
+setwd("E:/Mouse/DNA/MegaMuga/")
+bins <- read.table("analysis/HeHoBins.txt", sep="\t", header=TRUE)
 permutationmatrix <- apply(bins[,grep("^P", colnames(bins))],2,as.numeric)
 
 bin.thresholds <- t(apply(permutationmatrix,1,function(x){
@@ -89,15 +97,16 @@ cat(unique(bm.below[,"ensembl_gene_id"]),sep="\n")
 
 ### HWE
 
-ps <- apply(genotypes, 1, function(x){
+chis <- apply(genotypes, 1, function(x){
   obsAA <- sum(x == "A", na.rm=TRUE) ; obsH <- sum(x == "H", na.rm=TRUE); obsBB <- sum(x == "B", na.rm=TRUE)
   P <- (2 * obsAA + obsH) / (2 * ( obsAA + obsH + obsBB))
   Q <- (1 - P)
-  n <- sum(!is.na(genotypes[1,]))
+  n <- sum(!is.na(x))
   expAA <- (P^2) * n; expH <- 2 * P * Q * n; expBB <- (Q^2) * n
   chisq <- ((obsAA - expAA)^2 / expAA) + ((obsH - expH)^2 / expH) + ((obsBB - expBB)^2 / expBB)
-  pchisq(chisq, 1, lower=FALSE)
 })
+
+ps <- pchisq(chis, 1, lower=FALSE)
 
 boxplot(t(permutationmatrix))
 points(bins[,"Score"], col="green")

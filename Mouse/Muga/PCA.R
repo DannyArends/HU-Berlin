@@ -5,7 +5,6 @@
 # first written Aug, 2014
 
 library("psych")
-library("GPArotation")
 
 setwd("E:/Mouse/DNA/MegaMuga/")
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
@@ -21,6 +20,9 @@ rownames(genoNum) <- colnames(genotypes)
 colnames(genoNum) <- rownames(genotypes)
 
 corG <- cor(t(genoNum), use="pair")       # Calculate the correlation matrix
+
+write.table(corG, "Analysis/genotypecorrelation.txt", sep = "\t", quote = FALSE)
+
 pcas <- principal(corG, nfactors = 1)     # Calculate the first principal component
 
 plot(pcas$loadings[,1])

@@ -128,6 +128,14 @@ plotZoom <- function(qtls, smap, chr){
   abline(h = 3, col = "orange", lty=2) ; abline(h = 5, col = "green", lty=2)
 }
 
+
+setwd("E:/Mouse/DNA/MegaMuga/")
+map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+chrcolors <- rep(c("black","orange"),length(unique(map[,"Chr"])))
+names(chrcolors) <- unique(map[,"Chr"])
+
+setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+
 for(phe in phenonames){
   qtls <- read.table(paste0("Analysis/PCA_qtls_", phe, ".txt"),sep="\t")
   qtls <- cbind(qtls, BH  = round(-log10(p.adjust(10^(-qtls[,"marker"]), "BH")), d = 2))

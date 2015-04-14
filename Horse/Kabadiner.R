@@ -93,6 +93,23 @@ aa <- apply(map,1,function(x){
 axis(1, chromosomes, at=c(1:nrow(chrInfo)), las=1)
 axis(2, seq(0, max(chrInfo[,2]), 10000000)/1000000, at=seq(0, max(chrInfo[,2]), 10000000), cex.axis=0.7)
 
+Bay     <- paste0("P", c(3509, 3683, 3454, 3674, 3681, 3714, 3632, 3638, 3696, 3728))
+DarkBay <- paste0("P", c(3417, 3479, 3640, 3715, 3667))
+SealBay <- paste0("P", c(3421, 3571, 3597, 3613, 3007, 3615))
+
+# TODO find a SNP which is different in one group compared to the other 2 groups
+inBay <- apply(genotypes[,Bay],1,function(x){length(table(x)) == 1})
+inDarkBay <- apply(genotypes[,DarkBay],1,function(x){length(table(x)) == 1})
+inSealBay <- apply(genotypes[,SealBay],1,function(x){length(table(x)) == 1})
+
+subsetG <- genotypes[which(inBay & inDarkBay & inSealBay), ]
+
+difBayDarkBay  <- which(apply(subsetG[, c(Bay, DarkBay)],1,function(x){ length(table(x)) == 2 }))
+difBaySealBay  <- which(apply(subsetG[, c(Bay, SealBay)],1,function(x){ length(table(x)) == 2 }))
+DarkBaySealBay <- which(apply(subsetG[, c(DarkBay, SealBay)],1,function(x){ length(table(x)) == 2 }))
+
+## TODO same analysis now allowing for heterozygous animals in a single group so AA,AB versus BB
+
 ## QTL mapping analysis
 sex        <- as.factor(unlist(phenotypes["Sex",]))                                     # Has to be corrected for
 breed      <- as.factor(unlist(phenotypes["Breed",]))                                   # Has to be corrected for (3)

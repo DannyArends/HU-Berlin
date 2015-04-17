@@ -50,9 +50,12 @@ if(!file.exists("bioMart/BiomartAnnotation.txt")){
 }
 
 RPKM <- RPKM[,-c(11,12)]                                                                                              # Remove the quadriceps samples
-RPKM <- RPKM[-c(28048, 32151, 35810), ]                                                                                             # Remove the essentially constant error in t.test
+RPKM <- RPKM[-c(28048, 32151, 35810), ]                                                                               # Remove the essentially constant error in t.test
 
 RPKM[is.na(RPKM)] <- 0                                                                                                # Reset the NA's to 0
+
+RPKM <- apply(RPKM, 2, function(x){log(x+1)})
+
 
 which(rownames(RPKM) == "ENSMUSG00000091771")
 
@@ -139,7 +142,7 @@ analysis_LD1 <- findGroups(LBFMI, LB6N, LD1)
 updatedData[rownames(LD1), "A/D_BFMI860-12xB6N"] <- "-"
 updatedData[(rownames(LD2)), "E_A_BFMI860-12xB6N_B6N"] <- "-"
 updatedData[(rownames(LD2)), "E_D_BFMI860-12xB6N_B6N"] <- "-"
-alleffectsD1 <- updatedData[,"Mean BFMI860-12xB6N L"] - updatedData[,"Mean B6N"]
+alleffectsD1 <- as.numeric(updatedData[,"Mean BFMI860-12xB6N L"]) - as.numeric(updatedData[,"Mean B6N"])
 names(alleffectsD1) <- rownames(updatedData)
 
 updatedData[(rownames(analysis_LD1[[1]])), "A/D_BFMI860-12xB6N"] <- "ADDITIVE"
@@ -161,7 +164,7 @@ analysis_LD2 <- findGroups(LBFMI, LB6N, LD2)
 updatedData[(rownames(LD2)), "A/D_B6NxBFMI860-12"] <- "-"
 updatedData[(rownames(LD2)), "E_A_B6NxBFMI860-12_B6N"] <- "-"
 updatedData[(rownames(LD2)), "E_D_B6NxBFMI860-12_B6N"] <- "-"
-alleffectsD2 <- updatedData[,"Mean B6NxBFMI860-12 L"] - updatedData[,"Mean B6N"]
+alleffectsD2 <- as.numeric(updatedData[,"Mean B6NxBFMI860-12 L"]) - as.numeric(updatedData[,"Mean B6N"])
 names(alleffectsD2) <- rownames(updatedData)
 
 updatedData[(rownames(analysis_LD2[[1]])), "A/D_B6NxBFMI860-12"] <- "ADDITIVE"
@@ -205,5 +208,5 @@ updatedData[which(updatedData$ensembl_gene_id %in% SPLICE), "SpliceSite"] <- 1
 updatedData <- cbind(updatedData, "Stop/Start"    = rep(0, nrow(updatedData)))
 updatedData[which(updatedData$ensembl_gene_id %in% STARTSTOP), "Stop/Start"] <- 1
 
-write.table(updatedData, file="Analysis/BFMI_RPKM_Qnorm_ANN_AddDom.txt", sep="\t", row.names=FALSE)
+write.table(updatedData, file="Analysis/BFMI_RPKM_Qnorm_ANN_AddDomLog2.txt", sep="\t", row.names=FALSE)
 

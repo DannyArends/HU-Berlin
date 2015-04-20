@@ -49,7 +49,7 @@ library(biomaRt)                                              # Biomart
 snp.db <- useMart("snp", dataset="mmusculus_snp")             # For mouse SNPs
 res.biomart <- getBM(c("refsnp_id", "allele", "chr_name", "chrom_start", "chrom_start", "chrom_start"), filters="snp_filter", values=c(snpsChr3, snpsChr7), mart=snp.db)
 
-res.biomart <- apply(res.biomart,2,as.character)
+res.biomart <- apply(res.biomart, 2, as.character)
 
 colnames(res.biomart)     <- c("markerID", "Allele", "Chr", "Start", "End", "Location")
 colnames(microSatellites) <- c("markerID", "Allele", "Chr", "Start", "End", "Location")

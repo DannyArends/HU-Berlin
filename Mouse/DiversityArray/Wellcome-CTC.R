@@ -162,9 +162,9 @@ aa <- apply(chrInfo,1,function(x){
   cnt <<- cnt + 1
 })
 
-aa <- apply(wellcomedata, 1,function(x){
-  yloc <- match(x["CHR"], chromosomes); xloc <- x["POSITION"]
-  points(x=xloc, y=(yloc-0.2), pch='|', col='black',cex=0.4)
+aa <- apply(wellcomeoverlap, 1,function(x){
+  yloc <- match(x["Chr"], chromosomes); xloc <- x["Location"]
+  points(x=xloc, y=(yloc-0.2), pch='|', col='black',cex=1)
 })
 
 

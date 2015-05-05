@@ -50,3 +50,48 @@ plot(LODresults$Mesenteric.adipose.tissue..g[,"Marker"], t='l')                 
 ## What do we learn: the first 6 traits show a similar QTL profile from:
 ## Small region: rs14488203 => 4 69583407 to rs14494169 => 4 78715886
 ## Extended region: MCW0276 => 4 59553432 to UMA4024 =>    4 84774762
+
+
+c1 <- which(bodycomposition[,"Cross"] == 1)   # NHI x WL77
+c2 <- which(bodycomposition[,"Cross"] == 2)   # WL77 x NHI
+
+
+
+## Top marker "Body.weight.at.20.weeks..g" = rs14488203
+
+phenotypename <- "Body.weight.at.20.weeks..g"
+markername <- "rs14488203"
+
+gt <- as.factor(as.character(genotypes[,markername]))
+sire <- as.factor(as.character(bodycomposition[,"Sire"]))
+hd <- as.factor(as.character(bodycomposition[,"HatchDate"]))
+
+
+residual1 <- lm(bodycomposition[c1, "Body.weight.at.20.weeks..g"] ~ hd[c1] + sire[c1])$residuals
+residual2 <- lm(bodycomposition[c2, "Body.weight.at.20.weeks..g"] ~ hd[c2] + sire[c2])$residuals
+
+
+markersForQTL <- colnames(genotypes)[7:ncol(genotypes)]                                                         # Markers that are used in QTL mapping
+LODscores <- NULL                                                                                               # Matrix for results
+for(markername in markersForQTL){
+  res <- anova(lm(residual ~  bodycomposition[as.numeric(names(residual)),"Cross"] * genotypes[as.numeric(names(residual)),markername]))
+  LODscores <- rbind(LODscores, -log10(res[[5]]))
+}
+rownames(LODscores) <- markersForQTL
+
+
+markername <- "UMA4.034"
+
+
+ma <- anova(lm(bodycomposition[,phenotypename] ~  hd + sire + gt))
+ma[[2]] / sum(ma[[2]])
+
+AIC(lm(bodycomposition[,phenotypename] ~ gt))               # Best model: 3782.041
+AIC(lm(bodycomposition[,phenotypename] ~ hd + gt))          # better model: 3754.228
+AIC(lm(bodycomposition[,phenotypename] ~ hd + sire + gt))   # better model: 3736.432
+
+residual <- rep(NA, length(bodycomposition[,phenotypename]))
+names(residual) <- 1:length(residual)
+ressss <- lm(bodycomposition[,phenotypename] ~ hd + sire)$residuals
+residual[names(ressss)] <- ressss
+plot(residual ~ gt)

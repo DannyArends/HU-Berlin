@@ -30,25 +30,24 @@ MM_snps <- MM_snps[match(rownames(locusxdna), MM_snps[,"SNP_ID"]),]             
 locusxdna[1:10,1:10]                                                                  # Convince ourselves that they match
 MM_snps[1:10,1:5]                                                                     # Convince ourselves that they match
 
-cat("", file="Analysis/ArraySequences.fasta")                                         # Create a FASTA file to blast to the MM10 genome
-for(x in 1:nrow(MM_snps)){
-  cat(">", MM_snps[x,"SNP_ID"],"\n", file="Analysis/ArraySequences.fasta", append=TRUE)
-  cat(gsub("\\[.+\\]", "N", MM_snps[x,"Sequence"],perl=TRUE),"\n", file="Analysis/ArraySequences.fasta", append=TRUE)
-}
+#cat("", file="Analysis/ArraySequences.fasta")                                         # Create a FASTA file to blast to the MM10 genome
+#for(x in 1:nrow(MM_snps)){
+#  cat(">", MM_snps[x,"SNP_ID"],"\n", file="Analysis/ArraySequences.fasta", append=TRUE)
+#  cat(gsub("\\[.+\\]", "N", MM_snps[x,"Sequence"],perl=TRUE),"\n", file="Analysis/ArraySequences.fasta", append=TRUE)
+#}
 
 # Blast, we can use the database created for the Mouse Diversity Array
 # blastn -task blastn -query ArraySequences.fasta -db E:\Mouse\DNA\DiversityArray\Analysis\Mus_musculus.GRCm38.74.dna.db -perc_identity 98 -outfmt 6 -evalue 0.1 -max_target_seqs 5 -out ProbeLocationBLAST.txt
 
-# TODO: Find the offset of the SNP relative to the probe, so that we can add it back later
+# NOTE: we use the reported positions as by JAX
 
-nGenotypes    <- apply(locusxdna, 1, function(x){ length(unique(na.omit(x))) })
-seggregating  <- which(nGenotypes >= 2)
+nGenotypes   <- apply(locusxdna, 1, function(x){ length(unique(na.omit(x))) })        # Number of unique genotypes
+segregating  <- which(nGenotypes >= 2)                                                # Only segregating genotypes
+genotypes    <- locusxdna[segregating,]                                               # Create the genotypes
 
-genotypes <- locusxdna[seggregating,]                                                 # Create the genotypes
-
-imap <- MM_snps[seggregating, c("Chr","Mb_NCBI38","cM")]                              # Get an initial map
-rownames(imap) <- MM_snps[seggregating, "SNP_ID"]
-imap <- imap[order(as.numeric(imap$Chr), imap$Mb_NCBI38),]                            # Sort it
+imap <- MM_snps[segregating, c("Chr","Mb_NCBI38","cM")]                               # Get an initial map
+rownames(imap) <- MM_snps[segregating, "SNP_ID"]
+imap <- imap[order(as.numeric(imap$Mb_NCBI38)),]                                      # Sort it
 
 map <- NULL
 for(chr in chromosomes){ map <- rbind(map, imap[imap$Chr == chr,]); }                 # Correct the chromosome ordering
@@ -74,10 +73,8 @@ aa <- apply(map, 1,function(x){
 axis(2,chrInfo[,1], at=c(1:nrow(chrInfo)), las=1)
 axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 
-write.table(map, "Analysis/map.txt", sep="\t")
-write.table(genotypes, "Analysis/genotypes.txt", sep="\t")
+write.table(map, "Analysis/mapRAW.txt", sep="\t")
+write.table(genotypes, "Analysis/genotypesRAW.txt", sep="\t", quote = FALSE)
 
-# TODO: Sort out duplicate markers
-# TODO: Create relationship trees based on the genotype data
-# TODO: Look for differences between AB and BA, heterozygous animals
-
+# Further work in phasing: beagle.R and grandparents.R
+# QTL analysis: qtl_analysis.R

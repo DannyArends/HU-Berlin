@@ -47,7 +47,7 @@ png(file="Analysis/Figures/BFMI861-S1vsALL_SNPs.png",width=1200, height=800)
 dev.off()
 
 png(file="Analysis/Figures/BFMI861-S1vsBFMI861-S2_SNPs.png",width=1200, height=800)
-  chromosomePlot("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt", "BFMI861-S1 versus BFMI861-S1")
+  chromosomePlot("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt", "BFMI861-S1 versus BFMI861-S2")
 dev.off()
 
 png(file="Analysis/Figures/BFMI861-S1andBFMI860-12vsALL_SNPs.png",width=1200, height=800)

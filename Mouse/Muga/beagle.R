@@ -12,7 +12,7 @@ load("MM_snps.Rdata")                                                           
 MM_snps[,"SNP_ID"] <- gsub(".", "-", MM_snps[,"SNP_ID"], fixed = TRUE)                      # Fix the . to - error in the MM_snps from JAX
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))                  # Genetic map (created from JAX data)
-genotypes <- read.table("Analysis/genotypes.txt", sep="\t", check.names=FALSE)              # Genotypes measured on the MUGA array
+genotypes <- read.table("Analysis/genotypesRAW.txt", sep="\t", check.names=FALSE)           # Genotypes measured on the MUGA array
 
 missingPerInd <- apply(genotypes, 2, function(x){ sum(is.na(x)) / length(x) * 100 })        # Missing amount of genotype data per individual
 genotypes <- genotypes[,-which(missingPerInd==100)]                                         # Remove individuals which have NO genotypes
@@ -78,6 +78,8 @@ for(ind in c(F1, F2)){                                                          
         #cat("genotype error",ind,"at:", rownames(genotypes)[x],"->", as.character(genotypes[x, vID]), as.character(genotypes[x, mID]), as.character(genotypes[x, ind]), "\n")
       }
     }
+  }else{
+    cat("Not all parents are present in the data for", ind, "\n")
   }
 
   input  <- paste0("Analysis/phase/", ind, ".bgl")

@@ -19,6 +19,9 @@ genesDE    <- read.table("tfbs/papergenes.txt", colClasses="character", sep="\t"
 upgenes    <- as.character(unlist(genesDE[genesDE[,"Ratio_F1"] > 1,"ensembl_gene_id"])); upgenes    <- upgenes[-which(!upgenes %in% names(upstreams))]
 downgenes  <- as.character(unlist(genesDE[genesDE[,"Ratio_F1"] < 1,"ensembl_gene_id"])); downgenes  <- downgenes[-which(!downgenes %in% names(upstreams))]
 
+genesASE    <- as.character(unlist( read.table("tfbs/paperASE.txt", colClasses="character", sep="\t", header=TRUE) ))
+genesASE    <- genesASE[-which(!genesASE %in% names(upstreams))]
+
 TFBSmatches <- function(WeightMatrix, selgenes, upstreams){
   motifTFBS <- round( 100 * WeightMatrix)
 
@@ -36,7 +39,7 @@ TFBSperm <- function(ingenes, TFBSlist, nperm = 1000) {
     mREAL <- c(mREAL, TFBSmatches(TFBS, ingenes, upstreams))
   }
   nmatches <- length(unique(mREAL))
-
+  cat(paste0("Real data: ", nmatches,"\n"))
   nulldistribution <- NULL
   for(p in 1:nperm){
     rangenes <- names(upstreams)[sample(length(upstreams),length(ingenes))]
@@ -124,3 +127,29 @@ rownames(weights.IR3) <- c("A","C","G","T")
 
 resUpAG   <- TFBSperm(upgenes,   list(weights.ARE, weights.ARE2, weights.ADR3, weights.IR3, query(MotifDb, "Mmusculus")["Mmusculus-jolma2013-Ar"][[1]])) # Up regulated genes  p < 0.05
 resDownAG <- TFBSperm(downgenes, list(weights.ARE, weights.ARE2, weights.ADR3, weights.IR3, query(MotifDb, "Mmusculus")["Mmusculus-jolma2013-Ar"][[1]])) # Down regulated genes  p < 0.05
+
+
+ASE_Estrogen <- TFBSperm(genesASE, list(weights.ER, weights.ERE, weights.ESR1, JASPER[Esrra][[1]], JASPER[Esrra2][[1]], JASPER[Esrrb][[1]], JASPER[Esrrb2][[1]]) )
+ASE_Androgen <- TFBSperm(genesASE, list(weights.ER, weights.ERE, weights.ESR1, JASPER[Esrra][[1]], JASPER[Esrra2][[1]], JASPER[Esrrb][[1]], JASPER[Esrrb2][[1]]) )
+
+ASE_All <- cbind(ASE_Estrogen, ASE_Androgen)
+write.table(ASE_All, file="tfbs/permutation_ASE.txt",sep="\t", row.names=FALSE)
+
+for(x in 1:ncol(ASE_All)){
+  pUp   <- (1 - (length(which(ASE_All[2:nrow(ASE_All), x] <= ASE_All[1,x])) / length(2:nrow(ASE_All))))
+  pDown <- (1 - (length(which(ASE_All[2:nrow(ASE_All), x] >= ASE_All[1,x])) / length(2:nrow(ASE_All))))
+  cat("Name", colnames(ASE_All)[x], "\n")
+  cat("Over-represented:", pUp," (more then by chance)\n")
+  cat("under-represented:", pDown,"(less)\n")
+}
+
+diffExpressed <- cbind(resUpGC, resDownGC, resUpEstro, resDownEstro, resUpAG,resDownAG)
+write.table(diffExpressed, file="tfbs/permutation_DE.txt",sep="\t", row.names=FALSE)
+
+for(x in 1:ncol(diffExpressed)){
+  pUp   <- (1 - (length(which(diffExpressed[2:nrow(diffExpressed), x] <= diffExpressed[1,x])) / length(2:nrow(diffExpressed))))
+  pDown <- (1 - (length(which(diffExpressed[2:nrow(diffExpressed), x] >= diffExpressed[1,x])) / length(2:nrow(diffExpressed))))
+  cat("Name", colnames(diffExpressed)[x], "\n")
+  cat("Over-represented:", pUp," (more then by chance)\n")
+  cat("under-represented:", pDown,"(less)\n")
+}

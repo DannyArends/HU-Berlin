@@ -1,7 +1,7 @@
 # Preprocessing of the MegaMuga data, mapping QTLs on different genetic maps
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
-# last modified Aug, 2014
+# last modified Jun, 2015
 # first written Aug, 2014
 
 source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
@@ -99,43 +99,35 @@ mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotype
   return(round(-log10(pvalues), 3))
 }
 
-phenonames <- c("mri42d_fatDlean", "mri56d_fatDlean", "mri70d_fatDlean",                                        # Fat / Lean 
-                "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71",                                  # Weights
-                "GF1", "GF2", "total.GF",                                                                       # Gonadal fat
-                "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",                                 # Other phenotypes
-                "mri42d_fat", "mri42d_lean", "mri42d_3", "mri42d_4",                                            # MRI day 42
-                "mri56d_fat", "mri56d_lean", "mri56d_3", "mri56d_4",                                            # MRI day 56
-                "mri70d_fat", "mri70d_lean", "mri70d_3", "mri70d_4")                                            # MRI day 70
-
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 for(phe in phenonames){
-  qtls <- mriGWAS(genotypes,   phenotypes, phe);                                                                # Map QTLs, normal GWAS (A, H, B)
-  write.table(qtls, paste0("Analysis/qtls_", phe, ".txt"),   sep="\t")                                          # Write results
-  cat("QTLs done for", phe, "\n")
+#  qtls <- mriGWAS(genotypes,   phenotypes, phe);                                                                # Map QTLs, normal GWAS (A, H, B)
+#  write.table(qtls, paste0("Analysis/qtls_", phe, ".txt"),   sep="\t")                                          # Write results
+#  cat("QTLs done for", phe, "\n")
 
-  qtlsC   <- mriGWAS(genotypes,   phenotypes, phe, cof = "UNC5048297") ;  
-  write.table(qtlsC, paste0("Analysis/qtls_", phe, "_cof_UNC5048297.txt"),   sep="\t")                          # Write results
-  cat("QTL + COF done for", phe, "\n")
+#  qtlsC   <- mriGWAS(genotypes,   phenotypes, phe, cof = "UNC5048297") ;  
+#  write.table(qtlsC, paste0("Analysis/qtls_", phe, "_cof_UNC5048297.txt"),   sep="\t")                          # Write results
+#  cat("QTL + COF done for", phe, "\n")
   
-  phased_qtls <- mriGWAS(genotypesPh, phenotypes, phe) ;                                                        # Map QTLs, GWAS on the H0 versus H1
-  write.table(phased_qtls, paste0("Analysis/qtls_phased_", phe, ".txt"),   sep="\t")                            # Write results
-  cat("QTL PHASED done for", phe, "\n")
+#  phased_qtls <- mriGWAS(genotypesPh, phenotypes, phe) ;                                                        # Map QTLs, GWAS on the H0 versus H1
+#  write.table(phased_qtls, paste0("Analysis/qtls_phased_", phe, ".txt"),   sep="\t")                            # Write results
+#  cat("QTL PHASED done for", phe, "\n")
 
-  phasedfull_qtls <- mriGWAS(genotypesFP, phenotypes, phe) ;                                                    # Map QTLs, GWAS on full phase: A, H0, H1, B
-  write.table(phasedfull_qtls, paste0("Analysis/qtls_phasedfull_", phe, ".txt"),   sep="\t")                    # Write results
-  cat("QTL PHASED FULL done for", phe, "\n")
+#  phasedfull_qtls <- mriGWAS(genotypesFP, phenotypes, phe) ;                                                    # Map QTLs, GWAS on full phase: A, H0, H1, B
+#  write.table(phasedfull_qtls, paste0("Analysis/qtls_phasedfull_", phe, ".txt"),   sep="\t")                    # Write results
+#  cat("QTL PHASED FULL done for", phe, "\n")
 
-  phasedfull_qtlsC <- mriGWAS(genotypes,   phenotypes, phe, cof = "UNC5048297") ; 
-  write.table(phasedfull_qtlsC, paste0("Analysis/qtls_phasedfull_", phe, "_cof_UNC5048297.txt"),   sep="\t")    # Write results
-  cat("QTL PHASED FULL + COF done for", phe, "\n")
+#  phasedfull_qtlsC <- mriGWAS(genotypes,   phenotypes, phe, cof = "UNC5048297") ; 
+#  write.table(phasedfull_qtlsC, paste0("Analysis/qtls_phasedfull_", phe, "_cof_UNC5048297.txt"),   sep="\t")    # Write results
+#  cat("QTL PHASED FULL + COF done for", phe, "\n")
   
   grandparents_qtls <- mriGWAS(genotypesGP, phenotypes, phe) ;                                                  # Map QTLs, GWAS towards the grandparents
-  write.table(phased_qtls, paste0("Analysis/qtls_grandparents_", phe, ".txt"),   sep="\t")                      # Write results
+  write.table(grandparents_qtls, paste0("Analysis/qtls_grandparents_", phe, ".txt"),   sep="\t")                # Write results
   cat("QTL PHASED GP done for", phe, "\n")
 }
 
 plotZoom <- function(qtls, smap, chr){
-  onChr <- rownames(smap[which(smap[,"Chr"] == chr),])
+  onChr <- rownames(smap[which(smap[,"Chr"] == chr),])[1:500]
   plot(as.numeric(smap[onChr,"Mb_NCBI38"]) / 1000000, qtls[onChr,"BH"], t = 'p', xlab = paste0("Chromosome", chr), main = paste0("QTL profile ", phe, " (zoom)"), ylab="LOD", pch=19, cex=0.2,col="blue")
   ma <- function(x, n = 5){ filter(x, rep(1/n,n), sides=2) }
   points(as.numeric(smap[onChr,"Mb_NCBI38"]) / 1000000, ma(qtls[onChr,"BH"]), t = 'l', main = paste0("QTL profile, (zoom Chr ",chr,")"), ylab="LOD",lwd=3)
@@ -148,8 +140,8 @@ names(chrcolors) <- unique(map[,"Chr"])
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 for(phe in phenonames){
-  qtls <- read.table(paste0("Analysis/qtls_", phe, ".txt"),sep="\t")
-  qtls <- cbind(qtls, BH  = round(-log10(p.adjust(10^(-qtls[,"marker"]), "BH")), d = 2))
+    qtls <- read.table(paste0("Analysis/qtls_phased_", phe, ".txt"),sep="\t")
+    qtls <- cbind(qtls, BH  = round(-log10(p.adjust(10^(-qtls[,"marker"]), "BH")), d = 2))
 
   significant <- rownames(qtls[which(qtls[,"BH"] > 3),])
   if(length(significant) > 0){
@@ -162,7 +154,7 @@ for(phe in phenonames){
       cat("Chromosome", chr, "\n")
       onChr <- rownames(smap[which(smap[,"Chr"] == chr),])
       top <- which.max(qtls[onChr,"BH"])
-      for(x in max(1,(top-10)):(top+10)){
+      for(x in max(1,(top-20)):(top+20)){
         mName <- rownames(qtls[onChr[x],])
         cat(x,mName, smap[mName,"Mb_NCBI38"], qtls[mName,"marker"], qtls[mName,"BH"],"\n")
         #cat(x, mName,"\n")
@@ -173,6 +165,9 @@ for(phe in phenonames){
     cat("---", phe,"no significant QTL\n")
   }
 }
+
+cbind(map[rownames(qtls[2856:2876,]),],qtls[2856:2876,])        # Chr 3 - 14 mb
+cbind(map[rownames(qtls[13951:14131,]),],qtls[13951:14131,])    # Chr 12 - 9.7 mb
 
 # ix <- which(rownames(qtls) == "UNC4784019")
 # qtls[(ix-50):(ix+50),]
@@ -281,7 +276,7 @@ map[which(qtls[,"qtl42"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl56"] > -log10(0.01/nrow(qtls))),]
 map[which(qtls[,"qtl70"] > -log10(0.01/nrow(qtls))),]
 
-getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "42d", marker = "UNC5048297"){
+getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "mri42d_fat", marker = "UNC5048297"){
   ind           <- colnames(genotypes[marker,!is.na(genotypes[marker,])])
 
   genotype      <- as.factor(t(genotypes[marker,!is.na(genotypes[marker,])]))
@@ -290,11 +285,13 @@ getVarianceExplained <- function(genotypes, phenotypes, pheno.col = "42d", marke
   season        <- as.factor(phenotypes[ind, "Season"])
   litternumber  <- as.factor(phenotypes[ind, "W.Label"])
 
-  phenotype     <- phenotypes[ind, paste0("mri",pheno.col,"_fat")] / phenotypes[ind, paste0("mri",pheno.col,"_lean")]
-
-  tryCatch(res  <- anova(lm(phenotype ~ littersize + litternumber + subfamily + season + genotype + littersize:litternumber)), error = function(e){ res <<- NA })
+  phenotype     <- phenotypes[ind, pheno.col]
+  model <- lm(phenotype ~ subfamily + littersize + litternumber + season + genotype)
+  tryCatch(res  <- anova(model), error = function(e){ res <<- NA })
+  cat(names(model$coefficients),"\n")
+  cat(model$coefficients,"\n")
   varExplained  <- res[, "Sum Sq"] / sum((phenotype - mean(phenotype, na.rm=TRUE))^2, na.rm=TRUE)
-  names(varExplained) <- c("l_size","l_number","subfamily", "season", "marker", "Int", "Left")
+  names(varExplained) <- c("subfamily","littersize","litternumber", "season", "marker", "Left")
   return(round(varExplained * 100, digits=1))
 }
 
@@ -351,3 +348,16 @@ aa <- apply(chrInfo,1,function(x){
 axis(1, chromosomes, at=c(1:nrow(chrInfo)), las=1)
 axis(2, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 legend("topright", c("BFMI like", "B6N like"), fill=c("orange","gray"))
+
+
+region1 <- "3:36481201:36854743"
+regionO <- "3:34000000:44000000"
+region2 <- "3:14841429:17563072"
+
+library(biomaRt)
+setwd("E:/Mouse/RNA/ArrayDesign/Atlas data")
+
+mart      <- useMart("ensembl", "mmusculus_gene_ensembl")
+allgenes  <- getBM(attributes = c("ensembl_gene_id", "mgi_symbol", "mgi_description", "chromosome_name", "start_position", "end_position"), filter=c("chromosomal_region"), values=regionO, mart = mart)
+
+

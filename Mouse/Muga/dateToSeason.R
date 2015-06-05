@@ -13,3 +13,11 @@ getSeason <- function(DATES) {
   ret[mmonths == 12 | mmonths == 1 | mmonths == 2]  <- "Winter"
   return(ret)
 }
+
+phenonames <- c("mri42d_fatDlean", "mri56d_fatDlean", "mri70d_fatDlean",                                        # Fat / Lean 
+                "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71",                                  # Weights
+                "GF1", "GF2", "total.GF",                                                                       # Gonadal fat
+                "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",                                 # Other phenotypes
+                "mri42d_fat", "mri42d_lean", "mri42d_3", "mri42d_4",                                            # MRI day 42
+                "mri56d_fat", "mri56d_lean", "mri56d_3", "mri56d_4",                                            # MRI day 56
+                "mri70d_fat", "mri70d_lean", "mri70d_3", "mri70d_4")                                            # MRI day 70

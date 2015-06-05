@@ -61,7 +61,48 @@ for(phe in phenonames){
     pvalues <- rbind(pvalues, -log10(res[-length(res)]))
   }
   rownames(pvalues) <- rownames(genotypes)
+  colnames(pvalues) <- c("subfamily", "l_size", "l_number", "season", "marker")
   write.table(pvalues, paste0("Analysis/Kasp/QTL_",phe,"_kasp.txt"),sep="\t")
 }
+
+setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
+mapO <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+map <- rbind(map, mapO[,1:2])
+
+setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+qtl42FatO  <- read.table("Analysis/qtls_mri42d_fat.txt",   sep="\t")
+qtl42Fat   <- read.table("Analysis/kasp/QTL_mri42d_fat_kasp.txt",   sep="\t")
+qtl42Fat   <- rbind(qtl42Fat, qtl42FatO)
+
+
+submap <- map
+submap <- map[rownames(qtl42Fat[qtl42Fat[,"marker"] > 1,]), ]
+submap <- submap[submap[,"Chr"] == 3,]                                    #  & 
+submap <- submap[rownames(submap) %in% rownames(qtl42Fat),]
+
+
+submap <- submap[as.numeric(as.character(submap[,"Mb_NCBI38"])) > 32500000 &  as.numeric(as.character(submap[,"Mb_NCBI38"])) < 40000000,]
+submap <- submap[order(as.numeric(as.character(submap[,2]))),]
+
+colz <- rep("black", nrow(submap))
+colz[grep("KM", rownames(submap))] <- "red"
+
+op <- par(mfrow=c(1,2))
+plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "After")
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = colz, cex=0.5)
+axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
+
+submap <- submap[-grep("KM", rownames(submap)),]
+
+plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "Before")
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = "black", cex=0.5)
+axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
+
+
+
+
+
 
 

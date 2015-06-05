@@ -20,9 +20,9 @@ phenotypes <- phenotypes[F2, ]
 
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
-qtl42Fat     <- read.table("Analysis/qtls_fat42.txt",   sep="\t")
-qtl42Lean    <- read.table("Analysis/qtls_lean42.txt",   sep="\t")
-qtl42FatLean <- read.table("Analysis/qtls_fatDlean42.txt",   sep="\t")
+qtl42Fat     <- read.table("Analysis/qtls_mri42d_fat.txt",   sep="\t")
+qtl42Lean    <- read.table("Analysis/qtls_mri42d_lean.txt",   sep="\t")
+qtl42FatLean <- read.table("Analysis/qtls_mri42d_fatDlean.txt",   sep="\t")
 
 submap <- map
 submap <- map[rownames(qtl42Fat[qtl42Fat[,"marker"] > 1,]), ]

@@ -67,6 +67,7 @@ for(phe in phenonames){
 
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 mapO <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+genotypesO   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                                    # Normal A, H, B genotypes
 map <- rbind(map, mapO[,1:2])
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
@@ -93,16 +94,23 @@ points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames
 points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = colz, cex=0.5)
 axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
 
-submap <- submap[-grep("KM", rownames(submap)),]
+#submap <- submap[-grep("KM", rownames(submap)),]
 
-plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "Before")
-points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
-points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = "black", cex=0.5)
-axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
-
-
+#plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "Before")
+#points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
+#points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = "black", cex=0.5)
+#axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
 
 
 
+genotypesO <- genotypesO[,which(colnames(genotypesO) %in% colnames(genotypes))]
+
+genotypesO <- genotypesO[,match(colnames(genotypesO), colnames(genotypes))]
+
+combinedGeno <- rbind(genotypesO,genotypes)
 
 
+combinedGP <- rbind(phenotypes[colnames(combinedGeno),"d42"] , combinedGeno[rownames(submap),])
+combinedGPL <- cbind( map[rownames(combinedGP),], qtl42Fat[rownames(combinedGP), "marker"], combinedGP)
+
+write.table(combinedGPL, "Analysis/Chromosome3region_MarkersLodPheno.txt",sep="\t")

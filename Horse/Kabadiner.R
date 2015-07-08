@@ -39,7 +39,9 @@ write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")        
 
 ## Some basic QG plots of all the individuals relatedness
 numgeno <- apply(genotypes, 2, function(x){as.numeric(as.factor(x))})
-dendrogram <- as.dendrogram(hclust(dist(t(numgeno), method = "manhattan")))
+
+numgeno <- numgeno[,-which(colnames(numgeno) %in% c("P3691", "P3611", "P3625","P3525","P3422","P3613","P3423"))]
+dendrogram <- as.dendrogram(hclust(dist(t(numgeno), method = "manhattan")))         #TODO: perhaps add the reference horse
 
 cols <- c("red","blue","black")
 names(cols) <- unique(as.character(phenotypes[6,]))
@@ -54,7 +56,9 @@ labelCol <- function(x) {
   return(x)
 }
 dendrogram.col <- dendrapply(dendrogram, labelCol)
+png("Dendrogram_kabadiner.png", width=1024, height=768)
 plot(dendrogram.col)
+dev.off()
 
 # Identical : genotypes[,c("P3623","P3625")] and genotypes[,c("P3422","P3425")]
 
@@ -148,14 +152,18 @@ filters = c("chromosomal_region", "biotype"), values = list("14:41000000:4300000
 write.table(res.bio, file="analysis/GenesNearTopSNP.txt",sep="\t",row.names=FALSE)
 
 ## Colors for the Manhattan plot
-cols <- rep(c("black","orange"),16)
+cols <- rep(c("red","blue"),16)
 names(cols) <- unique(map[,"Chr"])
 
 ## Manhattan plot
 for(pheno in c("Performance","WH","BU","RU")){
   pvalues <- read.table(paste0("analysis/",pheno,".txt"), sep="\t",header=TRUE)[,c(3:4)]
+  png("Performance_Kabadiner.png", width=1024,height=768)
+
   plot(pvalues[,2], t = 'h', col=cols[map[,"Chr"]], main="Endurance in Kabadina horses", ylab="LOD score", xlab="SNP")                                                                             # Uncorrected for multiple testing
   abline(h=-log10(0.05/nrow(pvalues)), col="green", lwd=1,lty=2) ; abline(h=-log10(0.01/nrow(pvalues)), col="green", lwd=1,lty=2)      # Significance thresholds
+  abline(h=-log10(0.1/nrow(pvalues)), col="orange", lwd=1,lty=2) ; abline(h=-log10(0.01/nrow(pvalues)), col="orange", lwd=1,lty=2)      # Significance thresholds
+  dev.off()
 
 #  plot(-log10(p.adjust(pvalues[,2],"BH")),t='h', col=cols[map[,"Chr"]])                                                                 # BH corrected for multiple testing
 #  abline(h=-log10(0.05), col="orange", lwd=1,lty=2) ; abline(h=-log10(0.01), col="green", lwd=1,lty=2)                                  # Significance thresholds

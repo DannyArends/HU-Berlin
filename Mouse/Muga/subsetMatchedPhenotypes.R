@@ -10,7 +10,7 @@ genotypesGP <- read.table("Analysis/genotypesPhasedGP.txt",     sep="\t", check.
 setwd("E:/Mouse/ClassicalPhenotypes/Reciprocal Cross B6 BFMI")                                                                                                    # Read in the phenotypes
 phenotypedata <- read.csv("20140801_AIL1_666.txt", sep="\t", header=TRUE)
 
-phenos <- c("Vater", "W.dat", "W.Label", "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1", "GF2", "total.GF", "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",
+phenos <- c("Vater", "Mutter", "W.dat", "W.Label", "d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70", "d71", "GF1", "GF2", "total.GF", "RF1", "RF2", "total.RF", "IF", "Muskel", "Leber", "BAT", "LD",
             "mri42d_fat", "mri42d_lean", "mri42d_3", "mri42d_4", "mri56d_fat", "mri56d_lean", "mri56d_3", "mri56d_4", "mri70d_fat", "mri70d_lean", "mri70d_3", "mri70d_4", "WG", "WG2", "Farbe", "sex", "Gen.")
             
 phenotypes <- phenotypedata[which(rownames(phenotypedata) %in% colnames(genotypes)), phenos]               # Use only the phenotypes for which we have genotypes

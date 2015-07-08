@@ -121,9 +121,9 @@ for(phe in phenonames){
 #  write.table(phasedfull_qtlsC, paste0("Analysis/qtls_phasedfull_", phe, "_cof_UNC5048297.txt"),   sep="\t")    # Write results
 #  cat("QTL PHASED FULL + COF done for", phe, "\n")
   
-  grandparents_qtls <- mriGWAS(genotypesGP, phenotypes, phe) ;                                                  # Map QTLs, GWAS towards the grandparents
-  write.table(grandparents_qtls, paste0("Analysis/qtls_grandparents_", phe, ".txt"),   sep="\t")                # Write results
-  cat("QTL PHASED GP done for", phe, "\n")
+#  grandparents_qtls <- mriGWAS(genotypesGP, phenotypes, phe) ;                                                  # Map QTLs, GWAS towards the grandparents
+#  write.table(grandparents_qtls, paste0("Analysis/qtls_grandparents_", phe, ".txt"),   sep="\t")                # Write results
+#  cat("QTL PHASED GP done for", phe, "\n")
 }
 
 plotZoom <- function(qtls, smap, chr){
@@ -140,7 +140,7 @@ names(chrcolors) <- unique(map[,"Chr"])
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
 for(phe in phenonames){
-    qtls <- read.table(paste0("Analysis/qtls_phased_", phe, ".txt"),sep="\t")
+    qtls <- read.table(paste0("Analysis/qtls_", phe, ".txt"),sep="\t")
     qtls <- cbind(qtls, BH  = round(-log10(p.adjust(10^(-qtls[,"marker"]), "BH")), d = 2))
 
   significant <- rownames(qtls[which(qtls[,"BH"] > 3),])

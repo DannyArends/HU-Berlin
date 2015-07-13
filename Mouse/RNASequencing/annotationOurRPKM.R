@@ -115,7 +115,7 @@ findGroups <- function(BFMI, B6N, F1, pExp=0.1, p = 0.1){
   pval_B6N_L  <- apply(B6N_F1 ,  1, function(x){ return(t.test(x[1:2], x[3:5], alternative="greater")$p.value)})         # B6N  > LD1
   pval_B6N_S  <- apply(B6N_F1 ,  1, function(x){ return(t.test(x[1:2], x[3:5], alternative="less")$p.value)})            # B6N  < LD1
   pval_BFMI_L <- apply(BFMI_F1,  1, function(x){ return(t.test(x[1:2], x[3:5], alternative="greater")$p.value)})         # BFMI > LD1
-  pval_BFMI_S <- apply(BFMI_F1 , 1, function(x){ return(t.test(x[1:2], x[3:5], alternative="less")$p.value)})            # B6N  < LD1
+  pval_BFMI_S <- apply(BFMI_F1 , 1, function(x){ return(t.test(x[1:2], x[3:5], alternative="less")$p.value)})            # GFMI < LD1
 
   # Test LD1 for Additive/Dominance or Undetermined
   G1  <-  pval_B6N_S_BFMI < 0.1 & pval_B6N_S <  p & pval_BFMI_L <  p; wG1 <- which(G1);   cat("Group  1: B6N  < D1/D2  < BFMI:", length(wG1), "\n")

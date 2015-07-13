@@ -22,6 +22,10 @@ genotypes <- genotypes[,-which(colnames(genotypes) %in% wrongIND)]              
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
 F1 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]                                                 # The F2 individuals
 
+onegenotype <- which(lapply(apply(genotypes[,F2], 1, table), length) < 2)                                       # Markers with only one genotype cannot be used in QTL mapping
+genotypes   <- (genotypes[-onegenotype, F2])                                                                    # Only take the F2 individuals, and the unique markers
+cat("Left with", nrow(genotypes), "markers\n")                                                                  # == Left with 21260 markers    // Left with 11581 markers
+
 colorz <- as.numeric(as.factor(unlist(genotypes["UNC5048297", F2])))
 growth <- phenotypes[F2, c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70")]
 
@@ -111,6 +115,18 @@ legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),r
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
 
+## Family per Geno (merged B6n and Hetro)
+cBfmi <- apply(growth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+merged <- apply(growth[colorz != 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz != 1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+
+boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno)")
+boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
+boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
+legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+
+cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
+cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
+
 ## Family and Litter size per Geno
 
 boxplot(cBfmi <- apply(growth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1] + wsize[colorz==1]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(1,0,0,0.5), main = "~ Family(Geno) + Litter size(Geno)")
@@ -120,6 +136,18 @@ legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),r
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
+
+## Family and Litter size per Geno (merged B6n and Hetro)
+cBfmi <- apply(growth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1]+ wsize[colorz==1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+merged <- apply(growth[colorz != 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz != 1]+ wsize[colorz!=1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+
+boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno) + Litter size(Geno)")
+boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
+boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
+legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+
+cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
+cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
 
 ## Current model
 
@@ -149,6 +177,41 @@ cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
 lm(as.numeric(ngrowth[colorz == 1,1]) ~ fam[colorz == 1] + wsize[colorz==1])
 lm(as.numeric(ngrowth[colorz == 2,1]) ~ fam[colorz == 2]+ wsize[colorz==2])
 lm(as.numeric(ngrowth[colorz == 3,1]) ~ fam[colorz == 3]+ wsize[colorz==3])
+
+
+## Litter # + Season + (Family and Litter size per Geno)
+
+ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+
+cBfmi <- apply(ngrowth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1] + wsize[colorz == 1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+rownames(cBfmi) <- rownames(growth[colorz == 1,])
+merged <- apply(ngrowth[colorz != 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz != 1] + wsize[colorz != 1]); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+rownames(merged) <- rownames(growth[colorz != 1,])
+
+boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno) + litter # + season + Litter size(Geno)")
+boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
+boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
+legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+
+cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
+cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
+
+alldata <- rbind(cBfmi, merged)
+
+result <- matrix(NA, nrow(genotypes[,rownames(alldata)]), ncol(alldata))
+for(x in 1:nrow(genotypes[,rownames(alldata)])){
+  for(y in 1:ncol(alldata)){
+    tryCatch(res <- anova(lm(alldata[,y] ~ as.factor(as.character(genotypes[x, rownames(alldata)]))))[[5]], 
+        error = function(e){ res <<- rep(NA, 2) })
+    result[x, y] <- res[1]
+  }
+}
+
+
+lm(as.numeric(ngrowth[colorz == 1,1]) ~ fam[colorz == 1] + wsize[colorz==1])
+lm(as.numeric(ngrowth[colorz != 1,1]) ~ fam[colorz != 1] + wsize[colorz!=1])
+
+
 
 
 ### ONLY H ###

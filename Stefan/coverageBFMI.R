@@ -23,6 +23,8 @@ samtools sort -@ 4 -m 4G -o BFMI_aligned.bam BFMI > BFMI_aligned_sorted.bam
 java -jar /opt/picard-tools-1.99/MarkDuplicates.jar REMOVE_DUPLICATES=true INPUT=BFMI_aligned_sorted.bam OUTPUT=BFMI_aligned_sorted_dedup.bam METRICS_FILE=BFMI_matrics.txt
 samtools flagstat BFMI_aligned_sorted_dedup.bam
 
+### Do not forget - updated locations:  to /home/arends/Genomes/mm10
+
 #Add read groups
 java -Xmx4g -jar /opt/picard-tools-1.99/AddOrReplaceReadGroups.jar INPUT=BFMI_aligned_sorted_dedup.bam OUTPUT=BFMI_aligned_sorted_dedup_rg.bam CREATE_INDEX=false RGID=860 RGLB=LIB860 RGPL=Illumina RGPU=X RGSM=860
 samtools index BFMI_aligned_sorted_dedup_rg.bam

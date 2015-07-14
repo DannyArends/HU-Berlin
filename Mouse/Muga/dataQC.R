@@ -152,6 +152,7 @@ cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] =
 ## Current model *No family effect*
 
 ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+colnames(ngrowth) <- seq(21,70,7)
 plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "Growth curves AIL individuals", sub="Showing individuals from generation 28", ylab = "Bodyweight (g)", xlab="Time (days)",las=2)
 rect(0,0,((28-21)/2) + 21,100, col=rgb(1,0,0,0.1), border=FALSE)
 rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.1), border=FALSE)

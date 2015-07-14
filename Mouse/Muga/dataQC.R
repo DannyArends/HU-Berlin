@@ -1,4 +1,4 @@
-# data Quality control
+# Data Quality control
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Dec, 2014
@@ -52,7 +52,7 @@ boxplot(growth)
 boxplot(growth[colorz == 1,], col=rgb(1,0,0,0.5), main = "Raw data")
 boxplot(growth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(growth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(growth[colorz == 1,]) - colMeans(growth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(growth[colorz == 1,]) - colMeans(growth[colorz == 3,]),d=2), "\n")
@@ -64,7 +64,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ fam ); return(
 boxplot(ngrowth[colorz == 1,], col=rgb(1,0,0,0.5), main = "~ Family")
 boxplot(ngrowth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(ngrowth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 3,]),d=2), "\n")
@@ -76,7 +76,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lmer(as.numeric(x) ~ (1|fam) ); r
 boxplot(ngrowth[colorz == 1,], col=rgb(1,0,0,0.5), main = "~ Family")
 boxplot(ngrowth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(ngrowth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 3,]),d=2), "\n")
@@ -88,7 +88,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize ); retur
 boxplot(ngrowth[colorz == 1,], col=rgb(1,0,0,0.5), main = "~ Litter size")
 boxplot(ngrowth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(ngrowth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 3,]),d=2), "\n")
@@ -100,7 +100,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ fam + wsize );
 boxplot(ngrowth[colorz == 1,], col=rgb(1,0,0,0.5), main = "~ Family + Litter size")
 boxplot(ngrowth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(ngrowth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 3,]),d=2), "\n")
@@ -110,7 +110,7 @@ cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colo
 boxplot(cBfmi <- apply(growth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(1,0,0,0.5), main = "~ Family(Geno)")
 boxplot(cHetro <- apply(growth[colorz == 2,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 2]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(cB6n <- apply(growth[colorz == 3,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 3]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
@@ -122,7 +122,7 @@ merged <- apply(growth[colorz != 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam
 boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno)")
 boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
@@ -132,7 +132,7 @@ cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] =
 boxplot(cBfmi <- apply(growth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1] + wsize[colorz==1]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(1,0,0,0.5), main = "~ Family(Geno) + Litter size(Geno)")
 boxplot(cHetro <- apply(growth[colorz == 2,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 2]+ wsize[colorz==2]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(cB6n <- apply(growth[colorz == 3,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 3]+ wsize[colorz==3]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
@@ -144,18 +144,27 @@ merged <- apply(growth[colorz != 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam
 boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno) + Litter size(Geno)")
 boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
 
-## Current model
+## Current model *No family effect*
 
-ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ fam + wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
+plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "Growth curves AIL individuals", sub="Showing individuals from generation 28", ylab = "Bodyweight (g)", xlab="Time (days)",las=2)
+rect(0,0,((28-21)/2) + 21,100, col=rgb(1,0,0,0.1), border=FALSE)
+rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.1), border=FALSE)
+boxplot(ngrowth[colorz == 1,], at = seq(21,70,7)+1.1, col=rgb(1,0,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
+boxplot(ngrowth[colorz == 2,], at = seq(21,70,7), col=rgb(0.5,0.5,0.5,0.5), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
+boxplot(ngrowth[colorz == 3,], at = seq(21,70,7)-1.1, col=rgb(0,0,1,0.5), add=TRUE, pars=list(boxwex=.8),xaxt='n', notch=TRUE, yaxt='n')
 
-boxplot(ngrowth[colorz == 1,], col=rgb(1,0,0,0.5), main = "~ Family + Litter size + Litter # + season")
-boxplot(ngrowth[colorz == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
-boxplot(ngrowth[colorz == 3,], col=rgb(0,0,1,0.5), add=TRUE)
+points(x = seq(21,70,7)+1.1, y = apply(ngrowth[colorz == 1,],2,median),t='l', col=rgb(1,0,0,0.5))
+points(x = seq(21,70,7), y = apply(ngrowth[colorz == 2,],2,median),t='l', col=rgb(0.5,0.5,0.5,0.5))
+points(x = seq(21,70,7)-1.1, y = apply(ngrowth[colorz == 3,],2,median),t='l', col=rgb(0,0,1,0.5))
+
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
+
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 3,]),d=2), "\n")
@@ -169,7 +178,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wlabel + seaso
 boxplot(cBfmi <- apply(ngrowth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1] + wsize[colorz==1]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(1,0,0,0.5), main = "~ Family(Geno) + litter # + season + Litter size(Geno)")
 boxplot(cHetro <- apply(ngrowth[colorz == 2,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 2]+ wsize[colorz==2]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(cB6n <- apply(ngrowth[colorz == 3,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 3]+ wsize[colorz==3]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")
@@ -191,7 +200,7 @@ rownames(merged) <- rownames(growth[colorz != 1,])
 boxplot(cBfmi, col=rgb(1,0,0,0.5), main = "~ Family(Geno) + litter # + season + Litter size(Geno)")
 boxplot(merged[colorz[colorz != 1] == 2,], col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(merged[colorz[colorz != 1] == 3,], col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 2,]),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
@@ -261,7 +270,7 @@ ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wlabel + seaso
 boxplot(cBfmi <- apply(ngrowth[colorz == 1,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 1] + wsize[colorz==1]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(1,0,0,0.5), main = "~ Family(Geno) + litter # + season + Litter size(Geno)")
 boxplot(cHetro <- apply(ngrowth[colorz == 2,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 2]+ wsize[colorz==2]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0.5,0.5,0.5,0.5), add=TRUE)
 boxplot(cB6n <- apply(ngrowth[colorz == 3,],2,function(x){ aa <- lm(as.numeric(x) ~ fam[colorz == 3]+ wsize[colorz==3]); return(aa$coefficients["(Intercept)"] + aa$residuals) }), col=rgb(0,0,1,0.5), add=TRUE)
-legend("topleft", c("BFMI locus","Hetrozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
+legend("topleft", c("BFMI locus","Heterozygous", "B6n"), col = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), lwd=2)
 
 cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(cHetro),d=2), "\n")
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(cB6n),d=2), "\n")

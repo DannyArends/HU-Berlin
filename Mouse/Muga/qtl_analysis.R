@@ -62,7 +62,13 @@ cat("Left with", nrow(genotypesGP), "markers\n")                                
 
 phenotypes <- phenotypes[F2,]
 
-# Why do we have more markers in the case of phased ? // When using unique we reduce the amount of markrs
+#Growth curves
+growth <- phenotypes[F2, paste0("d",seq(21,70,7))]
+plot(c(1,length(seq(21,70,7))), c(0,max(growth)), t = 'n', main="Growth curves AIL individuals", sub="Generation 28", ylab="Bodyweight (g)", xlab="Day",xaxt='n')
+colorz <- c("orange", "black", "gray")[as.numeric(as.factor(unlist(genotypes["UNC5048297", F2])))]
+x <- 1
+apply(growth,1,function(x){points(x, t = 'l', col=colorz[x]); x <<- x + 1 } )
+
 
 mriGWAS <- function(genotypes, phenotypes, pheno.col = "42d", to = nrow(genotypes), cof = ""){                # to = nrow(genotypes)
   nterms  <- 5;

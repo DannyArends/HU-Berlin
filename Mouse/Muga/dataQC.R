@@ -29,6 +29,10 @@ cat("Left with", nrow(genotypes), "markers\n")                                  
 colorz <- as.numeric(as.factor(unlist(genotypes["UNC5048297", F2])))
 growth <- phenotypes[F2, c("d21", "d28", "d35", "d42", "d49", "d56", "d63", "d70")]
 
+fat <- phenotypes[F2, c("mri42d_fat", "mri56d_fat", "mri70d_fat")]
+lean <- phenotypes[F2, c("mri42d_lean", "mri56d_lean", "mri70d_lean")]
+fatlean <- (fat / (fat+lean))
+
 vater <- as.factor(phenotypes[F2, c("Vater")]) ; mutter <- as.factor(phenotypes[F2, c("Mutter")]) ; wsize <- as.numeric(phenotypes[F2, c("WG2")]) ; wlabel <- as.factor(phenotypes[F2, c("W.Label")]) ; season <- as.factor(phenotypes[F2, c("Season")])
 fam <- as.factor(paste0(mutter, vater))
 #op <- par(mfrow=c(3,2))
@@ -150,21 +154,34 @@ cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] =
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
 
 ## Current model *No family effect*
-
+op <- par(mfrow=c(1, 2), cex.main=1.3, cex.axis=1.2,cex.lab=1.3)
 ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
 colnames(ngrowth) <- seq(21,70,7)
-plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "Growth curves AIL individuals", sub="Showing individuals from generation 28", ylab = "Bodyweight (g)", xlab="Time (days)",las=2)
-rect(0,0,((28-21)/2) + 21,100, col=rgb(1,0,0,0.1), border=FALSE)
-rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.1), border=FALSE)
-boxplot(ngrowth[colorz == 1,], at = seq(21,70,7)+1.1, col=rgb(1,0,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
-boxplot(ngrowth[colorz == 2,], at = seq(21,70,7), col=rgb(0.5,0.5,0.5,0.5), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
+plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "a) Growth curves", sub="Showing individuals from generation 28", ylab = "Bodyweight (g)", xlab="Time (days)",las=2)
+rect(0,0,((28-21)/2) + 21,100, col=rgb(0,0,1,0.3), border=FALSE)
+rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.3), border=FALSE)
+boxplot(ngrowth[colorz == 1,], at = seq(21,70,7)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
+boxplot(ngrowth[colorz == 2,], at = seq(21,70,7), col=rgb(0.5,0.5,0.5,1), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
 boxplot(ngrowth[colorz == 3,], at = seq(21,70,7)-1.1, col=rgb(0,0,1,0.5), add=TRUE, pars=list(boxwex=.8),xaxt='n', notch=TRUE, yaxt='n')
+points(x = seq(21,70,7), y = apply(ngrowth[colorz == 2,],2,median),t='l', col=rgb(0.5,0.5,0.5,1),lwd=2)
+points(x = seq(21,70,7), y = apply(ngrowth[colorz == 3,],2,median),t='l', col=rgb(0,0,1,0.5),lwd=2)
+points(x = seq(21,70,7), y = apply(ngrowth[colorz == 1,],2,median),t='l', col=rgb(1,0.4,0,0.5),lwd=2)
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
 
-points(x = seq(21,70,7)+1.1, y = apply(ngrowth[colorz == 1,],2,median),t='l', col=rgb(1,0,0,0.5))
-points(x = seq(21,70,7), y = apply(ngrowth[colorz == 2,],2,median),t='l', col=rgb(0.5,0.5,0.5,0.5))
-points(x = seq(21,70,7)-1.1, y = apply(ngrowth[colorz == 3,],2,median),t='l', col=rgb(0,0,1,0.5))
+nfatlean <- apply(fatlean, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); bb <- rep(NA,length(x));bb[as.numeric(names(aa$residuals))] <- aa$residuals; bb <- bb + aa$coefficients["(Intercept)"]; return(bb) })
+colnames(nfatlean) <- c(42, 56, 70)
+plot(c(40,72),c(0,0.75), t = 'n', xaxt='n', yaxt='n', main = "b) Fat percentage", sub="Showing individuals from generation 28", ylab = "Fat / (Fat + Lean) (%)", xlab="Time (days)",las=2)
+boxplot(nfatlean[colorz == 1,], at = c(42, 56, 70)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
+boxplot(nfatlean[colorz == 2,], at = c(42, 56, 70), col=rgb(0.5,0.5,0.5,1), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
+boxplot(nfatlean[colorz == 3,], at = c(42, 56, 70)-1.1, col=rgb(0,0,1,0.5), add=TRUE, pars=list(boxwex=.8),xaxt='n', notch=TRUE, yaxt='n')
+points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 1,],2, median,na.rm=TRUE),t='l', col=rgb(1,0.4,0,0.5),lwd=2)
+points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 2,],2, median,na.rm=TRUE),t='l', col=rgb(0.5,0.5,0.5,1),lwd=2)
+points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 3,],2, median,na.rm=TRUE),t='l', col=rgb(0,0,1,0.5),lwd=2)
+axis(2, at=c(0,0.2,0.4,0.6), c("0", "20","40", "60"),las=2)
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
 
-legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0,0,0.5),rgb(0.5,0.5,0.5,0.5),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
+
+
 
 
 cat("BFMI - Het:", round(colMeans(ngrowth[colorz == 1,]) - colMeans(ngrowth[colorz == 2,]),d=2), "\n")

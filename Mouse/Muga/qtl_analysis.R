@@ -132,11 +132,11 @@ for(phe in phenonames){
 #  cat("QTL PHASED GP done for", phe, "\n")
 }
 
-for(phe in phenonames){
-  phasedFULLC <- read.table(paste0("Analysis/qtls_phasedfull_", phe, "_cof_UNC5048297.txt"),   sep="\t")
-  plot(phasedFULLC[,"marker"], main=phe)
-  scan()
-}
+#for(phe in phenonames){
+#  phasedFULLC <- read.table(paste0("Analysis/qtls_phasedfull_", phe, "_cof_UNC5048297.txt"),   sep="\t")
+#  plot(phasedFULLC[,"marker"], main=phe)
+#  scan()
+#}
 
 plotZoom <- function(qtls, smap, chr){
   onChr <- rownames(smap[which(smap[,"Chr"] == chr),])[1:500]

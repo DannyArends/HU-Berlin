@@ -10,7 +10,7 @@ setwd("E:/Mouse/DNA/MegaMuga/")                                                 
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                                    # Normal A, H, B genotypes
-
+ 
 missingPerInd <- apply(genotypes, 2, function(x){ sum(is.na(x)) / length(x) * 100 })
 wrongIND <- c("33310233", "6661965", "6662155", "6662156", names(which(missingPerInd==100)))
 
@@ -157,7 +157,7 @@ cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] =
 op <- par(mfrow=c(1, 2), cex.main=1.3, cex.axis=1.2,cex.lab=1.3)
 ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
 colnames(ngrowth) <- seq(21,70,7)
-plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "a) Growth curves", sub="Showing individuals from generation 28", ylab = "Bodyweight (g)", xlab="Time (days)",las=2)
+plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "a) Growth curves", sub="Showing individuals from generation 28", ylab = "Body mass (g)", xlab="Time (days)",las=2)
 rect(0,0,((28-21)/2) + 21,100, col=rgb(0,0,1,0.3), border=FALSE)
 rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.3), border=FALSE)
 boxplot(ngrowth[colorz == 1,], at = seq(21,70,7)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
@@ -166,7 +166,7 @@ boxplot(ngrowth[colorz == 3,], at = seq(21,70,7)-1.1, col=rgb(0,0,1,0.5), add=TR
 points(x = seq(21,70,7), y = apply(ngrowth[colorz == 2,],2,median),t='l', col=rgb(0.5,0.5,0.5,1),lwd=2)
 points(x = seq(21,70,7), y = apply(ngrowth[colorz == 3,],2,median),t='l', col=rgb(0,0,1,0.5),lwd=2)
 points(x = seq(21,70,7), y = apply(ngrowth[colorz == 1,],2,median),t='l', col=rgb(1,0.4,0,0.5),lwd=2)
-legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white",cex=1.2)
 
 nfatlean <- apply(fatlean, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); bb <- rep(NA,length(x));bb[as.numeric(names(aa$residuals))] <- aa$residuals; bb <- bb + aa$coefficients["(Intercept)"]; return(bb) })
 colnames(nfatlean) <- c(42, 56, 70)
@@ -178,7 +178,7 @@ points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 1,],2, median,na.rm=TRUE)
 points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 2,],2, median,na.rm=TRUE),t='l', col=rgb(0.5,0.5,0.5,1),lwd=2)
 points(x = c(42, 56, 70), y = apply(nfatlean[colorz == 3,],2, median,na.rm=TRUE),t='l', col=rgb(0,0,1,0.5),lwd=2)
 axis(2, at=c(0,0.2,0.4,0.6), c("0", "20","40", "60"),las=2)
-legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white")
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white",cex=1.2)
 
 
 

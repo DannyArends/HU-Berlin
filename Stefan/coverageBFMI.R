@@ -13,13 +13,13 @@ samtools faidx Mus_musculus.GRCm38.dna.fa
 tabix mgp.v5.merged.indels.dbSNP142.normed.vcf.gz
 tabix mgp.v5.merged.snps_all.dbSNP142.vcf.gz 
 
-# Alignment
+# Alignment 
 
 bowtie2 -x /home/arends/RNASeq/Reference/Mus_musculus.GRCm38.dna.bt2idx -1 BFMI_R1.P.fastq.gz -2 BFMI_R2.P.fastq.gz -U BFMI_R1.U.fastq.gz,BFMI_R2.U.fastq.gz -X 2000 -I 50 -p 4 | samtools view -bS - > BFMI_aligned.bam
 #bowtie2 -x /home/arends/RNASeq/Reference/Mus_musculus.GRCm38.dna.bt2idx -1 BFMI_subset_R1.P.fastq.gz -2 BFMI_subset_R2.P.fastq.gz -U BFMI_subset_R1.U.fastq.gz,BFMI_subset_R2.U.fastq.gz -X 2000 -I 50 | samtools view -bS - > BFMI_subset_aligned.bam
 
 # Alignment to flagstats
-samtools sort -@ 4 -m 4G -o BFMI_aligned.bam BFMI > BFMI_aligned_sorted.bam
+nohup samtools sort -@ 4 -m 4G BFMI_aligned.bam -o BFMI_aligned_sorted.bam &
 java -jar /opt/picard-tools-1.99/MarkDuplicates.jar REMOVE_DUPLICATES=true INPUT=BFMI_aligned_sorted.bam OUTPUT=BFMI_aligned_sorted_dedup.bam METRICS_FILE=BFMI_matrics.txt
 samtools flagstat BFMI_aligned_sorted_dedup.bam
 

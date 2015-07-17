@@ -41,6 +41,8 @@ bowtie.index <- paste0(static.dir, reference.stem, ".dna.bt2idx")
 command <- paste0("bowtie2-build -f ", reference.unzip," ", bowtie.index)
 if(!file.exists(paste0(bowtie.index,".1.bt2"))) system(command, intern = TRUE)
 
+### TODO: Get rid of the bed READs
+
 ### Trim RNA-Seq read files using Trimmomatic
 sample.id    <- as.character("4423")
 sample.name  <- sample.names[sample.id]
@@ -90,6 +92,34 @@ command      <- paste0("samtools flagstat ", outputSBAID)
 system(command, intern=TRUE)
 
 
-### GATK
+### TODO add the whole GATK part of the pipeline (see adjust the stuff below, so it matched the stuff above)
+###- NEED TO CHECK FORM HERE ON
+
+### Indel Realign
+outputSNPS    <- "output.snp.intervals"
+outputSIBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.bam")
+knownindels   <- paste0(referenceDir, "/mgp.v3.indels.rsIDdbSNPv137.vcf")                              # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
+if(!file.exists(outputSNPS)){
+  command <- paste0("java -Xmx4g -jar ", gatk, " -nt 4 -T RealignerTargetCreator -R ", reference, " -known ", knownindels, " -o ", outputSNPS, " -U ALLOW_N_CIGAR_READS")
+  cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK RealignerTargetCreator, only need to be done because the knownSNPlist does not change
+}
+command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference, " -targetIntervals ", outputSNPS, " -maxReads 150000 -I ", outputSBAID, " -o ",outputSIBAM," -known ",knownindels, " -U ALLOW_N_CIGAR_READS")
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")     # Call the GATK IndelRealigner
+
+### Base Recalibration
+knownsnps     <- paste0(referenceDir, "/mgp.v3.snps.rsIDdbSNPv137.vcf")                                # Reference, download from: ftp://ftp-mouse.sanger.ac.uk/
+covfile1      <- paste0(fileBase, "1.covariates")
+covfile2      <- paste0(fileBase, "2.covariates")
+plotfile      <- paste0(fileBase, "recalibration.pdf")
+outputSIRBAM  <- paste0(fileBase, "P_trimmed.aligned.sorted.realigned.recalibrated.bam")
+
+command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T BaseRecalibrator -R ", reference, " -knownSites ", knownsnps, " -I ", outputSIBAM," -o ",  covfile1, " -U ALLOW_N_CIGAR_READS")
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK BaseRecalibrator
+command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T PrintReads -R ", reference," -I ", outputSIBAM," -BQSR ", covfile1, " -U ALLOW_N_CIGAR_READS -o ", outputSIRBAM)
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK PrintReads
+command <- paste0("java -Xmx4g -jar ", gatk, " -nct 4 -T BaseRecalibrator -R ", reference, " -knownSites ", knownsnps, " -I ", outputSIRBAM," -o ", covfile2, " -U ALLOW_N_CIGAR_READS")
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK BaseRecalibrator
+command <- paste0("java -Xmx4g -jar ", gatk, " -T AnalyzeCovariates -R ", reference, " -before ", covfile1, " -after ", covfile2, " -U ALLOW_N_CIGAR_READS -plots ", plotfile)
+cat(system(command, intern=TRUE), file=logfile, append=TRUE, sep="\n")   # Call the GATK AnalyzeCovariates
 
 

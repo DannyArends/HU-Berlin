@@ -154,10 +154,16 @@ cat("BFMI - Het:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] =
 cat("BFMI - B6n:", round(colMeans(cBfmi) - colMeans(merged[colorz[colorz != 1] == 3,]),d=2), "\n")
 
 ## Current model *No family effect*
-op <- par(mfrow=c(1, 2), cex.main=1.3, cex.axis=1.2,cex.lab=1.3)
+op <- par(mfrow=c(2, 2), cex.main=1.3, cex.axis=1.2,cex.lab=1.3)
+
+plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "-log10(pvalue)", xlab = "Chromosome 3: 32.5 - 40 Mb", xaxt='n', las = 2, main= "a) QTL profile Fat mass (Day 42)")
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red",lwd=3)
+points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = colz, cex=0.5)
+axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
+
 ngrowth <- apply(growth, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); return(aa$coefficients["(Intercept)"] + aa$residuals) })
 colnames(ngrowth) <- seq(21,70,7)
-plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "a) Growth curves", sub="Showing individuals from generation 28", ylab = "Body mass (g)", xlab="Time (days)",las=2)
+plot(c(20,72),c(10,65), t = 'n', xaxt='n', main = "b) Body mass", ylab = "Body mass (g)", xlab="Time (days)",las=2)
 rect(0,0,((28-21)/2) + 21,100, col=rgb(0,0,1,0.3), border=FALSE)
 rect(((42-35)/2) + 35,0,100,100, col=rgb(0,1,0,0.3), border=FALSE)
 boxplot(ngrowth[colorz == 1,], at = seq(21,70,7)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
@@ -168,9 +174,22 @@ points(x = seq(21,70,7), y = apply(ngrowth[colorz == 3,],2,median),t='l', col=rg
 points(x = seq(21,70,7), y = apply(ngrowth[colorz == 1,],2,median),t='l', col=rgb(1,0.4,0,0.5),lwd=2)
 legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white",cex=1.2)
 
+
+nfat <- apply(fat, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); bb <- rep(NA,length(x));bb[as.numeric(names(aa$residuals))] <- aa$residuals; bb <- bb + aa$coefficients["(Intercept)"]; return(bb) })
+colnames(nfat) <- c(42, 56, 70)
+plot(c(40,72),c(0,25), t = 'n', xaxt='n', main = "c) Fat mass", ylab = "Fat mass (g)", xlab="Time (days)",las=2)
+boxplot(nfat[colorz == 1,], at = c(42, 56, 70)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
+boxplot(nfat[colorz == 2,], at = c(42, 56, 70), col=rgb(0.5,0.5,0.5,1), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
+boxplot(nfat[colorz == 3,], at = c(42, 56, 70)-1.1, col=rgb(0,0,1,0.5), add=TRUE, pars=list(boxwex=.8),xaxt='n', notch=TRUE, yaxt='n')
+points(x = c(42, 56, 70), y = apply(nfat[colorz == 1,],2, median,na.rm=TRUE),t='l', col=rgb(1,0.4,0,0.5),lwd=2)
+points(x = c(42, 56, 70), y = apply(nfat[colorz == 2,],2, median,na.rm=TRUE),t='l', col=rgb(0.5,0.5,0.5,1),lwd=2)
+points(x = c(42, 56, 70), y = apply(nfat[colorz == 3,],2, median,na.rm=TRUE),t='l', col=rgb(0,0,1,0.5),lwd=2)
+legend("topleft", c("BFMI","Heterozygous", "B6N"), fill = c(rgb(1,0.4,0,0.5),rgb(0.5,0.5,0.5,1),rgb(0,0,1,0.5)), title="UNC5048297 genotype",bg="white",cex=1.2)
+
+
 nfatlean <- apply(fatlean, 2, function(x){ aa <- lm(as.numeric(x) ~ wsize + wlabel + season); bb <- rep(NA,length(x));bb[as.numeric(names(aa$residuals))] <- aa$residuals; bb <- bb + aa$coefficients["(Intercept)"]; return(bb) })
 colnames(nfatlean) <- c(42, 56, 70)
-plot(c(40,72),c(0,0.75), t = 'n', xaxt='n', yaxt='n', main = "b) Fat percentage", sub="Showing individuals from generation 28", ylab = "Fat / (Fat + Lean) (%)", xlab="Time (days)",las=2)
+plot(c(40,72),c(0,0.75), t = 'n', xaxt='n', yaxt='n', main = "d) Fat percentage", ylab = "Fat / (Fat + Lean) (%)", xlab="Time (days)",las=2)
 boxplot(nfatlean[colorz == 1,], at = c(42, 56, 70)+1.1, col=rgb(1,0.4,0,0.5), pars=list(boxwex=.8), xaxt='n', notch=TRUE,add = TRUE, yaxt='n')
 boxplot(nfatlean[colorz == 2,], at = c(42, 56, 70), col=rgb(0.5,0.5,0.5,1), add=TRUE, pars=list(boxwex=.8), notch=TRUE, yaxt='n')
 boxplot(nfatlean[colorz == 3,], at = c(42, 56, 70)-1.1, col=rgb(0,0,1,0.5), add=TRUE, pars=list(boxwex=.8),xaxt='n', notch=TRUE, yaxt='n')

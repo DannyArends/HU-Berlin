@@ -19,6 +19,12 @@ phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))       
 phenotypes <- phenotypes[-which(rownames(phenotypes) %in% wrongIND),]                                         # Remove the faulty individuals from the phenotypes
 genotypes <- genotypes[,-which(colnames(genotypes) %in% wrongIND)]                                            # Remove the faulty individuals from the genotypes
 
+GinP <- which(colnames(genotypes) %in% rownames(phenotypes))
+selected <- colnames(genotypes)[GinP]
+
+write.table(cbind(rownames(genotypes), genotypes[,selected]),"D:/Papers/megaMuga/Additional files/Supplement2 - Genotypes.txt",sep="\t",quote=FALSE,row.names=FALSE)
+write.table(cbind(rownames(phenotypes), phenotypes)[selected,],"D:/Papers/megaMuga/Additional files/Supplement3 - Phenotypes.txt",sep="\t",quote=FALSE,row.names=FALSE)
+
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
 F1 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]                                                 # The F2 individuals
 

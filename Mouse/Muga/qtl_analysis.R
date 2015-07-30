@@ -373,3 +373,17 @@ mart      <- useMart("ensembl", "mmusculus_gene_ensembl")
 allgenes  <- getBM(attributes = c("ensembl_gene_id", "mgi_symbol", "mgi_description", "chromosome_name", "start_position", "end_position"), filter=c("chromosomal_region"), values=regionO, mart = mart)
 
 
+#### Plot chromosome 3, and looking into the second QTL
+
+setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
+map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+
+setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+qtls <- read.table("Analysis/qtls_mri70d_fatDlean.txt",   sep="\t")
+
+ch3 <- rownames(map[which(map[rownames(qtls),1]==3),])
+plot(qtls[ch3,],t='l',lwd=2,main="Fat / Lean")
+
+
+qtls <- read.table("Analysis/qtls_mri70d_fatDlean_cof_UNC5048297.txt",   sep="\t")
+qtls["UNC4768063",]

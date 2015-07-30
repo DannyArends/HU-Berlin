@@ -100,8 +100,8 @@ genotypes[,c("6661385","6661114","6662242","6661117")]
 
 
 setwd("E:/Mouse/ClassicalPhenotypes/AIL")
-qtl42FatO  <- read.table("Analysis/qtls_mri70d_fat.txt",   sep="\t")
-qtl42Fat   <- read.table("Analysis/kasp/QTL_mri70d_fat_kasp.txt",   sep="\t")
+qtl42FatO  <- read.table("Analysis/qtls_mri42d_fat.txt",   sep="\t")
+qtl42Fat   <- read.table("Analysis/kasp/QTL_mri42d_fat_kasp.txt",   sep="\t")
 qtl42Fat   <- rbind(qtl42Fat, qtl42FatO)
 
 
@@ -118,13 +118,13 @@ colz <- rep("black", nrow(submap))
 colz[grep("KM", rownames(submap))] <- "red"
 
 #op <- par(mfrow=c(1,3))
-png("Analysis/Region_Chr3_Before.png")
-op <- par(cex=1.5)
+#png("Analysis/Region_Chr3_Before.png")
+#op <- par(cex=1.5)
 plot(c(32500000, 40000000), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3: 30 Mb - 45 Mb", xaxt='n', las = 2, main= "QTL  + Lab markers")
 points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red",lwd=3)
 points(x = as.numeric(as.character(submap[,"Mb_NCBI38"])), y = rep(-1.3, nrow(submap)), pch="|", col = colz, cex=0.5)
 axis(1, at=seq(32500000, 40000000, 2500000), seq(32500000, 40000000, 2500000) / 1000000)
-dev.off()
+#dev.off()
 
 submapO <- submap[-grep("KM", rownames(submap)),]
 png("Analysis/Region_Chr3_After.png")

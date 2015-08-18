@@ -1,5 +1,4 @@
 
-
 seqtk sample -s100 /home/neubert/BFMImm10/BFMI860_L008_R1.fastq.gz 10000 > BFMI_subset_R1.fq
 seqtk sample -s100 /home/neubert/BFMImm10/BFMI860_L008_R2.fastq.gz 10000 > BFMI_subset_R2.fq
 

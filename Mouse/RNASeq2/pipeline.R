@@ -6,12 +6,13 @@
 
 # Execute function, does not execute when outputfile exists
 execute <- function(x, outputfile = NA, intern = FALSE){
-  if(!is.na(outputfile) && file.exists(outputfile)){ cat("Output for step exists, skipping"); return("") }
+  if(!is.na(outputfile) && file.exists(outputfile)){ cat("Output for step exists, skipping this step\n"); return("") }
   cat("----", x, "\n"); res <- system(x, intern = intern); cat(">>>>", res[1], "\n")
   if(res[1] >= 1){ cat("Error external process did not finish\n\n"); q("no") }
 }
 
 # Input filename (Should be supplied as input to this script)          e.g.:       nohup Rscript pipeline.R /home/arends/RNASeq/FastQ/4422_GCCAAT_L001 > 4422_GCCAAT_L001.log 2>&1&
+# Input filename (Should be supplied as input to this script)          e.g.:       nohup Rscript pipeline.R /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001 > 4422_GCCAAT_L001.log 2>&1&
 inputfile <- as.character(commandArgs(trailingOnly = TRUE)[1])
 #inputfile <-"/home/arends/RNASeq/FastQ/4422_GCCAAT_L001"
 
@@ -21,6 +22,8 @@ base         <- strsplit(inputfile, "/")[[1]]
 fname        <- base[length(base)]
 filebase     <- paste0(paste0(inputfile,".output/"), fname)
 readgroupID  <- as.numeric(paste0(strsplit(fname,"")[[1]][1:4],collapse=""))
+
+cat(base," ", fname, " ", filebase,"\n")
 
 # Locations, executable names and constants
 sampledescription      <- "/home/arends/RNASeq/Experiment/SampleDescription.txt"
@@ -73,25 +76,38 @@ execute(paste0("ln -s ",  reference.fa, " ", reference.bt2idx.fa), reference.bt2
 transcriptome.index  <- "/home/share/genomes/mm10/tophat2/Mus_musculus.GRCm38.genes"
 execute(paste0("tophat2 -G ", reference.gtf, " --transcriptome-index=", transcriptome.index, " ", reference.bt2idx), transcriptome.index)
 
-## TODO: Add the chastity filter: zcat ${h}_R${i}_001.fastq.gz | paste - - - - | grep ':N:' | tr '\t' '\n' | gzip > ${h}_R${i}_001.subset.onlyGood.fastq.gz
+## The chastity filter: zcat ${h}_R${i}_001.fastq.gz | paste - - - - | grep ':N:' | tr '\t' '\n' | gzip > ${h}_R${i}_001.subset.onlyGood.fastq.gz
+samples   <- read.table(sampledescription,sep="\t",header=TRUE, colClasses="character")
+inS       <- grepl(fname, paste(samples[,"Lib_id"],samples[,"TagLane"],sep="_"))
+if(sum(inS) != 1){ cat("ERROR: Cannot find the required sample description for: ", fname,"\n"); q("no") }
 
+cursample <- samples[which(inS),]
+cat("-- Starting analysis for sample:", as.character(cursample["core_name"]), "Needs chastity filter", as.character(cursample["AllReads"]),"\n")
+  
+if(cursample["AllReads"] == "Yes"){
+  cat("Applying chastity filter to ", paste0(inputfile,"_R1_001.fastq.gz"), "\n")
+  execute(paste0("zcat ", paste0(inputfile,"_R1_001.fastq.gz"), " | paste - - - - | grep ':N:' | tr '\t' '\n' | gzip > ",paste0(inputfile, "CF", "_R1_001.fastq.gz")), paste0(inputfile, "CF", "_R1_001.fastq.gz"))
+  cat("Applying chastity filter to ", paste0(inputfile,"_R2_001.fastq.gz"), "\n")
+  execute(paste0("zcat ", paste0(inputfile,"_R2_001.fastq.gz"), " | paste - - - - | grep ':N:' | tr '\t' '\n' | gzip > ",paste0(inputfile, "CF", "_R2_001.fastq.gz")), paste0(inputfile, "CF", "_R2_001.fastq.gz"))
+  inputfile <- paste0(inputfile, "CF")
+}
 
 # Trim reads by Trimmomatic
-trimmomatic.files  <- c(paste0(inputfile,"_R1_001.subset.fastq.gz"), paste0(inputfile,"_R2_001.subset.fastq.gz"), paste0(filebase,"_R1.P.fastq.gz"), paste0(filebase,"_R1.U.fastq.gz"), paste0(filebase,"_R2.P.fastq.gz"), paste0(filebase,"_R2.U.fastq.gz"))
+trimmomatic.files  <- c(paste0(inputfile,"_R1_001.fastq.gz"), paste0(inputfile,"_R2_001.fastq.gz"), paste0(filebase,"_R1.P.fastq.gz"), paste0(filebase,"_R1.U.fastq.gz"), paste0(filebase,"_R2.P.fastq.gz"), paste0(filebase,"_R2.U.fastq.gz"))
 trimmomatic.exec   <- "java -jar /opt/Trimmomatic-0.32/trimmomatic-0.32.jar"
 trimmomatic.opts   <- "ILLUMINACLIP:/opt/Trimmomatic-0.32/adapters/TruSeq3-PE-2.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
 
 execute(paste0(trimmomatic.exec, " PE ", paste0(trimmomatic.files, collapse=" "), " ", trimmomatic.opts), trimmomatic.files[3])
 
 # Alignment using bowtie2
-bowtie2.file <- paste0(filebase, ".aln.bam")
-execute(paste0(bowtie2.exec, " -x ", reference.bt2idx, " -1 ", trimmomatic.files[3]," -2 ", trimmomatic.files[5]," -U ", trimmomatic.files[4], ",", trimmomatic.files[6]," -X 2000 -I 50 | ",samtools.exec," view -bS - > ",bowtie2.file), bowtie2.file)
+#bowtie2.file <- paste0(filebase, ".aln.bam")
+#execute(paste0(bowtie2.exec, " -x ", reference.bt2idx, " -1 ", trimmomatic.files[3]," -2 ", trimmomatic.files[5]," -U ", trimmomatic.files[4], ",", trimmomatic.files[6]," -X 2000 -I 50 | ",samtools.exec," view -bS - > ",bowtie2.file), bowtie2.file)
 
 # Aligment using tophat2
-#tophat2.file    <- paste0(filebase, ".tophat2.aln.bam")
-#tophat.options  <- paste0("--prefilter-multihits --rg-id ", readgroupID, " --rg-sample ", fname, " --rg-library RNA-seq --rg-platform Illumina --b2-sensitive --read-gap-length 12 --read-mismatches 2 --read-edit-dist 13 --max-insertion-length 20 --max-deletion-length 30 --num-threads 2",collapse="")
-#tophat.log      <- paste0(filebase, ".tophat2.log")
-#execute(paste0("tophat2"," -o ", tophat2.file, " --transcriptome-index ", transcriptome.index, " ", tophat.options, " ", reference.bt2idx, " ", trimmomatic.files[3], " ", trimmomatic.files[5], ",", trimmomatic.files[4], ",", trimmomatic.files[6], " > ", tophat.log,collapse=""))
+tophat2.file    <- paste0(filebase, ".tophat2.aln.bam")
+tophat.options  <- paste0("--prefilter-multihits --rg-id ", readgroupID, " --rg-sample ", fname, " --rg-library RNA-seq --rg-platform Illumina --b2-sensitive --read-gap-length 12 --read-mismatches 2 --read-edit-dist 13 --max-insertion-length 20 --max-deletion-length 30 --num-threads 2",collapse="")
+tophat.log      <- paste0(filebase, ".tophat2.log")
+execute(paste0("tophat2"," -o ", tophat2.file, " --transcriptome-index ", transcriptome.index, " ", tophat.options, " ", reference.bt2idx, " ", trimmomatic.files[3], " ", trimmomatic.files[5], ",", trimmomatic.files[4], ",", trimmomatic.files[6], " > ", tophat.log,collapse=""))
 
 # Sort and remove duplicates
 samtools.file    <- paste0(filebase, ".aln.sort")

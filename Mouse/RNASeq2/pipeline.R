@@ -43,6 +43,7 @@ indels.intervals    <- "/home/share/genomes/mm10/output.indels.intervals"
 picarddict.exec     <- "java -Xmx4g -jar /opt/picard-tools-1.99/CreateSequenceDictionary.jar"
 picardrmdup.exec    <- "java -Xmx4g -jar /opt/picard-tools-1.99/MarkDuplicates.jar"
 picardrg.exec       <- "java -Xmx4g -jar /opt/picard-tools-1.99/AddOrReplaceReadGroups.jar"
+picardreo.exec      <- "java -Xmx4g -jar /opt/picard-tools-1.99/ReorderSam.jar"
 gatk.exec           <- "java -Xmx4g -jar /opt/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar"
 b2build.exec        <- "bowtie2-build"
 bowtie2.exec        <- "bowtie2"
@@ -100,14 +101,15 @@ trimmomatic.opts   <- "ILLUMINACLIP:/opt/Trimmomatic-0.32/adapters/TruSeq3-PE-2.
 execute(paste0(trimmomatic.exec, " PE ", paste0(trimmomatic.files, collapse=" "), " ", trimmomatic.opts), trimmomatic.files[3])
 
 # Alignment using bowtie2
-#bowtie2.file <- paste0(filebase, ".aln.bam")
-#execute(paste0(bowtie2.exec, " -x ", reference.bt2idx, " -1 ", trimmomatic.files[3]," -2 ", trimmomatic.files[5]," -U ", trimmomatic.files[4], ",", trimmomatic.files[6]," -X 2000 -I 50 | ",samtools.exec," view -bS - > ",bowtie2.file), bowtie2.file)
+#alignment.file <- paste0(filebase, ".aln.bam")
+#execute(paste0(bowtie2.exec, " -x ", reference.bt2idx, " -1 ", trimmomatic.files[3]," -2 ", trimmomatic.files[5]," -U ", trimmomatic.files[4], ",", trimmomatic.files[6]," -X 2000 -I 50 | ",samtools.exec," view -bS - > ",alignment.file), alignment.file)
 
 # Aligment using tophat2
-tophat2.file    <- paste0(filebase, ".tophat2.aln.bam")
+alignment.file    <- paste0(filebase, ".tophat2.aln.bam")
 tophat.options  <- paste0("--prefilter-multihits --rg-id ", readgroupID, " --rg-sample ", fname, " --rg-library RNA-seq --rg-platform Illumina --b2-sensitive --read-gap-length 12 --read-mismatches 2 --read-edit-dist 13 --max-insertion-length 20 --max-deletion-length 30 --num-threads 2",collapse="")
 tophat.log      <- paste0(filebase, ".tophat2.log")
-execute(paste0("tophat2"," -o ", tophat2.file, " --transcriptome-index ", transcriptome.index, " ", tophat.options, " ", reference.bt2idx, " ", trimmomatic.files[3], " ", trimmomatic.files[5], ",", trimmomatic.files[4], ",", trimmomatic.files[6], " > ", tophat.log,collapse=""))
+execute(paste0("tophat2"," -o ", alignment.file, " --transcriptome-index ", transcriptome.index, " ", tophat.options, " ", reference.bt2idx, " ", trimmomatic.files[3], " ", trimmomatic.files[5], ",", trimmomatic.files[4], ",", trimmomatic.files[6], " > ", tophat.log, collapse=""), alignment.file)
+alignment.file    <- paste0(filebase, ".tophat2.aln.bam/accepted_hits.bam")
 
 # Sort and remove duplicates
 samtools.file    <- paste0(filebase, ".aln.sort")
@@ -115,21 +117,29 @@ samtools.bamfile <- paste0(samtools.file, ".bam")
 picard.file <- paste0(filebase, ".aln.sort.rmdup.bam")
 metrics.file <- paste0(filebase, ".metrics.txt")
 
-execute(paste0(samtools.exec, " sort -@ 4 -m 2G ",bowtie2.file, " ", samtools.file), samtools.bamfile)
+execute(paste0(samtools.exec, " sort -@ 4 -m 2G ",alignment.file, " ", samtools.file), samtools.bamfile)
 execute(paste0(picardrmdup.exec, " REMOVE_DUPLICATES=true INPUT=", samtools.bamfile, " OUTPUT=", picard.file, " METRICS_FILE=", metrics.file), picard.file)
-execute(paste0(samtools.exec, " flagstat ", picard.file))
+#execute(paste0(samtools.exec, " flagstat ", picard.file))
 
 # Add read groups
-picard.rgfile <-  paste0(filebase, ".aln.sort.rmdup.rg.bam")
+picard.rgfile             <-  paste0(filebase, ".aln.sort.rmdup.rg.bam")
+picard.rgfile.reordered   <-  paste0(filebase, ".aln.sort.rmdup.rg.o.bam")
 execute(paste0(picardrg.exec, " INPUT=", picard.file, " OUTPUT=", picard.rgfile, " CREATE_INDEX=false RGID=",readgroupID," RGLB=LIB860 RGPL=Illumina RGPU=X RGSM=860"), picard.rgfile)
 
 # index the bamfile
 indexed.rgfile <-  paste0(filebase, ".aln.sort.rmdup.rg.bam.bai")
 execute(paste0(samtools.exec, " index ", picard.rgfile), indexed.rgfile)
 
+# Reorder the bam file so it matches the ordering of the fasta file (how it gets to be out of order, I have no f*cking clue)
+execute(paste0(picardreo.exec, " I=", picard.rgfile," O=", picard.rgfile.reordered," REFERENCE=",reference.fa), picard.rgfile.reordered)
+
+# index the bamfile
+indexed.rgfile <-  paste0(filebase, ".aln.sort.rmdup.rg.o.bam.bai")
+execute(paste0(samtools.exec, " index ", picard.rgfile.reordered), indexed.rgfile)
+
 # Indel realign
 gatk.realigned <- paste0(filebase, ".aln.sort.rmdup.rg.realigned.bam")
-execute(paste0(gatk.exec, " -T IndelRealigner -R ", reference.fa, " -targetIntervals ", indels.intervals , " -maxReads 150000 -I ", picard.rgfile, " -o ", gatk.realigned, " -known ", reference.indels, " -U ALLOW_N_CIGAR_READS"), gatk.realigned)
+execute(paste0(gatk.exec, " -T IndelRealigner -R ", reference.fa, " -targetIntervals ", indels.intervals , " -maxReads 150000 -I ", picard.rgfile.reordered, " -o ", gatk.realigned, " -known ", reference.indels, " -U ALLOW_N_CIGAR_READS"), gatk.realigned)
 
 # Base Recalibration
 gatk.cov1 <- paste0(filebase, ".1.covariates")

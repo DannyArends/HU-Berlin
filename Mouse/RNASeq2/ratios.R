@@ -165,6 +165,8 @@ for(x in rownames(pAllele)){
   cat("\n")
 }
 rownames(results) <- 1:nrow(results)
+write.table(results,"annotatedSNPsChiSq.txt", sep = "\t")
+
 # At which SNPs do the father and the mother differ ?
 matB6Ndiff <- NULL
 matBFMIdiff <- NULL

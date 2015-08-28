@@ -82,9 +82,9 @@ for(sname in c(matB6N,matBFMI)){
   }
   cat("Done", sname,"\n")
 }
-write.table(probs, "F1_ChiSquare.ratios.txt", sep="\t")
-write.table(probs, "F1_ChiSquare.probs.txt", sep="\t")
-write.table(chisq, "F1_ChiSquare.adjusted.txt", sep="\t")
+write.table(ratios, "F1_ChiSquare.ratios.txt", sep="\t")
+write.table(probs,  "F1_ChiSquare.probs.txt", sep="\t")
+write.table(chisq,  "F1_ChiSquare.adjusted.txt", sep="\t")
 
 # ChiSquare test of parental allele (Ref, Hetro, Alt)
 pAllele <- matrix(NA,nrow(reads), length(c(B6N,BFMI)), dimnames=list(rownames(reads), c(B6N,BFMI)))
@@ -96,8 +96,6 @@ for(sname in c(B6N, BFMI)){
       i <- which.max(c(chisq.test(rbind(observed, c(totalreads, 1)))$p.value, chisq.test(observed)$p.value, chisq.test(rbind(observed, c(1, totalreads)))$p.value))
       pAllele[x, sname] <- c("Ref", "Hetro", "Alt")[i]
     }
-    #    cat(x, reads[x,1], c("Ref", "Hetro", "Alt")[i], "\n")
-    #  cat(x, reads[x,1], chisq.test(observed, p=c(.99, .01))$p.value, chisq.test(observed)$p.value, chisq.test(observed, p=c(.01, .99))$p.value,"\n")
   }
   cat("Done", sname,"\n")
 }
@@ -131,19 +129,19 @@ for(x in rownames(pAllele)){
   idx <- which(Gene_Exon[,"chr"] == snp.chr & Gene_Exon[,"start"] <= snp.loc & Gene_Exon[,"end"] >= snp.loc)
   cat("", length(idx),"")
   if(length(idx) == 0){
-    mrow <- c(x, rep("", ncol(Gene_Exon)), pAllele[x,], round(ratios[x,],3) * 100, chisq[x,], probs[x,])
+    mrow <- c(x, rep("", ncol(Gene_Exon)), pAllele[x,], ratios[x,], chisq[x,], probs[x,])
     cat(length(mrow))
     results <- rbind(results, mrow)
   }else if(length(idx) == 1){
-    mrow <- c(x, unlist(lapply(Gene_Exon[idx,],as.character)), pAllele[x,], round(ratios[x,],3) * 100, chisq[x,], probs[x,])
+    mrow <- c(x, unlist(lapply(Gene_Exon[idx,],as.character)), pAllele[x,], ratios[x,], chisq[x,], probs[x,])
     cat(length(mrow))
     results <- rbind(results, mrow)
   }else{
     mrow <- cbind(x, apply(Gene_Exon[idx,],2,as.character))
-    pRow <- matrix(unlist(rep(pAllele[x,], nrow(mrow))),nrow(mrow),ncol(pAllele),byrow=TRUE,dimnames = list(1:nrow(mrow),colnames(pAllele[x,])))
-    rRow <- matrix(unlist(rep(round(ratios[x,],3) * 100, nrow(mrow))),nrow(mrow),ncol(ratios),byrow=TRUE,dimnames = list(1:nrow(mrow),colnames(ratios[x,])))
-    cRow <- matrix(unlist(rep(chisq[x,], nrow(mrow))),nrow(mrow),ncol(chisq),byrow=TRUE,dimnames = list(1:nrow(mrow),colnames(chisq[x,])))
-    oRow <- matrix(unlist(rep(probs[x,], nrow(mrow))),nrow(mrow),ncol(probs),byrow=TRUE,dimnames = list(1:nrow(mrow),colnames(probs[x,])))
+    pRow <- matrix(unlist(rep(pAllele[x,], nrow(mrow))), nrow(mrow), ncol(pAllele),byrow=TRUE, dimnames = list(1:nrow(mrow),colnames(pAllele[x,])))
+    rRow <- matrix(unlist(rep(ratios[x,],  nrow(mrow))), nrow(mrow), ncol(ratios), byrow=TRUE, dimnames = list(1:nrow(mrow),colnames(ratios[x,])))
+    cRow <- matrix(unlist(rep(chisq[x,],   nrow(mrow))), nrow(mrow), ncol(chisq),  byrow=TRUE, dimnames = list(1:nrow(mrow),colnames(chisq[x,])))
+    oRow <- matrix(unlist(rep(probs[x,],   nrow(mrow))), nrow(mrow), ncol(probs),  byrow=TRUE, dimnames = list(1:nrow(mrow),colnames(probs[x,])))
     mrow <- cbind(mrow, pRow, rRow, cRow, oRow)
     cat(ncol(mrow))
     results <- rbind(results, mrow)
@@ -160,6 +158,9 @@ canonical <- rbind(canonical, c("",""))                                         
 setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/ReAnalysisSNPs")
 results <- read.table("annotatedSNPsChiSq.txt",sep="\t", header=TRUE, check.names=FALSE)
 results <- results[which(results[,"transcript_id"] %in% canonical[,2]),]                        # Only take the canonical transcripts
+colnames(results)[20:25] <- paste0(colnames(results)[20:25],"_ChiSq")                           # Add the correct headers
+colnames(results)[26:31] <- paste0(colnames(results)[26:31],"_P")                               # Add the correct headers
+
 
 isEqual <- function(x){
   if(is.na(x[1]) || is.na(x[2])) return(TRUE)
@@ -179,8 +180,7 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After basic QC there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
-# After basic QC there are 50211 SNPs, there are 16622  not in genes, and 33589 SNPs in 5942 genes
-
+#After basic QC there are 45300 SNPs, there are 16099 not in genes, and 29201 SNPs in 5265 genes
 
 BFMIalleles <- apply(results[,BFMI],1,function(x){
   if(is.na(x[1])) return(x[2])
@@ -206,10 +206,8 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting BFMI != B6N there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
+#After selecting BFMI != B6N there are 25621 SNPs, there are 6768 not in genes, and 18853 SNPs in 3758 genes
 
-# Calculate the summed ChiSq per group and decide if they are different
-colnames(results)[20:25] <- paste0(colnames(results)[20:25],"_ChiSq")
-colnames(results)[26:31] <- paste0(colnames(results)[26:31],"_P")
 
 diffs <- NULL
 ratios <- NULL

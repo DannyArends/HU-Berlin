@@ -192,6 +192,17 @@ B6Nalleles <- apply(results[,B6N],1,function(x){
   return(x[1])
 })
 
+onAutosome <- which(results[,"chr"] != "X" & results[,"chr"] != "Y" & results[,"chr"] != "MT")
+results <- results[onAutosome,]
+
+snp.unique    <- length(unique(results[,1]))
+snp.outside   <- nrow(results[which(results[,2] == ""),])
+snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
+genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
+
+cat("After selecting autosomes there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
+#After selecting autosomes there are 44024 SNPs, there are 16099 not in genes, and 27925 SNPs in 5082 genes
+
 # At which SNPs do the father and the mother differ ?
 equalto <- rep(FALSE, nrow(results))
 for(x in 1:nrow(results)){
@@ -206,8 +217,37 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting BFMI != B6N there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
-#After selecting BFMI != B6N there are 25621 SNPs, there are 6768 not in genes, and 18853 SNPs in 3758 genes
+##After selecting BFMI != B6N there are 25515 SNPs, there are 6759 not in genes, and 18756 SNPs in 3707 genes
 
+plot(apply(results[,paste0(matB6N,"_ChiSq")],1,sum) - apply(results[,paste0(matBFMI,"_ChiSq")],1,sum))
+
+matB6N.sum <- apply(results[,paste0(matB6N,"_ChiSq")],1,sum,na.rm=TRUE)
+matBFMI.sum <- apply(results[,paste0(matBFMI,"_ChiSq")],1,sum,na.rm=TRUE)
+
+
+oldResults <- read.table("Table S2.txt",sep="\t", header = TRUE)
+snpIDnames <- paste(oldResults[,"CHROM"], oldResults[,"POS"], oldResults[,"REF"],"")
+snpShared <- snpIDnames[which(snpIDnames %in% as.character(results[,1]))]
+cat("SNPs shared between 100 % analysis and chiSq =", round(length(snpShared) / length(snpIDnames),3) * 100,"%\n")
+
+write.table(results[which(as.character(results[,1]) %in% snpShared),],"ChiSquareTableS2.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
+#
+# Find things which are different, use permutation on our data
+#
+
+randomScoresSum <- NULL
+randomScores <- NULL
+for(x in 1:10000){
+  i <- sample(nrow(results), 1)
+  randomScoresSum <- c(randomScoresSum, max(abs(c(matB6N.sum[i],matBFMI.sum[i])),na.rm=TRUE))
+  randomScores <- c(randomScores, max(abs(results[i,c(paste0(matB6N,"_ChiSq"), paste0(matBFMI,"_ChiSq"))]),na.rm=TRUE))
+}
+threshold.a5S <- sort(randomScoresSum)[length(randomScoresSum) * .95] ; threshold.a5 <- sort(randomScores)[length(randomScores) * .95]
+threshold.a1S <- sort(randomScoresSum)[length(randomScoresSum) * .99] ; threshold.a1 <- sort(randomScores)[length(randomScores) * .99]
+
+showsASE <- results[unique(c(which(matB6N.sum > threshold.a5S | matB6N.sum < -threshold.a5S), which(matBFMI.sum > threshold.a5S | matBFMI.sum < -threshold.a5S))),]
+write.table(showsASE, "ChiSquareAllSupplTable.txt",sep="\t",row.names=FALSE,quote=FALSE)
 
 diffs <- NULL
 ratios <- NULL

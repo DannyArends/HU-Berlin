@@ -237,17 +237,65 @@ write.table(results[which(as.character(results[,1]) %in% snpShared),],"ChiSquare
 #
 
 randomScoresSum <- NULL
+randomScoresDiff <- NULL
 randomScores <- NULL
 for(x in 1:10000){
   i <- sample(nrow(results), 1)
   randomScoresSum <- c(randomScoresSum, max(abs(c(matB6N.sum[i],matBFMI.sum[i])),na.rm=TRUE))
+  randomScoresDiff <- c(randomScoresSum, max(abs(matB6N.sum[i] - matBFMI.sum[i]),na.rm=TRUE))
   randomScores <- c(randomScores, max(abs(results[i,c(paste0(matB6N,"_ChiSq"), paste0(matBFMI,"_ChiSq"))]),na.rm=TRUE))
 }
-threshold.a5S <- sort(randomScoresSum)[length(randomScoresSum) * .95] ; threshold.a5 <- sort(randomScores)[length(randomScores) * .95]
-threshold.a1S <- sort(randomScoresSum)[length(randomScoresSum) * .99] ; threshold.a1 <- sort(randomScores)[length(randomScores) * .99]
+threshold.a5S <- sort(randomScoresSum)[length(randomScoresSum) * .95] ; threshold.a5 <- sort(randomScores)[length(randomScores) * .95] ; threshold.a5d <- sort(randomScoresDiff)[length(randomScoresDiff) * .95]
+threshold.a1S <- sort(randomScoresSum)[length(randomScoresSum) * .99] ; threshold.a1 <- sort(randomScores)[length(randomScores) * .99] ; threshold.a1d <- sort(randomScoresDiff)[length(randomScoresDiff) * .99]
 
-showsASE <- results[unique(c(which(matB6N.sum > threshold.a5S | matB6N.sum < -threshold.a5S), which(matBFMI.sum > threshold.a5S | matBFMI.sum < -threshold.a5S))),]
-write.table(showsASE, "ChiSquareAllSupplTable.txt",sep="\t",row.names=FALSE,quote=FALSE)
+results <- results[unique(c(which(matB6N.sum > threshold.a5S | matB6N.sum < -threshold.a5S), which(matBFMI.sum > threshold.a5S | matBFMI.sum < -threshold.a5S), which(matB6N.sum-matBFMI.sum > threshold.a5d | matB6N.sum-matBFMI.sum < -threshold.a5d))),]
+
+snp.unique    <- length(unique(results[,1]))
+snp.outside   <- nrow(results[which(results[,2] == ""),])
+snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
+genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
+
+cat("After selecting looking for ASE there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
+
+### TODO: Add the mgi descriptions to the genes.
+ensembleIDs <- as.character(unique(showsASE[,"gene_id"]))
+library(biomaRt)
+mart      <- useMart("ensembl", "mmusculus_gene_ensembl")
+descriptions  <- getBM(values = ensembleIDs, filters = "ensembl_gene_id", attributes = c("ensembl_gene_id", "mgi_description"), mart = mart)
+
+results <- cbind(results, mgi_description = NA)
+for(x in 1:nrow(results)){
+  ix <- which(descriptions[,"ensembl_gene_id"]  == results[x,"gene_id"])
+  if(length(ix) == 1)results[x, "mgi_description"] <- descriptions[ix, "mgi_description"]
+}
+
+results <- cbind(results, diff = NA)
+results <- cbind(results, absdiff = NA)
+for(x in 1:nrow(results)){
+  results[x,"diff"] <- sum(results[x,paste0(matB6N,"_ChiSq")],na.rm=TRUE) - sum(results[x,paste0(matBFMI,"_ChiSq")],na.rm=TRUE)
+  results[x,"absdiff"] <- abs(results[x,"diff"])
+}
+
+results <- cbind(results, meanRatioMatB6N = apply(results[,matB6N],1,mean,na.rm=TRUE))
+results <- cbind(results, sdRatioMatB6N = apply(results[,matB6N],1,sd,na.rm=TRUE))
+results <- cbind(results, meanRatioMatBFMI = apply(results[,matBFMI],1,mean,na.rm=TRUE))
+results <- cbind(results, sdRatioMatBFMI = apply(results[,matBFMI],1,sd,na.rm=TRUE))
+results <- cbind(results, diffRatio = abs(results[,"meanRatioMatB6N"] - results[,"meanRatioMatBFMI"]))
+
+## High standard deviations  > 20 in one of the groups and you are out
+## SNPs at which one of the parent is hetro is out
+
+
+
+write.table(results, "ChiSquareAllSupplTable.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
+# Filter results:
+# - False positives (Might be interesting because of the ifference in expression reflected in the ChiSq scores
+# - True positives
+# - False Negatives / Borderline
+
+write.table(results, "ChiSquareFilteredSupplTable.txt",sep="\t",row.names=FALSE,quote=FALSE)
+
 
 diffs <- NULL
 ratios <- NULL

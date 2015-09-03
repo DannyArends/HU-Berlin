@@ -124,7 +124,7 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting autosomes there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
-#After selecting autosomes there are 44024 SNPs, there are 16099 not in genes, and 27925 SNPs in 5082 genes
+#After selecting autosomes there are 47566 SNPs, there are 7470 not in genes, and 40096 SNPs in 6260 genes
 
 BFMIalleles <- apply(results[,BFMI],1,function(x){ if(is.na(x[1])) return(x[2]) ; return(x[1]) })
 B6Nalleles <- apply(results[,B6N],1,function(x){ if(is.na(x[1])) return(x[2]) ; return(x[1]) })
@@ -144,7 +144,7 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting BFMI != B6N there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
-#After selecting BFMI != B6N there are 24944 SNPs, there are 6565 not in genes, and 18379 SNPs in 3630 genes
+#After selecting BFMI != B6N there are 26101 SNPs, there are 1846 not in genes, and 24255 SNPs in 3961 genes
 
 results[which(results[,1] == "1 9553659 G "),1:15]
 
@@ -160,6 +160,7 @@ oldResults <- read.table("ReAnalysisSNPs/Table S2.txt",sep="\t", header = TRUE)
 snpIDnames <- paste(oldResults[,"CHROM"], oldResults[,"POS"], oldResults[,"REF"],"")
 snpShared <- snpIDnames[which(snpIDnames %in% as.character(results[,1]))]
 cat("SNPs shared between 100 % analysis and chiSq =", round(length(snpShared) / length(snpIDnames),3) * 100,"%\n")
+#SNPs shared between 100 % analysis and chiSq = 85.1 %
 
 # Write the overlap to a separate file
 write.table(results[which(as.character(results[,1]) %in% snpShared),],"ReAnalysisSNPs/ChiSquareTableS2.txt",sep="\t",row.names=FALSE,quote=FALSE)
@@ -188,6 +189,7 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting for ASE there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
+#After selecting for ASE there are 1362 SNPs, there are 139 not in genes, and 1223 SNPs in 415 genes
 
 ### Add the mgi descriptions to the genes.
 ensembleIDs <- as.character(unique(results[,"gene_id"]))
@@ -223,6 +225,7 @@ snp.ingenes   <- length(unique(results[which(results[,2] != ""),1]))
 genes.unique  <- length(unique(results[which(results[,2] != ""),2]))
 
 cat("After selecting for ASE and filtering for concordance there are", snp.unique, "SNPs, there are", snp.outside, "not in genes, and", snp.ingenes, "SNPs in", genes.unique ,"genes\n")
+#After selecting for ASE and filtering for concordance there are 1315 SNPs, there are 137 not in genes, and 1178 SNPs in 402 genes
 
 # Add expression data from: BFMI_RPKM_Qnorm_ANN_AddDom_plusLog2.txt
 expfile <- read.table("Analysis/BFMI_RPKM_Qnorm_ANN_AddDom_plusLog2.txt", sep="\t",header=TRUE,stringsAsFactors=FALSE)
@@ -259,9 +262,22 @@ for(x in 1:nrow(results)){
   if(length(ii) == 1) results[x,"Alt"] <- as.character(populationVCF[ii,"ALT"])
 }
 
+# TODO: Add DP4
 
-# TODO: Add the generegion (intron, exon, intergenic)
+reads <- read.table("ReAnalysisSNPs/allsamples.recal.dp4", sep="\t", header=TRUE, check.names=FALSE,row.names=1)       # load in the DP4 read count
+reads <- reads[which(apply(reads,1,sum) >= 100),]                                                 # Filter for 100 reads across all samples
 
+results <- cbind(results, reads_BFMI = NA)
+results <- cbind(results, reads_B6N = NA)
+results <- cbind(results, reads_matB6N = NA)
+results <- cbind(results, reads_matBFMI = NA)
+
+for(x in 1:nrow(results)){
+  results[x,"reads_BFMI"] <- paste0(sum(reads[results[x,1],paste0(BFMI,"_Ref")]),    ";", sum(reads[results[x,1],paste0(BFMI,"_Alt")]))
+  results[x,"reads_B6N"] <- paste0(sum(reads[results[x,1],paste0(B6N,"_Ref")]),     ";", sum(reads[results[x,1],paste0(B6N,"_Alt")]))
+  results[x,"reads_matB6N"] <- paste0(sum(reads[results[x,1],paste0(matBFMI,"_Ref")]), ";", sum(reads[results[x,1],paste0(matBFMI,"_Alt")]))
+  results[x,"reads_matBFMI"] <- paste0(sum(reads[results[x,1],paste0(matB6N,"_Ref")]),  ";", sum(reads[results[x,1],paste0(matB6N,"_Alt")]))
+}
 
 write.table(results, "ReAnalysisSNPs/ChiSquareAllSupplTable.txt",sep="\t",row.names=FALSE,quote=FALSE)
 

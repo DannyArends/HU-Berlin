@@ -17,13 +17,12 @@ library(biomaRt)
 mart      <- useMart("ensembl", "btaurus_gene_ensembl")
 utr_seq   <- getSequence(seqType="5utr", mart=mart, type="ensembl_gene_id",id="ENSBTAG00000007695")
 utr_coords <- getBM(attributes=c('ensembl_gene_id', "ensembl_transcript_id", '5_utr_start', '5_utr_end'), filters='ensembl_gene_id', values="ENSBTAG00000007695", mart=mart)
+
 ## Create the fasta file from the MIRbase reference
+mdata       <- read.table("miRNA.txt",sep="\t",header=TRUE)     # Data from mirbase
+miRNA.bta   <- mdata[which(grepl("bta", mdata[,"ID"])),]        # Take the cow known miRNA
 
-mdata <- read.table("miRNA.txt",sep="\t",header=TRUE)     # Data from mirbase
-
-miRNA.bta <- mdata[which(grepl("bta", mdata[,"ID"])),]
-cat("", file="cow.miRNA.fasta")
-
+cat("", file="cow.miRNA.fasta")                                 # Empty the output fasta, and fill it
 for(x in 1:nrow(miRNA.bta)){
   cat(paste0(">", miRNA.bta[x,"Mature1_ID"], "\n"), file="cow.miRNA.fasta",append=TRUE)
   cat(paste0(miRNA.bta[x,"Mature1_Seq"], "\n"), file="cow.miRNA.fasta",append=TRUE)
@@ -33,33 +32,45 @@ for(x in 1:nrow(miRNA.bta)){
   }
 }
 
-#Run prediction
+#Run prediction (on server, since miranda is a linux tool)
 execute("./miRanda-3.3a/src/miranda cow.miRNA.fasta locationsandUTR.fasta | grep '^>bta' > scanout.txt", "scanout.txt")
 
-
-
+# Transfer the scanout back to the local machine
+#library(biomaRt)
+#mart      <- useMart("ensembl", "btaurus_gene_ensembl")
 setwd("E:/Cow/RNA/miRNA")
-SNPs <- read.table("SNPs.txt",sep="\t",header=TRUE,check.names=FALSE)       # Load the SNP data
 
-scan.results <- read.table("scanout.txt")                                   # Load the scanresults
+SNPfasta <- read.table("Something.txt")
+seqs <- SNPfasta[1:nrow(SNPfasta) %% 2 == 0,]
+names(seqs) <- SNPfasta[1:nrow(SNPfasta) %% 2 == 1,]
+names(seqs) <-  gsub(">","", names(seqs))    # get the gene names from the FASTA (we do not use the location)
+
+
+scan.results <- read.table("scanout.txt",colClasses="character")                                     # Load the scanresults
 scan.results[,1] <-  gsub(">bta","bta",scan.results[,1])
 colnames(scan.results) <- c("miRNA_id", "gene_id","score", "energy","from.miRNA","to.miRNA", "from.UTR", "to.UTR", "length", "alignment%", "alignment max%")
 
-write.table(scan.results[which(scan.results[,"energy"] < -10),],"miRNA.scan.output",sep="\t",row.names=FALSE)   # Significant scan results (energy < -10)
+significant <- scan.results[which(as.numeric(scan.results[,"energy"]) < -10),]            # Filter the results for a maximum binding energy of -10
+write.table(significant, "miRNA.scan.output", sep="\t", row.names = FALSE)    # Significant scan results (energy < -10)
 
-significant <- scan.results[which(scan.results[,"energy"] < -10),]
+results <- NULL
 
-genes <-  gsub(">","", readLines("locationsandUTR.fasta")[1:24 %% 2 == 1])
-
-
-for(gene in genes){
-  miRNAs <- scan.results[which(scan.results[,2] == gene),]
-  gene_id <- strsplit(gene,"-")[[1]][2]
-  prime <- strsplit(strsplit(gene,"-")[[1]][3],"")[[1]][1]
-  utr.sequence <- getSequence(seqType = paste0(prime, "utr"), mart = mart, type = "ensembl_gene_id",id = gene_id)
-  utr.coords <- getBM(attributes=c('ensembl_gene_id', paste0(prime,'_utr_start'), paste0(prime,'_utr_end')), filters='ensembl_gene_id', values = gene_id, mart=mart)
-  
+for(name in names(seqs)){
+  onUTR <- significant[which(significant[,"gene_id"] == name), ]
+  mletters <- strsplit(as.character(seqs[name]),"")[[1]]
+  positions <- which(!is.na(as.numeric(mletters)))
+  cnt <- 1
+  for(pos in positions){
+    for(utr in 1:nrow(onUTR)){
+      if(as.numeric(onUTR[utr,"from.UTR"]) <= pos && as.numeric(onUTR[utr,"to.UTR"]) >= pos){
+        #cat("Match", name, "",cnt, onUTR[utr,]),"\n")
+        results <- rbind(results, c(name, cnt, pos, as.character(onUTR[utr,])))
+      }
+    }
+    cnt <- cnt + 1
+  }
 }
+write.table(results,"results.txt",sep="\t")
 
 
 ## PITA

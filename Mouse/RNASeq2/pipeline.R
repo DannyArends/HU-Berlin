@@ -44,7 +44,7 @@ picarddict.exec     <- "java -Xmx4g -jar /opt/picard-tools-1.99/CreateSequenceDi
 picardrmdup.exec    <- "java -Xmx4g -jar /opt/picard-tools-1.99/MarkDuplicates.jar"
 picardrg.exec       <- "java -Xmx4g -jar /opt/picard-tools-1.99/AddOrReplaceReadGroups.jar"
 picardreo.exec      <- "java -Xmx4g -jar /opt/picard-tools-1.99/ReorderSam.jar"
-gatk.exec           <- "java -Xmx6g -jar /opt/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar"
+gatk.exec           <- "java -Xmx10g -jar /opt/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar"
 b2build.exec        <- "bowtie2-build"
 bowtie2.exec        <- "bowtie2"
 samtools.exec       <- "samtools"

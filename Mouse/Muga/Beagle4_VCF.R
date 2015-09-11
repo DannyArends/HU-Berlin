@@ -104,7 +104,7 @@ phased.vcf[1:10,1:10]
 
 # Change the genotype coding
 phased.AHBp <- phased.vcf                                                                         # Copy
-phased.AHBp[, samples] <- apply(phased.AHBp[, samples], 2, fromVCFcode.AHBp)                      # Change coding to AHB
+phased.AHBp[, samples] <- apply(phased.AHBp[, samples], 2, fromVCFcode.AHBp)                      # Change coding to A H0 H1 B
 
 # Order chromosomes in the normal way
 chromosomes  <- c(1:19, "X", "Y", "M")
@@ -114,15 +114,35 @@ for(chr in chromosomes){
 }
 phased.AHBp <- phased.AHBpN
 
-# Analysis of generation 28
-
-# Load in the phenotypes for QTL mapping
+# Load in the phenotypes
 phenotypes <- read.table("Phenotypes/allPhenotypes.txt", sep="\t", header=TRUE, na.strings=c(0, "-", "NA"))
 rownames(phenotypes) <- phenotypes[,"ID"]
 phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                                         # Add the season column to the matrix
 phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.AHBp)),]                                               # We do not have genotypes for all individuals
 
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)] ; F1 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]     # Get the names for each generations
+
+# parent of origin effects
+
+for(m in 1:nrow(phased.AHBp)){
+  pTrans <- matrix(0,2,2,dimnames=list(c("A","B"),c("A","B")))
+  for(i in F2){
+    pG <- phased.AHBp[m, as.character(phenotypes[i,"Vater"])]
+    iG <- phased.AHBp[m, i]
+    if(pG == "A" || pG == "B")   pTrans[pG,pG] <- pTrans[pG,pG] + 1
+    if(pG == "H0" || pG == "H1"){
+      if(iG == "A") pTrans["A","B"] <- pTrans["A","B"] + 1
+      if(iG == "B") pTrans["B","A"] <- pTrans["B","A"] + 1
+    }
+    if(iG == "H0") 
+    if(iG == "H1")
+  }
+}
+
+
+# QTL Analysis of generation 28
+
+
 
 # Filter the genotypes for markers that are seggregating
 phased.AHBp <- phased.AHBp[-which(lapply(apply(phased.AHBp[, F2], 1, table),length) == 1),]
@@ -147,3 +167,6 @@ plot(-log10(p.adjust(pvalues[,5],"BH")), col = as.numeric(as.factor(phased.AHBp[
 ratios <- apply(phased.AHBp[,F2],1,function(x){
   return(sum(x == "H0") / (sum(x == "H0")+sum(x == "H1")))
 })
+
+
+

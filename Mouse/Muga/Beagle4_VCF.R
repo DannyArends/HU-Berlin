@@ -1,15 +1,7 @@
 
-toVCFcode <- function(x){
-  r <- rep(NA,length(x));  r[x == "A"] <- "0/0"; r[x == "H"] <- "0/1";  r[x == "B"] <- "1/1";  r[is.na(x)] <- "./.";  return(r)
-}
 
-fromVCFcode.AHB <- function(x){
-  r <- rep(NA,length(x));  r[x == "0|0"] <- "A";  r[x == "0|1"] <- "H"; r[x == "1|0"] <- "H";  r[x == "1|1"] <- "B";  r[x == ".|."] <- NA;  return(r)
-}
-
-fromVCFcode.AHBp <- function(x){
-  r <- rep(NA,length(x));  r[x == "0|0"] <- "A";  r[x == "0|1"] <- "H0"; r[x == "1|0"] <- "H1";  r[x == "1|1"] <- "B";  r[x == ".|."] <- NA;  return(r)
-}
+source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
+source("D:/Github/HU-Berlin/Mouse/Muga/vcfTools.R")
 
 # Load the genotype call data
 setwd("E:/Mouse/DNA/MegaMuga/")
@@ -26,7 +18,7 @@ locusxdna <- locusxdna[-which(apply(locusxdna,1,function(x){return(sum(is.na(x))
 locusxdna <- locusxdna[,-which(apply(locusxdna,2,function(x){return(sum(is.na(x)))}) == nrow(locusxdna))]
 
 cat("Loaded:", ncol(locusxdna), "individuals,", nrow(locusxdna), "markers\n")  ###Loaded: 479 individuals, 70651 markers
-write.table(locusxdna, "Analysis/AllGenotypes.txt", sep="\t", quote=FALSE)
+if(!file.exists("Analysis/AllGenotypes.txt")) write.table(locusxdna, "Analysis/AllGenotypes.txt", sep="\t", quote=FALSE)
 
 samples <- colnames(locusxdna)
 markers <- rownames(locusxdna)
@@ -122,27 +114,77 @@ phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.AHBp)
 
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)] ; F1 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]     # Get the names for each generations
 
-# parent of origin effects
+counts <- matrix(c(rep(0,6),rep(NA,4)), nrow(phased.AHBp), 10, dimnames = list(rownames(phased.AHBp), c("P12","P21", "M12", "M21", "C12", "C21", "Xp", "Xm", "PO", "Xh")),byrow=TRUE)
 
-for(m in 1:nrow(phased.AHBp)){
-  pTrans <- matrix(0,2,2,dimnames=list(c("A","B"),c("A","B")))
-  for(i in F2){
-    pG <- phased.AHBp[m, as.character(phenotypes[i,"Vater"])]
-    iG <- phased.AHBp[m, i]
-    if(pG == "A" || pG == "B")   pTrans[pG,pG] <- pTrans[pG,pG] + 1
-    if(pG == "H0" || pG == "H1"){
-      if(iG == "A") pTrans["A","B"] <- pTrans["A","B"] + 1
-      if(iG == "B") pTrans["B","A"] <- pTrans["B","A"] + 1
-    }
-    if(iG == "H0") 
-    if(iG == "H1")
+updateCounts <- function(m, type, pG, iG){
+  if(pG == "H0" || pG == "H1"){
+    if(iG == "A")  counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
+    if(iG == "B")  counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
+    if(iG == "H0") counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
+    if(iG == "H1") counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
   }
 }
 
+for(m in 1:nrow(phased.AHBp)){
+  for(i in F2){
+    vG <- phased.AHBp[m, as.character(phenotypes[i, "Vater"])]
+    mG <- phased.AHBp[m, as.character(phenotypes[i, "Mutter"])]
+    iG <- phased.AHBp[m, i]
+    updateCounts(m, "P", vG, iG)
+    updateCounts(m, "M", mG, iG)
+    if(vG == "H0" || vG == "H1" ){
+      if(mG == "H0" || mG == "H1" ){
+        if(iG == "H0") counts[m, "C12"] <- counts[m, "C12"] + 1
+        if(iG == "H1") counts[m, "C21"] <- counts[m, "C21"] + 1
+      }
+    }
+  }
+  counts[m, "Xp"] <-  ((counts[m, "P12"] - counts[m, "P21"])^2) / (counts[m, "P12"] + counts[m, "P21"])
+  counts[m, "Xm"] <-  ((counts[m, "M12"] - counts[m, "M21"])^2) / (counts[m, "M12"] + counts[m, "M21"])
+  counts[m, "PO"] <-  log(counts[m, "P12"]/counts[m, "P21"]) - log(counts[m, "M12"]/counts[m, "M21"]) / sqrt((1/counts[m, "P12"]) + (1/counts[m, "P21"]) + (1/counts[m, "M12"]) + (1/counts[m, "M21"]))
+  counts[m, "Xh"] <-  ((counts[m, "C12"] - counts[m, "C21"])^2) / (counts[m, "C12"] + counts[m, "C21"])
+  cat(m,"/",nrow(phased.AHBp),"\n")
+}
+
+write.table(counts, file="Analysis/TransmissionBias.txt", sep="\t")
+
+counts <- read.table("Analysis/TransmissionBias.txt")
+
+enoughSamples <- unlist(apply(counts[,c("P12", "P21", "M12", "M21")] ,1,function(x){
+  all(x > 5)
+}))
+
+counts <- counts[enoughSamples,]
+map <- marker.annot[rownames(counts), ]
+map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
+
+counts <- counts[rownames(map.autosomes),]
+
+Pp  <- -log10(pchisq(counts[, "Xp"], 1, lower.tail=FALSE))
+Pm  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))
+PoO <-  -log10(pchisq(counts[, "PO"], 1, lower.tail=FALSE))
+Ph <-  -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))
+
+chr.cols <- 1+as.numeric(map.autosomes[,"Chr"]) %%2
+chr.cols2 <- 1+(as.numeric(map.autosomes[,"Chr"]) %%2 == 0)
+
+ymax <- max(c(Pp,Pm),na.rm=TRUE)
+
+op <- par(mfrow=c(2,1))
+
+plot(c(0,nrow(counts)), c(-ymax, ymax), t = 'n')
+points(Pp, t='h', col=c("Blue", "Gray")[chr.cols])
+points(-Pm, t='h', col=c("Pink", "Gray")[chr.cols2])
+plot(abs(Pp-Pm), t='h', col=c("black", "Gray")[chr.cols2])
+abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
+abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+
+
+plot(PoO, t='h', col=c("orange", "green")[chr.cols])
+#points(Ph, t='h', col=c("orange", "green")[chr.cols])
+
 
 # QTL Analysis of generation 28
-
-
 
 # Filter the genotypes for markers that are seggregating
 phased.AHBp <- phased.AHBp[-which(lapply(apply(phased.AHBp[, F2], 1, table),length) == 1),]

@@ -148,7 +148,7 @@ for(m in 1:nrow(phased.AHBp)){
 
 write.table(counts, file="Analysis/TransmissionBias.txt", sep="\t")
 
-counts <- read.table("Analysis/TransmissionBias.txt")
+counts <- read.table("Analysis/TransmissionBias.txt", sep="\t", row.names=1, header=TRUE)
 
 enoughSamples <- unlist(apply(counts[,c("P12", "P21", "M12", "M21")] ,1,function(x){
   all(x > 5)
@@ -165,23 +165,50 @@ Pm  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))
 PoO <-  -log10(pchisq(counts[, "PO"], 1, lower.tail=FALSE))
 Ph <-  -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))
 
+write.table(map.autosomes[rownames(counts[which(Pp > 10),]),],"Analysis/SignPp.txt",sep="\t")
+write.table(map.autosomes[rownames(counts[which(Pm > 10),]),],"Analysis/SignPm.txt",sep="\t")
+
 chr.cols <- 1+as.numeric(map.autosomes[,"Chr"]) %%2
 chr.cols2 <- 1+(as.numeric(map.autosomes[,"Chr"]) %%2 == 0)
 
 ymax <- max(c(Pp,Pm),na.rm=TRUE)
 
-op <- par(mfrow=c(2,1))
+op <- par(mfrow=c(3,1))
 
 plot(c(0,nrow(counts)), c(-ymax, ymax), t = 'n')
 points(Pp, t='h', col=c("Blue", "Gray")[chr.cols])
 points(-Pm, t='h', col=c("Pink", "Gray")[chr.cols2])
+
 plot(abs(Pp-Pm), t='h', col=c("black", "Gray")[chr.cols2])
 abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
 abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
 
-
 plot(PoO, t='h', col=c("orange", "green")[chr.cols])
-#points(Ph, t='h', col=c("orange", "green")[chr.cols])
+
+## Create the chromosome plot
+op <- par(mfrow=c(1,1))
+ymax <- max(as.numeric(map.autosomes[,"Pos"]))
+
+plot(c(1,19), c(0, ymax), t = 'n', xlab="Chromosome", ylab="Position (Mbp)", xaxt='n', yaxt='n', main="Transmission bias from heterozygous parents")
+axis(1, at=1:19, paste0("Chr ", 1:19), las=2, cex.axis=0.7)
+axis(2, at=seq(0,ymax, 20000000), seq(0, ymax, 20000000) / 1000000, las=2, cex.axis=0.9)
+for(x in 1:19){
+  onChr <- rownames(map.autosomes[which(map.autosomes[,"Chr"] == as.character(x)),])
+  colz <- as.numeric(-log10(pchisq(counts[onChr, "Xp"], 1, lower.tail=FALSE)) > 7)
+  colz <- colz + as.numeric(-log10(pchisq(counts[onChr, "Xp"], 1, lower.tail=FALSE)) > 10) + 1
+
+  colfunc <- c("white", "lightblue", "darkblue")
+  points(rep(x-0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colfunc[colz], cex=1.8)
+
+  colz <- as.numeric(-log10(pchisq(counts[onChr, "Xm"], 1, lower.tail=FALSE)) > 7)
+  colz <- colz + as.numeric(-log10(pchisq(counts[onChr, "Xm"], 1, lower.tail=FALSE)) > 10) + 1
+  colfunc <- c("white", "pink", "red")
+  points(rep(x+0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colfunc[colz], cex=1.8)
+
+  onC <- which(marker.annot[,"Chr"] == x)
+  points(rep(x,length(onC)), as.numeric(marker.annot[onC,"Pos"]), pch="-",cex=1.5, col="gray")
+  points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col='black',cex=1.5)
+}
 
 
 # QTL Analysis of generation 28

@@ -54,23 +54,23 @@ significant <- scan.results[which(as.numeric(scan.results[,"energy"]) < -10),]  
 write.table(significant, "miRNA.scan.output", sep="\t", row.names = FALSE)    # Significant scan results (energy < -10)
 
 results <- NULL
-
 for(name in names(seqs)){
-  onUTR <- significant[which(significant[,"gene_id"] == name), ]
   mletters <- strsplit(as.character(seqs[name]),"")[[1]]
+  name <- paste0(name,"_ref")
+  onUTR <- significant[which(significant[,"gene_id"] == name), ]
   positions <- which(!is.na(as.numeric(mletters)))
   cnt <- 1
   for(pos in positions){
     for(utr in 1:nrow(onUTR)){
       if(as.numeric(onUTR[utr,"from.UTR"]) <= pos && as.numeric(onUTR[utr,"to.UTR"]) >= pos){
-        #cat("Match", name, "",cnt, onUTR[utr,]),"\n")
+        #cat("Match", name, "",cnt, onUTR[utr,],"\n")
         results <- rbind(results, c(name, cnt, pos, as.character(onUTR[utr,])))
       }
     }
     cnt <- cnt + 1
   }
 }
-write.table(results,"results.txt",sep="\t")
+write.table(results,"results_ref.txt",sep="\t")
 
 
 ## PITA

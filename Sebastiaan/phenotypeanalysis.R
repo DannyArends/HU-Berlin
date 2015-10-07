@@ -6,13 +6,15 @@
 # first written Sep, 2015
 
 setwd("D:/Sebastiaan")
-phenotypes <- read.table("Tuerkei_all_measurements_20weeks.txt", sep = "\t", header = TRUE, na.strings = c(NA, "."))
-phenames <- colnames(phenotypes)[c(4:34)][-21]                                                    # Take the ones we can plot, Malonyl_CoA can't be sued
+phenotypes <- read.table("All_Measurements_20weeks.txt", sep = "\t", header = TRUE, na.strings = c(NA, ".", "/"))
+phenames <- colnames(phenotypes)[c(6:ncol(phenotypes))]                                           # Take the ones we can plot, Malonyl_CoA can't be sued
 
 clusters <- hclust(dist(cor(phenotypes[,phenames], use = "pair", method = "spearman")))           # Cluster phenotypes based on correlation similarity
 #phenames <- phenames[clusters$order]                                                              # Order them in a 'logical' way
 
-phenames <- c("FAT56", "FAT70", "FAT126", "FAT140", "FATpro140","LEAN56", "LEAN70" ,"LEAN126" ,"LEAN140","LEANpro140"   , "IntramuscFat_Q","Intramusc_LD"  , "Liver_TRIGS", "ITT20_0_mmol.l","ITT20_0", "ITT20_15","ITT20_30"  ,     "ITT20_60"  ,     "AUC20"  , "C"         ,      "AKT1" , "CBL"  , "FOXA2" ,"IRS1"      , "IRS2", "INSR", "IGF1R","LEP", "PRKAA2",           "SLC2A")
+phenames <- c("FAT56", "FAT70", "FAT126", "FAT140", "FATpro140","LEAN56", "LEAN70" ,"LEAN126" ,"LEAN140","LEANpro140", "IntramuscFat_Q", 
+              "IntramuscFat_LD", "Liver_TRIGS", "Insulin","ITT20_0", "ITT20_15","ITT20_30", "ITT20_60", "AUC20", "C", "Akt1", "Cbl", 
+              "Foxa2" ,"Irs1", "Irs2", "Insr", "Igf1r","Lep", "Prkaa2", "Slc2a")
 
 rot <- seq(1, 360, 360/length(phenames))                                                          # Rotational axis
 names(rot) <- phenames                                                                            # Phenotype names displayed for each axis

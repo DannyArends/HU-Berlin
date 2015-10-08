@@ -14,7 +14,7 @@ clusters <- hclust(dist(cor(phenotypes[,phenames], use = "pair", method = "spear
 
 phenames <- c("FAT56", "FAT70", "FAT126", "FAT140", "FATpro140","LEAN56", "LEAN70" ,"LEAN126" ,"LEAN140","LEANpro140", "IntramuscFat_Q", 
               "IntramuscFat_LD", "Liver_TRIGS", "Insulin","ITT20_0", "ITT20_15","ITT20_30", "ITT20_60", "AUC20", "C", "Akt1", "Cbl", 
-              "Foxa2" ,"Irs1", "Irs2", "Insr", "Igf1r","Lep", "Prkaa2", "Slc2a")
+              "Foxa2" ,"Irs1", "Irs2", "Insr", "Igf1r","Lep", "Prkaa2", "Slc2a4")
 
 rot <- seq(1, 360, 360/length(phenames))                                                          # Rotational axis
 names(rot) <- phenames                                                                            # Phenotype names displayed for each axis

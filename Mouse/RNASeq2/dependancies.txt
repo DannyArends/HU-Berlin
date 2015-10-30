@@ -1,0 +1,50 @@
+Missing on the compute nodes
+
+Compute-Clusters Clou
+
+Sehr geehrter Herr Döbler,
+
+Thanks for the account at the compute cluster, I logged in and tested some things. I have the following problem:
+
+The module environment doesn't seem to be working after log in, as an example loading module R-210 (module load R-210) doesn't set R on the path, 
+since no R binary is found in on the system (The binary should be located at  /usr/lib64/R/bin/ (according to the module file) however this 
+folder does not exist). Additionally the R version is way too old ( 2.10 the current version is 3.2.2 )
+
+Addionally there is some software missing that we use for the analysis of DNA and RNA sequencing data:
+
+- R (>3.2)       = R is a free software environment for statistical computing and graphics - https://www.r-project.org
+- sshfs          = Direct connection to our storage machine - http://fuse.sourceforge.net/sshfs.html
+- bowtie2 (>2.2) = DNA / RNA seq aligner - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
+- tophat2 (>2.1) = Splice junction mapper for RNA-Seq reads - https://ccb.jhu.edu/software/tophat/index.shtml
+- Samtools       = Manipulation of SAM/BAM files - http://samtools.sourceforge.net/
+- Tabix (part of Samtools) = Tabix tool for reference genome indexing - http://sourceforge.net/projects/samtools/files/tabix/
+- BCFtools       = BCFtools is a set of utilities that manipulate variant calls in the Variant Call Format (VCF/BCF) - https://samtools.github.io/bcftools/bcftools.html
+- GATK           = Software package for analysis of high-throughput sequencing data - https://www.broadinstitute.org/gatk/
+- picard-tools  = A set of tools for working with next generation sequencing data - http://broadinstitute.github.io/picard/
+- curl          = Open source command line tool and library for transferring data with URL syntax - http://curl.haxx.se/
+
+General Issues:
+
+Module environment doesn't seem to be working after log in, as an example loading module R-210 (module load R-210) doesn't set R on the path, 
+since no R binary is found in on the system (The binary should be located at  /usr/lib64/R/bin/ (according to the module file) however this 
+folder does not exist). Additionally the R version is way too old ( 2.10 the current version is 3.2.2 )
+
+HLRN
+
+Missing software for the analysis of DNA and RNA sequencing data:
+
+- R             = R is a free software environment for statistical computing and graphics - https://www.r-project.org
+- sshfs         = Direct connection to our storage machine - http://fuse.sourceforge.net/sshfs.html
+- bowtie2       = DNA / RNA seq aligner - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
+- tophat2       = Splice junction mapper for RNA-Seq reads - https://ccb.jhu.edu/software/tophat/index.shtml
+- Samtools      = Manipulation of SAM/BAM files - http://samtools.sourceforge.net/
+- BCFtools      = BCFtools is a set of utilities that manipulate variant calls in the Variant Call Format (VCF/BCF) - https://samtools.github.io/bcftools/bcftools.html
+- GATK          = Software package for analysis of high-throughput sequencing data - https://www.broadinstitute.org/gatk/
+- picard-tools  = A set of tools for working with next generation sequencing data - http://broadinstitute.github.io/picard/
+- curl          = Open source command line tool and library for transferring data with URL syntax - http://curl.haxx.se/
+
+General Issues:
+
+Unable to download files via HTTP 
+- Might need to tranfer the genome references and such ourselves
+

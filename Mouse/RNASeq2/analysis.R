@@ -9,10 +9,14 @@
 #biocLite(c("GenomicAlignments", "GenomicFeatures", "Rsamtools","preprocessCore"))
 
 baminputdir     <- as.character("/home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/")
+readsoutput     <- as.character("/home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/Analysis/")
 reference.gtf   <- "/home/share/genomes/mm10/Mus_musculus.GRCm38.81.gtf"                      # wget ftp://ftp.ensembl.org/pub/release-81/gtf/mus_musculus/Mus_musculus.GRCm38.81.gtf.gz
 short.gtf       <- "/home/share/genomes/mm10/Mus_musculus.GRCm38.81.short.gtf"
 sampledescrpath <- "/home/arends/RNASeq/Experiment/SampleDescription.txt"
 chrdescrpath    <- "/home/arends/Mouse/GTF/MouseChrInfo.txt"
+reference       <- "/home/share/genomes/mm10/Mus_musculus.GRCm38.dna"
+reference.fa    <- paste0(reference, ".fa")        #!
+mpileup         <- "~/Github/samtools/samtools mpileup"
 
 library("GenomicAlignments")
 library("GenomicFeatures")
@@ -36,6 +40,8 @@ for(msample in inputbfiles){
   if(!((length(fname) == 0) && (typeof(fname) == "character"))) bamfiles <- c(bamfiles, paste0(baminputdir, msample, "/", fname))
 }                                                                                                             #done <- substr(bamfiles, 1, 4)
 cat("Found ", length(bamfiles), " aligned bam files in folder: ", baminputdir, "\n")
+
+completed <- unlist(lapply(strsplit(unlist(lapply(strsplit(bamfiles,"/"),"[",10)),"_"),"[",1))
 
 if(!file.exists(short.gtf)){
   gtf <- read.table(reference.gtf,sep="\t")
@@ -62,9 +68,29 @@ library(BiocParallel)
 register(MulticoreParam(workers = 2))
 
 bamfilelist <- BamFileList(bamfiles, yieldSize = 1000000, asMates = TRUE)
-sT <- proc.time()
-overlap     <- summarizeOverlaps(features = exonsByGene, reads = bamfilelist, mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
-(proc.time() - sT)[3]
+setwd(readsoutput)
+for(x in 1:length(bamfilelist)){
+  fname <- names(bamfilelist[x])
+  if(!file.exists(paste0("Reads", fname,".txt"))){
+    cat("Processing", fname, "(", x, "/", length(bamfilelist), ")\n")
+    sT <- proc.time()
+    overlap     <- summarizeOverlaps(features = exonsByGene, reads = bamfilelist[x], mode="Union", singleEnd=FALSE, ignore.strand=TRUE, fragments=TRUE)
+    write.table(assay(overlap), file=paste0("Reads", fname,".txt"), sep="\t")
+    cat("Processing done for", fname, "in", (proc.time() - sT)[3], "\n")
+  }else{
+    cat("Output file found, skipping", fname, "(", x, "/", length(bamfilelist), ")\n")
+  }
+}
 
-write.table(assay(overlap), file="Reads18Samples.txt", sep="\t")
+
+# reheader the bamfiles
+#for(x in bamfiles){
+#  sampleid <- strsplit(strsplit(x,"/")[[1]][10],"_")[[1]][1]
+#  cat(paste0("samtools view -H ",x," | sed \"s/SM:860/SM:",sampleid,"/\" | samtools reheader - ",x),"\n")
+#}
+
+# Extract the SNPs
+cat(paste0("nohup ", mpileup, " -g -f ", reference.fa," ", paste(bamfiles, collapse=" "), " -o population.bcf &"), "\n")
+cat(paste0("nohup bcftools call -c population.bcf | ~/Github/bcftools/vcfutils.pl varFilter -d 10 - > population.vcf &"), "\n")
+
 

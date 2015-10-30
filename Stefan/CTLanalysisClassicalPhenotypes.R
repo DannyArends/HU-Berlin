@@ -7,11 +7,20 @@
 # Small script to perform CTL analysis on classical phenotypes
 
 library(ctl)
-setwd("d:/Stefan_Mouse_F3")
+setwd("d:/Stefan/Stefan_Mouse_F3")
 
 cross <- read.cross("csv", file="100419_c_f3_phegen.csv", sep=";")
 geno <- pull.geno(cross)
 pheno <- pull.pheno(cross)
+
+qtls <- scanone(cross)
+
+map <- qtls[,c(1:3)]
+
+males <- which(pheno[,"sex"]=="m")
+
+pheno <- pheno[males,]
+geno <- geno[males,]
 
 traits <- c(4:6, 9:10, 12:17,22:26, 27,28,30:50, 53:54, 56:60)
 
@@ -23,3 +32,8 @@ pheno <- pheno[,-derived]
 
 ctlscan <- CTLscan(geno, pheno, verbose = TRUE)
 significant <- ctl.lineplot(ctlscan)
+
+significant
+
+plot(ctlscan[[1]])
+

@@ -31,9 +31,7 @@ for(x in bamfiles){
   execute(paste0("/home/neubert/Keane/samtools-1.2/samtools mpileup -uv -t DV -t DP -l SNPlocations.txt -f ", reference.fa, " ", x, " | bcftools call -c - > ",paste0(x,".vcf")),paste0(x,".vcf"))
 }
 
-getDP4 <- function(x){ 
-  sub(".*?DP4=(.*?);.*", "\\1", x)
-}
+getDP4 <- function(x){ return(sub(".*?DP4=(.*?);.*", "\\1", x)) }
 
 # Load in the created VCF files, and extract the DP4 for all locations which exist across all files
 vcffiles        <- list.files(pattern = ".aligned.sorted.realigned.bam.vcf$")

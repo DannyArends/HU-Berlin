@@ -129,7 +129,6 @@ if(!file.exists(paste0(readsoutput, "allsamples_annotated.dp4"))){
   results <- read.table(paste0(readsoutput, "allsamples_annotated.dp4"), sep="\t", check.names=FALSE)
 }
 
-#TODO: Fix the names of the SNPs + Add MGI ID's sice we now loose them during this step
 # BIOMART annotation of the MGI_Description
 if(!file.exists("/home/share/genomes/mm10/biomart/BiomartAnnotation.txt")){
   library(biomaRt)
@@ -188,6 +187,7 @@ for(x in unique(sampledescr[,"tissue"])){
   probs   <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
   chisqs  <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
   chisqsS <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
+  # TODO: transfer DP4 reads to the output
   for(sn in names(samples)){
     ratios[,sn]  <- round((as.numeric(dp4dataT[, paste0(sn,"_ALT")]) / as.numeric(dp4dataT[, paste0(sn,"_DP")])) * 100,d=1)
     chiTests     <- apply(dp4dataT[, c(paste0(sn,"_REF"), paste0(sn,"_ALT"))], 1, function(observed){chisq.test(as.numeric(observed))})

@@ -21,14 +21,14 @@ reference       <- "/home/share/genomes/mm10/Mus_musculus.GRCm38.dna"
 reference.fa    <- paste0(reference, ".fa")        #!
 mpileup         <- "~/Github/samtools/samtools mpileup"
 
-chrs <- c(1:19,"X","Y","MT")
+chrs         <- c(1:19, "X", "Y", "MT")
 sampledescr  <- read.table(sampledescrpath, sep="\t", header=TRUE, colClasses="character")
 chrominfo    <- read.table(chrdescrpath, sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
 chrominfo    <- chrominfo[chrominfo[,1] %in% chrs,]
 
-baminputfolder <- dir(baminputdir)
-inputbfiles <- baminputfolder[which(grepl("output", baminputfolder))]
-sampleNames <- substr(inputbfiles, 1, 4)
+baminputfolder  <- dir(baminputdir)
+inputbfiles     <- baminputfolder[which(grepl("output", baminputfolder))]
+sampleNames     <- substr(inputbfiles, 1, 4)
 cat("Found ", length(sampleNames), " samples in folder: ", baminputdir, "\n")
 
 bamfiles <- NULL
@@ -179,6 +179,7 @@ for(x in unique(sampledescr[,"tissue"])){
       i <- which.max(c(chisq.test(rbind(observed, c(sum(observed), 1)))$p.value, chisq.test(observed)$p.value, chisq.test(rbind(observed, c(1, sum(observed))))$p.value))
       pAllele[snp, sn] <- c("Ref", "Hetro", "Alt")[i]
     }
+    cat("Tested", sn, "\n")
   }
 
   cat("Parental alleles determined\n")
@@ -187,14 +188,17 @@ for(x in unique(sampledescr[,"tissue"])){
   probs   <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
   chisqs  <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
   chisqsS <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
+  dp4s    <- matrix(NA, nrow(dp4dataT), length(samples), dimnames=list(rownames(dp4dataT),names(samples)))
   # TODO: transfer DP4 reads to the output
   for(sn in names(samples)){
+    dp4s[,sn]    <- paste0(dp4dataT[, paste0(sn,"_ALT")],":", dp4dataT[, paste0(sn,"_DP")])
     ratios[,sn]  <- round((as.numeric(dp4dataT[, paste0(sn,"_ALT")]) / as.numeric(dp4dataT[, paste0(sn,"_DP")])) * 100,d=1)
     chiTests     <- apply(dp4dataT[, c(paste0(sn,"_REF"), paste0(sn,"_ALT"))], 1, function(observed){chisq.test(as.numeric(observed))})
     probs[,sn]   <- unlist(lapply(chiTests, function(x){x$p.value}))
     chisqs[,sn]  <- round(sign(ratios[,sn] - 50)  * as.numeric(unlist(lapply(chiTests, function(x){unlist(x)["statistic.X-squared"]}))), d = 2)
     chisqsS[,sn] <- round(sign(ratios[,sn] - 50)  * sqrt(as.numeric(unlist(lapply(chiTests, function(x){unlist(x)["statistic.X-squared"]})))), d = 2)
   }
+  colnames(dp4s) <- paste0(samples[colnames(dp4s)], "_", colnames(dp4s),"_reads")
   colnames(pAllele) <- paste0(samples[colnames(pAllele)], "_", colnames(pAllele),"_call")
   colnames(ratios)  <- paste0(samples[colnames(ratios)], "_", colnames(ratios))
   colnames(probs)   <- paste0(samples[colnames(probs)], "_", colnames(probs), "_p")
@@ -202,7 +206,7 @@ for(x in unique(sampledescr[,"tissue"])){
   colnames(chisqsS)  <- paste0(samples[colnames(chisqsS)], "_", colnames(chisqsS), "_chisqS")
 
   cat("Allelic imbalanced detected\n")
-  output <- cbind(dp4dataT[,9:12], dp4dataT[,1:5], dp4dataT[,"mgi_description"], dp4dataT[,6:8], pAllele, ratios, probs, chisqs, chisqsS)
+  output <- cbind(dp4dataT[,9:12], dp4dataT[,1:5], dp4dataT[,"mgi_description"], dp4dataT[,6:8], pAllele, ratios, dp4s, probs, chisqs, chisqsS)
   write.table(output, file=paste0(readsoutput, "snp_stats_",x,".txt"), sep="\t", quote=FALSE, row.names=FALSE)
 }
 

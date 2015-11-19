@@ -2,11 +2,11 @@
 genesInRegion <- function(chr, start_position, end_position, species = "mmusculus", verbose = TRUE){
   require("biomaRt")
   if(is.na(end_position)) end_position <- start_position + 1
-  mart = useMart("ensembl", dataset = paste0(species, "_gene_ensembl"))
+  mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = paste0(species, "_gene_ensembl"), host="www.ensembl.org")
   chr.region = c(paste0(chr, ":",start_position, ":", end_position))
   filterlist = list(chr.region, "protein_coding")
   if(verbose) cat("Retrieving results for ", chr.region, "\n")
-  res <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position"), filters = c("chromosomal_region","biotype"), values = filterlist, mart = mart)
+  res <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "mgi_symbol", "mgi_description"), filters = c("chromosomal_region","biotype"), values = filterlist, mart = mart)
   if(verbose) cat("Retrieved ",nrow(res), "results for ", chr.region, "\n")
   return(res)
 }
@@ -19,6 +19,7 @@ for(x in 1:nrow(patRegions)){
     results <- rbind(results, genesInRegion(patRegions[x,"Chr"],patRegions[x,"Start"],patRegions[x,"Stop"]))
 }
 cat(unique(results[,"ensembl_gene_id"]),sep="\n", file="Analysis/genesPatBias.txt")
+write.table(results, file="Analysis/GenesPatBiasedregions.txt",sep="\t", quote = FALSE, row.names = FALSE)
 #Retrieved  12 results for  2:3164247:4280400 
 #Retrieved  31 results for  3:6274425:14841429 
 #Retrieved  68 results for  4:3569913:20188902 
@@ -51,6 +52,7 @@ for(x in 1:nrow(matRegions)){
     results <- rbind(results, genesInRegion(matRegions[x,"Chr"],matRegions[x,"Start"],matRegions[x,"Stop"]))
 }
 cat(unique(results[,"ensembl_gene_id"]),sep="\n", file="Analysis/genesMatBias.txt")
+write.table(results, file="Analysis/GenesMatBiasedregions.txt",sep="\t", quote = FALSE, row.names = FALSE)
 #Retrieved  12 results for  1:3668628:6357478 
 #Retrieved  12 results for  2:3164247:4280400 
 #Retrieved  4 results for  2:55092420:57658939 

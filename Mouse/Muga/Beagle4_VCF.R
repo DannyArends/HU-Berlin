@@ -157,8 +157,8 @@ write.table(counts, file="Analysis/TransmissionBias.txt", sep="\t")
 
 counts <- read.table("Analysis/TransmissionBias.txt", sep="\t", row.names=1, header=TRUE)
 
-enoughSamples <- unlist(apply(counts[,c("P12", "P21", "M12", "M21")] ,1,function(x){
-  all(x > 5)
+enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] ,1,function(x){
+  any(x > 10)
 }))
 
 counts <- counts[enoughSamples,]

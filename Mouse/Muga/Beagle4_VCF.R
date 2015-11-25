@@ -1,3 +1,6 @@
+#
+# Analyse megaMuga data from multiple generations using beagle and R
+#
 
 
 source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
@@ -24,19 +27,23 @@ samples <- colnames(locusxdna)
 markers <- rownames(locusxdna)
 
 #Load annotation from JAX
-load("MM_snps.Rdata")
-MM_snps[,"SNP_ID"] <- gsub(".", "-", MM_snps[,"SNP_ID"], fixed = TRUE)                # Fix the . to - error in the MM_SNP
-rownames(MM_snps) <- MM_snps[,"SNP_ID"]                                               # Use them as rownames
+if(!file.exists("Analysis/markerAnnotation.txt")){
+  load("MM_snps.Rdata")
+  MM_snps[,"SNP_ID"] <- gsub(".", "-", MM_snps[,"SNP_ID"], fixed = TRUE)                # Fix the . to - error in the MM_SNP
+  rownames(MM_snps) <- MM_snps[,"SNP_ID"]                                               # Use them as rownames
 
-marker.annot <- matrix(NA, length(markers), 4, dimnames=list(markers,c("Chr", "Pos", "snp_A", "snp_B")))
-marker.annot[markers, "Chr"] <- MM_snps[markers,"Chr"]
-marker.annot[markers, "Pos"] <- MM_snps[markers,"Mb_NCBI38"] * 1000000
+  marker.annot <- matrix(NA, length(markers), 4, dimnames=list(markers,c("Chr", "Pos", "snp_A", "snp_B")))
+  marker.annot[markers, "Chr"] <- MM_snps[markers,"Chr"]
+  marker.annot[markers, "Pos"] <- MM_snps[markers,"Mb_NCBI38"] * 1000000
 
-for(x in markers){
-  instr  <- regexpr("\\[.+\\]", MM_snps[x,"Sequence"], perl=TRUE)
-  marker.annot[x,c("snp_A","snp_B")] <- unlist(strsplit(substr(MM_snps[x,"Sequence"], (instr[1]+1), (instr[1]+attr(instr,"match.length")-2)),"/"))
+  for(x in markers){
+    instr  <- regexpr("\\[.+\\]", MM_snps[x,"Sequence"], perl=TRUE)
+    marker.annot[x,c("snp_A","snp_B")] <- unlist(strsplit(substr(MM_snps[x,"Sequence"], (instr[1]+1), (instr[1]+attr(instr,"match.length")-2)),"/"))
+  }
+  write.table(marker.annot, "Analysis/markerAnnotation.txt", sep="\t", quote=FALSE)
+}else{
+  marker.annot <- read.table("Analysis/markerAnnotation.txt", sep="\t")
 }
-write.table(marker.annot, "Analysis/markerAnnotation.txt", sep="\t", quote=FALSE)
 
 # Remove the duplicated markers
 duplicates <- rownames(marker.annot)[which(duplicated(apply(marker.annot[,c("Chr","Pos")],1,paste0,collapse="")))]
@@ -112,50 +119,57 @@ rownames(phenotypes) <- phenotypes[,"ID"]
 phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                                         # Add the season column to the matrix
 phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.AHBp)),]                                               # We do not have genotypes for all individuals
 
-F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)] ; F1 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]     # Get the names for each generations
-
-
+F2  <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
+F1  <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27)]                                     # Get the names for each generations
+P   <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 26)]                                     # Get the names for each generations
 F1m <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27 & phenotypes[, "sex"] == 'm')]
 F1f <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 27 & phenotypes[, "sex"] == 'f')]
 
-counts <- matrix(c(rep(0,8),rep(NA,4)), nrow(phased.AHBp), 12, dimnames = list(rownames(phased.AHBp), c("P12","P21", "M12", "M21", "C12", "C21", "nFat", "nMat", "Xp", "Xm", "PO", "Xh")),byrow=TRUE)
-
-updateCounts <- function(m, type, pG, iG){
-  if(pG == "H0" || pG == "H1"){
-    if(iG == "A")  counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
-    if(iG == "B")  counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
-    if(iG == "H0") counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
-    if(iG == "H1") counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
-  }
-}
-
-for(m in 1:nrow(phased.AHBp)){
-  for(i in F2){
-    vG <- phased.AHBp[m, as.character(phenotypes[i, "Vater"])]
-    mG <- phased.AHBp[m, as.character(phenotypes[i, "Mutter"])]
-    iG <- phased.AHBp[m, i]
-    updateCounts(m, "P", vG, iG)
-    updateCounts(m, "M", mG, iG)
-    if(vG == "H0" || vG == "H1" ){
-      if(mG == "H0" || mG == "H1" ){
-        if(iG == "H0") counts[m, "C12"] <- counts[m, "C12"] + 1
-        if(iG == "H1") counts[m, "C21"] <- counts[m, "C21"] + 1
+calculateATB <- function(phased.AHBp, phenotypes, generation = 28){
+  individuals <- rownames(phenotypes)[which(phenotypes[, "Gen."] == generation)]
+  if(!file.exists(paste0("Analysis/TransmissionBias_",generation,".txt"))){
+    counts <- matrix(c(rep(0,8),rep(NA,4)), nrow(phased.AHBp), 12, dimnames = list(rownames(phased.AHBp), c("P12","P21", "M12", "M21", "C12", "C21", "nFat", "nMat", "Xp", "Xm", "PO", "Xh")),byrow=TRUE)
+    updateCounts <- function(m, type, pG, iG){
+      if(pG == "H0" || pG == "H1"){
+        if(iG == "A")  counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
+        if(iG == "B")  counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
+        if(iG == "H0") counts[m, paste0(type,"21")] <<- counts[m, paste0(type,"21")] + 1
+        if(iG == "H1") counts[m, paste0(type,"12")] <<- counts[m, paste0(type,"12")] + 1
       }
     }
-  }
-  counts[m, "nFat"] <-  length(which(grepl("H", phased.AHBp[m,F1m])))
-  counts[m, "nMat"] <-  length(which(grepl("H", phased.AHBp[m,F1f])))
 
-  counts[m, "Xp"] <-  ((counts[m, "P12"] - counts[m, "P21"])^2) / (counts[m, "P12"] + counts[m, "P21"])
-  counts[m, "Xm"] <-  ((counts[m, "M12"] - counts[m, "M21"])^2) / (counts[m, "M12"] + counts[m, "M21"])
-  counts[m, "PO"] <-  log(counts[m, "P12"]/counts[m, "P21"]) - log(counts[m, "M12"]/counts[m, "M21"]) / sqrt((1/counts[m, "P12"]) + (1/counts[m, "P21"]) + (1/counts[m, "M12"]) + (1/counts[m, "M21"]))
-  counts[m, "Xh"] <-  ((counts[m, "C12"] - counts[m, "C21"])^2) / (counts[m, "C12"] + counts[m, "C21"])
-  cat(m,"/",nrow(phased.AHBp),"\n")
+    for(m in 1:nrow(phased.AHBp)){
+      for(i in individuals){
+        vG <- phased.AHBp[m, as.character(phenotypes[i, "Vater"])]
+        mG <- phased.AHBp[m, as.character(phenotypes[i, "Mutter"])]
+        iG <- phased.AHBp[m, i]
+        updateCounts(m, "P", vG, iG)
+        updateCounts(m, "M", mG, iG)
+        if(vG == "H0" || vG == "H1" ){
+          if(mG == "H0" || mG == "H1" ){
+            if(iG == "H0") counts[m, "C12"] <- counts[m, "C12"] + 1
+            if(iG == "H1") counts[m, "C21"] <- counts[m, "C21"] + 1
+          }
+        }
+      }
+      counts[m, "nFat"] <-  length(which(grepl("H", phased.AHBp[m,F1m])))
+      counts[m, "nMat"] <-  length(which(grepl("H", phased.AHBp[m,F1f])))
+
+      counts[m, "Xp"] <-  ((counts[m, "P12"] - counts[m, "P21"])^2) / (counts[m, "P12"] + counts[m, "P21"])
+      counts[m, "Xm"] <-  ((counts[m, "M12"] - counts[m, "M21"])^2) / (counts[m, "M12"] + counts[m, "M21"])
+      counts[m, "PO"] <-  log(counts[m, "P12"]/counts[m, "P21"]) - log(counts[m, "M12"]/counts[m, "M21"]) / sqrt((1/counts[m, "P12"]) + (1/counts[m, "P21"]) + (1/counts[m, "M12"]) + (1/counts[m, "M21"]))
+      counts[m, "Xh"] <-  ((counts[m, "C12"] - counts[m, "C21"])^2) / (counts[m, "C12"] + counts[m, "C21"])
+      cat(m,"/",nrow(phased.AHBp),"\n")
+    }
+    write.table(counts, file=paste0("Analysis/TransmissionBias_",generation,".txt"), sep="\t")
+  }else{
+    cat("Loading results from disk:", paste0("Analysis/TransmissionBias_",generation,".txt"), "\n")
+    counts <- read.table(paste0("Analysis/TransmissionBias_",generation,".txt"), sep="\t", row.names=1, header=TRUE)
+  }
+  return(counts)
 }
 
-write.table(counts, file="Analysis/TransmissionBias.txt", sep="\t")
-
-counts <- read.table("Analysis/TransmissionBias.txt", sep="\t", row.names=1, header=TRUE)
+counts <- calculateATB(phased.AHBp, phenotypes, 28)
 
 enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] ,1,function(x){
   any(x > 10)
@@ -179,15 +193,15 @@ patTransmission <- cbind(counts[rownames(counts[which(Pp > 10),]),],bfmi)
 
 transmitted <- NULL
 for(x in 1:nrow(patTransmission)){
-  if(patTransmission[x, "P12"] > patTransmission[x, "P21"]){ # prefere to transmit a B`
-  transmitted <- c(transmitted, "B")
+  if(patTransmission[x, "P12"] > patTransmission[x, "P21"]){ # prefere to transmit the B allele
+    transmitted <- c(transmitted, "B")
   }else{
-  transmitted <- c(transmitted, "A")
+    transmitted <- c(transmitted, "A")
   }
 }
 
-write.table(map.autosomes[rownames(counts[which(Pp > 10),]),],"Analysis/SignPp.txt",sep="\t")
-write.table(cbind(map.autosomes[rownames(counts[which(Pp > 10),]),], patTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPpCounts.txt",sep="\t")
+write.table(map.autosomes[rownames(counts[which(Pp > 10),]),],"Analysis/SignPp_28.txt",sep="\t")
+write.table(cbind(map.autosomes[rownames(counts[which(Pp > 10),]),], patTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPpCounts_28.txt",sep="\t")
 
 cat(length(which(bfmi == transmitted)), "BFMI out of", length(transmitted),"\n")
 
@@ -203,8 +217,8 @@ for(x in 1:nrow(matTransmission)){
   }
 }
 
-write.table(map.autosomes[rownames(counts[which(Pm > 10),]),],"Analysis/SignPm.txt",sep="\t")
-write.table(cbind(map.autosomes[rownames(counts[which(Pm > 10),]),], matTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPmCounts.txt",sep="\t")
+write.table(map.autosomes[rownames(counts[which(Pm > 10),]),],"Analysis/SignPm_28.txt",sep="\t")
+write.table(cbind(map.autosomes[rownames(counts[which(Pm > 10),]),], matTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPmCounts_28.txt",sep="\t")
 
 cat(length(which(bfmi == transmitted)), "BFMI out of", length(transmitted),"\n")
 

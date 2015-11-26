@@ -169,58 +169,32 @@ calculateATB <- function(phased.AHBp, phenotypes, generation = 28){
   return(counts)
 }
 
-counts <- calculateATB(phased.AHBp, phenotypes, 28)
+generation <- 27
 
-enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] ,1,function(x){
-  any(x > 10)
-}))
+getSignificant <- function(generation = 28){
+  counts <- calculateATB(phased.AHBp, phenotypes, generation)
+  enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] , 1, function(x){ any(x > 10) }))
+  counts <- counts[enoughSamples,]
+  map <- marker.annot[rownames(counts), ]
+  map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 
-counts <- counts[enoughSamples,]
-map <- marker.annot[rownames(counts), ]
-map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
-
-counts <- counts[rownames(map.autosomes),]
-
-Pp  <- -log10(pchisq(counts[, "Xp"], 1, lower.tail=FALSE))
-names(Pp) <- rownames(map.autosomes)
-Pm  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))
-names(Pm) <- rownames(map.autosomes)
-PoO <-  -log10(pchisq(counts[, "PO"], 1, lower.tail=FALSE))
-Ph  <-  -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))
-
-bfmi <- phased.AHBp[rownames(counts[which(Pp > 10),]), which(colnames(phased.AHBp) == "BFMI860-12 (V2)")]
-patTransmission <- cbind(counts[rownames(counts[which(Pp > 10),]),],bfmi)
-
-transmitted <- NULL
-for(x in 1:nrow(patTransmission)){
-  if(patTransmission[x, "P12"] > patTransmission[x, "P21"]){ # prefere to transmit the B allele
-    transmitted <- c(transmitted, "B")
-  }else{
-    transmitted <- c(transmitted, "A")
+  counts <- counts[rownames(map.autosomes),]
+  lodPat  <- -log10(pchisq(counts[, "Xp"], 1, lower.tail=FALSE))  # Allele bias Father
+  lodMat  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))  # Allele bias Mother
+  #lodPoO  <- -log10(pchisq(, 1, lower.tail=FALSE))               # Ratio Pat/Mat
+  lodPoO  <- -log10(2*pnorm(-abs(counts[, "PO"])))                # Ratio Pat/Mat
+  lodPh  <-  -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))  # Overrepresentation of H0 versus H1
+  bfmi <- phased.AHBp[rownames(counts), which(colnames(phased.AHBp) == "BFMI860-12 (V2)")]
+  counts <- cbind(counts, lodPat, lodMat, lodPoO, lodPh, bfmi, patPref = NA, matPref = NA)
+  for(x in 1:nrow(counts)){
+    if(counts[x, "P12"] > counts[x, "P21"]){ counts[x,"patPref"] <- "B"; }else{ counts[x,"patPref"] <- "A"; }
+    if(counts[x, "M12"] > counts[x, "M21"]){ counts[x,"matPref"] <- "B"; }else{ counts[x,"matPref"] <- "A"; }
   }
+  write.table(counts, file=paste0("Analysis/TransmissionBias_annotated_",generation,".txt"), sep="\t")
+  return(counts)
 }
 
-write.table(map.autosomes[rownames(counts[which(Pp > 10),]),],"Analysis/SignPp_28.txt",sep="\t")
-write.table(cbind(map.autosomes[rownames(counts[which(Pp > 10),]),], patTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPpCounts_28.txt",sep="\t")
-
-cat(length(which(bfmi == transmitted)), "BFMI out of", length(transmitted),"\n")
-
-bfmi <- phased.AHBp[rownames(counts[which(Pm > 10),]), which(colnames(phased.AHBp) == "BFMI860-12 (V2)")]
-matTransmission <- cbind(counts[rownames(counts[which(Pm > 10),]),],bfmi)
-
-transmitted <- NULL
-for(x in 1:nrow(matTransmission)){
-  if(matTransmission[x, "P12"] > matTransmission[x, "P21"]){ # prefere to transmit a B`
-  transmitted <- c(transmitted, "B")
-  }else{
-  transmitted <- c(transmitted, "A")
-  }
-}
-
-write.table(map.autosomes[rownames(counts[which(Pm > 10),]),],"Analysis/SignPm_28.txt",sep="\t")
-write.table(cbind(map.autosomes[rownames(counts[which(Pm > 10),]),], matTransmission,transmitted, T = transmitted == bfmi),"Analysis/SignPmCounts_28.txt",sep="\t")
-
-cat(length(which(bfmi == transmitted)), "BFMI out of", length(transmitted),"\n")
+counts <- getSignificant(27)
 
 chr.lengths <- NULL
 lsum <- 0
@@ -232,16 +206,46 @@ for(chr in unique(map.autosomes[,"Chr"])){
 }
 rownames(chr.lengths) <- unique(map.autosomes[,"Chr"])
 
-chr.cols <- 1+as.numeric(map.autosomes[,"Chr"]) %%2
+map.autosomes <- cbind(map.autosomes, cumPos = NA)
+
+for(chr in unique(map.autosomes[,"Chr"])){
+  onChr <- rownames(map.autosomes[map.autosomes[,"Chr"] == chr,])
+  map.autosomes[onChr,"cumPos"] <- map.autosomes[onChr,"Pos"] + chr.lengths[chr,2]
+}
+
+op <- par(mfrow = c(4, 1), mar = c(3,4,1.5,1))
+
+chr.cols <- c("black","gray")[1+as.numeric(map.autosomes[,"Chr"]) %%2]
+
+chr.cols[counts[,"lodPat"] > -log10(0.01 / (4*nrow(counts)))] <- "red"
+
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppat)", main = "PAT test", las=2, t ="o")
+axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
+abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodMat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Pmat)", main = "MAT test", las=2, t ="o")
+axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
+abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPoO"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppofo)", main = "PofO test", las=2, t ="o")
+axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
+abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPh"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Phet)", main = "HET test", las=2, t ="o")
+axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
+abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+
+
+
 chr.cols2 <- 1+(as.numeric(map.autosomes[,"Chr"]) %%2 == 0)
 
-ymax <- max(c(Pp,Pm),na.rm=TRUE)
+ymax <- max(c(counts[,"lodPat"],counts[,"lodMat"]),na.rm=TRUE)
 i <- 1
 plot(c(0,max(chr.lengths[,3])), c(-ymax, ymax), t = 'n', ylab="-log10(p-value)", xlab="Position (Mb)")
 for(chr in unique(map.autosomes[,"Chr"])){
   onChr <- rownames(map.autosomes[map.autosomes[,"Chr"] == chr,])
-  points(x=as.numeric(map.autosomes[onChr,"Pos"]) + chr.lengths[chr, 2], y = Pp[onChr], t = 'h', col=c("Blue", "Gray")[i])
-  points(x=as.numeric(map.autosomes[onChr,"Pos"]) + chr.lengths[chr, 2], y = -Pm[onChr], t = 'h', col=c("Gray", "Pink")[i])
+  points(x=as.numeric(map.autosomes[onChr,"Pos"]) + chr.lengths[chr, 2], y = counts[onChr,"lodPat"], t = 'p', pch=19, cex=0.6, col=c("Blue", "Gray")[i])
+  points(x=as.numeric(map.autosomes[onChr,"Pos"]) + chr.lengths[chr, 2], y = -counts[onChr,"lodMat"], t = 'p', pch=19, cex=0.6, col=c("Gray", "Pink")[i])
   if(i == 2){ i <- 1; }else{ i <- 2; }
 }
 abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
@@ -250,8 +254,7 @@ abline(h=log10(0.05 / (4*nrow(counts))), col="orange")
 abline(h=log10(0.01 / (4*nrow(counts))), col="green")
 
 
-
-plot(abs(Pp-Pm), t='h', col=c("black", "Gray")[chr.cols2])
+plot(counts[,"lodPoO"], t='h', col=c("black", "Gray")[chr.cols2])
 abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
 abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
 

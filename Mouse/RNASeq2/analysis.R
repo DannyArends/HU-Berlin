@@ -48,14 +48,15 @@ cat("Found ", length(bamfiles), " aligned bam files in folder: ", baminputdir, "
 completed <- unlist(lapply(strsplit(unlist(lapply(strsplit(bamfiles,"/"),"[",10)),"_"),"[",1))
 
 
-if(!file.exists(short.gtf) || if(!file.exists(genesonly.gtf)))gtf <- read.table(reference.gtf,sep="\t")
+if(!file.exists(short.gtf) || if(!file.exists(genesonly.gtf))) gtf <- read.table(reference.gtf,sep="\t")
 if(!file.exists(short.gtf)){
   cat(readLines(reference.gtf,n=5),sep="\n", file=short.gtf)
   write.table(gtf[gtf[,1] %in% chrs,], file=short.gtf,sep="\t", row.names = FALSE, col.names=FALSE, append=TRUE, quote=FALSE)
 }
 if(!file.exists(genesonly.gtf)){  
   cat(readLines(reference.gtf,n=5),sep="\n", file=genesonly.gtf)
-  write.table(gtf[gtf[,1] %in% chrs & gtf[,3] == "gene" & grepl("ensembl",gtf[,2]),], file=genesonly.gtf, sep="\t", row.names = FALSE, col.names=FALSE, append=TRUE, quote=FALSE)
+  okG <- grepl("ensembl",gtf[,2]) | grepl("insdc",gtf[,2])
+  write.table(gtf[gtf[,1] %in% chrs & gtf[,3] == "gene" & okG,], file=genesonly.gtf, sep="\t", row.names = FALSE, col.names=FALSE, append=TRUE, quote=FALSE)
 }
 
 # # Use gtf2bed to create the reference transcriptome in BED format

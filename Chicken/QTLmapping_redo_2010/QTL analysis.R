@@ -25,11 +25,28 @@ mapQTL <- function(bodycomposition, genotypes, phenotypename = "Body.weight.at.2
   markersForQTL <- colnames(genotypes)[7:ncol(genotypes)]                                                         # Markers that are used in QTL mapping
   LODscores <- NULL                                                                                               # Matrix for results
   for(markername in markersForQTL){
-    res <- anova(lm(bodycomposition[,phenotypename] ~  bodycomposition[,"HatchDate"] + bodycomposition[,"Sire"] + genotypes[,markername]))
-    LODscores <- rbind(LODscores, -log10(res[[5]]))
+    m <- genotypes[,markername]
+    m.dom <- as.numeric(m == 12)
+    m.add <- (as.numeric(as.factor(m)) - 1)
+    
+    okM = which(!is.na(m.dom))
+    bc <- bodycomposition[okM,]
+    
+    m <- m[okM]
+    m.dom <- m.dom[okM]
+    m.add <- m.add[okM]
+    
+    mA <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + as.factor(m))
+    
+    m1 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + m.dom + m.add)
+    m0 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"])
+    res  <- anova(m1)
+    pval <- anova(m1, m0)
+    ptest <- anova(mA, m0)
+    LODscores <- rbind(LODscores, c(-log10(res[[5]]), -log10(pval[[6]][2]), -log10(ptest[[6]][2])))
   }
   rownames(LODscores) <- markersForQTL
-  colnames(LODscores) <- c("HatchDate", "Subfamily", "Marker", "Residuals")                                      # Add the row names to our result matrix
+  colnames(LODscores) <- c("HatchDate", "Subfamily", "M.Dom", "M.Add", "Residuals", "ModelDiff", "ModelDiff2")                                      # Add the row names to our result matrix
   return(LODscores)
 }
 
@@ -40,6 +57,10 @@ names(LODresults) <- phenotypesForQTL
 for(phenotype in phenotypesForQTL){
   LODresults[[phenotype]] <- mapQTL(bodycomposition, genotypes, phenotype)                                       # Map the QTL and store the resulting matrix in the list
 }
+
+plot(LODresults$"Body.weight.at.20.weeks..g"[,"ModelDiff"], t = 'l')
+points(LODresults$"Body.weight.at.20.weeks..g"[,"M.Add"], t = 'l', col="green")
+points(LODresults$"Body.weight.at.20.weeks..g"[,"M.Dom"], t = 'l', col='red')
 
 for(x in 1:length(LODresults)){
   above4 <- which(LODresults[[x]][,"Marker"] > 4.65)                                                             # Analyse the resulting profiles, and look at which markers are above the threshold
@@ -95,3 +116,23 @@ names(residual) <- 1:length(residual)
 ressss <- lm(bodycomposition[,phenotypename] ~ hd + sire)$residuals
 residual[names(ressss)] <- ressss
 plot(residual ~ gt)
+
+
+
+m <- genotypes[,markername]
+m.dom <- as.numeric(m == 12)
+m.add <- (as.numeric(as.factor(m)) - 1)
+
+anova(lm(bodycomposition[,phenotypename] ~  bodycomposition[,"HatchDate"] + bodycomposition[,"Sire"] + m))
+anova(lm(bodycomposition[,phenotypename] ~  bodycomposition[,"HatchDate"] + bodycomposition[,"Sire"] + m.add))
+
+
+okM = which(!is.na(m.dom))
+bodycomposition <- bodycomposition[okM,]
+
+m.dom <- m.dom[okM]
+m.add <- m.add[okM]
+
+model1 <- lm(bodycomposition[,phenotypename] ~  bodycomposition[,"HatchDate"] + bodycomposition[,"Sire"] + m.dom + m.add)
+model0 <- lm(bodycomposition[,phenotypename] ~  bodycomposition[,"HatchDate"] + bodycomposition[,"Sire"])
+anova(model1,model0)

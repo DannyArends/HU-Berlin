@@ -2,7 +2,6 @@
 # Analyse megaMuga data from multiple generations using beagle and R
 #
 
-
 source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
 source("D:/Github/HU-Berlin/Mouse/Muga/vcfTools.R")
 
@@ -105,13 +104,21 @@ phased.vcf[1:10,1:10]
 phased.AHBp <- phased.vcf                                                                         # Copy
 phased.AHBp[, samples] <- apply(phased.AHBp[, samples], 2, fromVCFcode.AHBp)                      # Change coding to A H0 H1 B
 
+# Change the genotype coding
+phased.geno <- phased.vcf                                                                         # Copy
+phased.geno[, samples] <- apply(phased.geno[, samples], 2, fromVCFcode.geno)                      # Change coding to AA AB BA BB
+
+
 # Order chromosomes in the normal way
 chromosomes  <- c(1:19, "X", "Y", "M")
 phased.AHBpN <- NULL
+phased.genoN <- NULL
 for(chr in chromosomes){
   phased.AHBpN <- rbind(phased.AHBpN, phased.AHBp[which(phased.AHBp[,"CHROM"] == chr),])
+  phased.genoN <- rbind(phased.genoN, phased.geno[which(phased.geno[,"CHROM"] == chr),])
 }
 phased.AHBp <- phased.AHBpN
+phased.geno <- phased.genoN
 
 # Load in the phenotypes
 phenotypes <- read.table("Phenotypes/allPhenotypes.txt", sep="\t", header=TRUE, na.strings=c(0, "-", "NA"))
@@ -169,32 +176,45 @@ calculateATB <- function(phased.AHBp, phenotypes, generation = 28){
   return(counts)
 }
 
+
+library(heterozygous)
+
+HWEf2 <- HWE(phased.geno[,F2])
+
+
+# TODO fix this mess of global variable dependancies
 generation <- 27
 
 getSignificant <- function(generation = 28){
-  counts <- calculateATB(phased.AHBp, phenotypes, generation)
-  enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] , 1, function(x){ any(x > 10) }))
-  counts <- counts[enoughSamples,]
-  map <- marker.annot[rownames(counts), ]
-  map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
+  counts <- NULL
+  #if(!file.exists(paste0("Analysis/TransmissionBias_annotated_",generation,".txt"))){
+    counts <- calculateATB(phased.AHBp, phenotypes, generation)
+    enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] , 1, function(x){ any(x > 10) }))
+    counts <- counts[enoughSamples,]
+    map <- marker.annot[rownames(counts), ]
+    map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 
-  counts <- counts[rownames(map.autosomes),]
-  lodPat  <- -log10(pchisq(counts[, "Xp"], 1, lower.tail=FALSE))  # Allele bias Father
-  lodMat  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))  # Allele bias Mother
-  #lodPoO  <- -log10(pchisq(, 1, lower.tail=FALSE))               # Ratio Pat/Mat
-  lodPoO  <- -log10(2*pnorm(-abs(counts[, "PO"])))                # Ratio Pat/Mat
-  lodPh  <-  -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))  # Overrepresentation of H0 versus H1
-  bfmi <- phased.AHBp[rownames(counts), which(colnames(phased.AHBp) == "BFMI860-12 (V2)")]
-  counts <- cbind(counts, lodPat, lodMat, lodPoO, lodPh, bfmi, patPref = NA, matPref = NA)
-  for(x in 1:nrow(counts)){
-    if(counts[x, "P12"] > counts[x, "P21"]){ counts[x,"patPref"] <- "B"; }else{ counts[x,"patPref"] <- "A"; }
-    if(counts[x, "M12"] > counts[x, "M21"]){ counts[x,"matPref"] <- "B"; }else{ counts[x,"matPref"] <- "A"; }
-  }
-  write.table(counts, file=paste0("Analysis/TransmissionBias_annotated_",generation,".txt"), sep="\t")
+    counts  <- counts[rownames(map.autosomes),]
+    lodPat  <- -log10(pchisq(counts[, "Xp"], 1, lower.tail=FALSE))  # Allele bias Father
+    lodMat  <- -log10(pchisq(counts[, "Xm"], 1, lower.tail=FALSE))  # Allele bias Mother
+    lodPoO  <- -log10(2*pnorm(-abs(counts[, "PO"])))                # Ratio Pat/Mat
+    lodPh   <- -log10(pchisq(counts[, "Xh"], 1, lower.tail=FALSE))  # Overrepresentation of H0 versus H1
+    bfmi    <- phased.AHBp[rownames(counts), which(colnames(phased.AHBp) == "BFMI860-12 (V2)")]
+    counts  <- cbind(counts, lodPat, lodMat, lodPoO, lodPh, bfmi, patPref = NA, matPref = NA)
+
+    for(x in 1:nrow(counts)){
+      if(counts[x, "P12"] > counts[x, "P21"]){ counts[x,"patPref"] <- "B"; }else{ counts[x,"patPref"] <- "A"; }
+      if(counts[x, "M12"] > counts[x, "M21"]){ counts[x,"matPref"] <- "B"; }else{ counts[x,"matPref"] <- "A"; }
+    }
+    counts <- cbind(map.autosomes[rownames(counts),],counts)
+    write.table(counts, file=paste0("Analysis/TransmissionBias_annotated_",generation,".txt"), sep="\t")
+  #}else{
+  #  counts <- read.table(paste0("Analysis/TransmissionBias_annotated_",generation,".txt"))
+  #}
   return(counts)
 }
 
-counts <- getSignificant(27)
+counts <- getSignificant(28)
 
 chr.lengths <- NULL
 lsum <- 0
@@ -213,27 +233,27 @@ for(chr in unique(map.autosomes[,"Chr"])){
   map.autosomes[onChr,"cumPos"] <- map.autosomes[onChr,"Pos"] + chr.lengths[chr,2]
 }
 
+N <- 4*70000
+
 op <- par(mfrow = c(4, 1), mar = c(3,4,1.5,1))
 
 chr.cols <- c("black","gray")[1+as.numeric(map.autosomes[,"Chr"]) %%2]
 
-chr.cols[counts[,"lodPat"] > -log10(0.01 / (4*nrow(counts)))] <- "red"
-
-plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppat)", main = "PAT test", las=2, t ="o")
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppat)", main = "PAT test", las=2, t ="p")
 axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
 
-plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodMat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Pmat)", main = "MAT test", las=2, t ="o")
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodMat"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Pmat)", main = "MAT test", las=2, t ="p")
 axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
 
-plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPoO"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppofo)", main = "PofO test", las=2, t ="o")
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPoO"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Ppofo)", main = "PofO test", las=2, t ="p")
 axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
 
-plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPh"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Phet)", main = "HET test", las=2, t ="o")
+plot(x= map.autosomes[,"cumPos"],  y = counts[,"lodPh"], col = chr.cols, pch=19,xaxt='n', ylab="-log10(Phet)", main = "HET test", las=2, t ="p")
 axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange") ; abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
 
 
 
@@ -248,15 +268,15 @@ for(chr in unique(map.autosomes[,"Chr"])){
   points(x=as.numeric(map.autosomes[onChr,"Pos"]) + chr.lengths[chr, 2], y = -counts[onChr,"lodMat"], t = 'p', pch=19, cex=0.6, col=c("Gray", "Pink")[i])
   if(i == 2){ i <- 1; }else{ i <- 2; }
 }
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
-abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
-abline(h=log10(0.05 / (4*nrow(counts))), col="orange")
-abline(h=log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.05 / 70000), col="orange")
+abline(h=-log10(0.01 / 70000), col="green")
+abline(h=log10(0.05 / 70000), col="orange")
+abline(h=log10(0.01 / 70000), col="green")
 
 
 plot(counts[,"lodPoO"], t='h', col=c("black", "Gray")[chr.cols2])
-abline(h=-log10(0.05 / (4*nrow(counts))), col="orange")
-abline(h=-log10(0.01 / (4*nrow(counts))), col="green")
+abline(h=-log10(0.05 / 70000), col="orange")
+abline(h=-log10(0.01 / 70000), col="green")
 
 plot(PoO, t='h', col=c("orange", "green")[chr.cols])
 

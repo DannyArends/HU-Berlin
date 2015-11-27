@@ -55,7 +55,7 @@ if(!file.exists(short.gtf)){
 }
 if(!file.exists(genesonly.gtf)){  
   cat(readLines(reference.gtf,n=5),sep="\n", file=genesonly.gtf)
-  okG <- grepl("ensembl",gtf[,2]) | grepl("insdc",gtf[,2])
+  okG <- grepl("ensembl", gtf[,2]) | grepl("insdc", gtf[,2]) | grepl("mirbase", gtf[,2])
   write.table(gtf[gtf[,1] %in% chrs & gtf[,3] == "gene" & okG,], file=genesonly.gtf, sep="\t", row.names = FALSE, col.names=FALSE, append=TRUE, quote=FALSE)
 }
 
@@ -69,11 +69,11 @@ execute(paste0("PATH=/home/arends/HLRN/bin:$PATH && gtf2bed < ", genesonly.gtf, 
 
 
 # Create index file symbolic links, to adhere to the bedtools expectation
-#for(x in bamfiles){
-#  old <- gsub("bam", "bai", x); new <- gsub("bam", "bam.bai", x);  out <- gsub("bam", "counts", x)
-#  execute(paste0("ln -s ",old," ", new, "\n"), new)
-#  execute(paste0("~/HLRN/bedtools2/bin/bedtools multicov -bams ", x, " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.short.bed > ", out), out)
-#}
+for(x in bamfiles){
+  old <- gsub("bam", "bai", x); new <- gsub("bam", "bam.bai", x);  out <- gsub("bam", "counts", x)
+  execute(paste0("ln -s ",old," ", new, "\n"), new)
+  execute(paste0("~/HLRN/bedtools2/bin/bedtools multicov -bams ", x, " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.short.bed > ", out), out)
+}
 
 # Extract the counts from the individual bam files
 out <- paste0(readsoutput, "raw_counts_genesonly.txt")
@@ -172,8 +172,8 @@ if(!file.exists("/home/share/genomes/mm10/biomart/BiomartAnnotation.txt")){
   ensemblIDs <- as.character(expressiondata[,"ensembl_gene_id"])
   bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")                                                # Biomart for mouse genes
   biomartResults <- NULL
-  for(x in seq(0, length(ensemblIDs), 1000)){                                                                        # Do 1000 per time, just to please biomaRt
-    xend <- min((x + 1000),length(ensemblIDs))                                                                       # Don't walk passed the end of the array
+  for(x in seq(0, length(ensemblIDs), 1000)){                                                                     # Do 1000 per time, just to please biomaRt
+    xend <- min((x + 1000),length(ensemblIDs))                                                                    # Don't walk passed the end of the array
     cat("Retrieving", x, "/", xend,"\n")
 
     res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "mgi_id", "mgi_symbol", "mgi_description"), 

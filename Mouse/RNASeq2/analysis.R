@@ -69,15 +69,15 @@ execute(paste0("PATH=/home/arends/HLRN/bin:$PATH && gtf2bed < ", genesonly.gtf, 
 
 
 # Create index file symbolic links, to adhere to the bedtools expectation
-for(x in bamfiles){
-  old <- gsub("bam", "bai", x); new <- gsub("bam", "bam.bai", x);  out <- gsub("bam", "counts", x)
-  execute(paste0("ln -s ",old," ", new, "\n"), new)
-  execute(paste0("~/HLRN/bedtools2/bin/bedtools multicov -bams ", x, " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.short.bed > ", out), out)
-}
+#for(x in bamfiles){
+#  old <- gsub("bam", "bai", x); new <- gsub("bam", "bam.bai", x);  out <- gsub("bam", "counts", x)
+#  execute(paste0("ln -s ",old," ", new, "\n"), new)
+#  execute(paste0("~/HLRN/bedtools2/bin/bedtools multicov -bams ", x, " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.short.bed > ", out), out)
+#}
 
 # Extract the counts from the individual bam files
 out <- paste0(readsoutput, "raw_counts_genesonly.txt")
-execute(paste0("~/HLRN/bedtools2/bin/bedtools multicov -bams ", paste0(bamfiles, collapse=" "), " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.genesonly.bed > ", out), out)
+execute(paste0("nohup ~/HLRN/bedtools2/bin/bedtools multicov -split -q 10 -bams ", paste0(bamfiles, collapse=" "), " -bed /home/share/genomes/mm10/Mus_musculus.GRCm38.81.genesonly.bed > ", out, " &"), out)
 
 if(!file.exists(paste0(readsoutput, "RPKM_norm_log.txt"))){
   expressiondata <- read.table(out, sep="\t")
@@ -104,14 +104,16 @@ if(!file.exists(paste0(readsoutput, "RPKM_norm_log.txt"))){
   chrominfo     <- read.table("/home/share/genomes/mm10/MouseChrInfo.txt", sep="\t", header=TRUE, colClasses=c("character","integer","logical"))
   mouse         <- makeTranscriptDbFromGFF(short.gtf, format = "gtf", exonRankAttributeName="exon_number", 
                                            species="Mus musculus", chrominfo=chrominfo, dataSource="ftp://ftp.ensembl.org/pub/release-76/gtf/mus_musculus/")
-  exonsByGene   <- exonsBy(mouse, by = "gene")
 
+                                           exonsByGene   <- exonsBy(mouse, by = "gene")
   exonicGeneSizes <- lapply(exonsByGene, function(x){ sum(width(reduce(x))) })                # Get the length of each gene using only the exons
   N <- apply(rawreadsQnorm, 2, sum)                                                           # Get the number of reads in all samples
 
+  orderedSizes <- exonicGeneSizes[as.character(expressiondata[,"ensembl_gene_id"])]
+
   n <- 1
   RPKM <- t(apply(rawreadsQnorm, 1, function(C){                                              # Calculate the RPKM values per gene
-    L     <- as.numeric(exonicGeneSizes[n])
+    L     <- as.numeric(orderedSizes[n])
     RPKM  <- (10^9 * C) / (N * L)
     n    <<- n + 1
     return(round(RPKM, d = 3))

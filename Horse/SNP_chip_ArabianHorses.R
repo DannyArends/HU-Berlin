@@ -216,7 +216,7 @@ analyzeStructure <- function(stmatrix, confidence = 0.0){
 }
 
 plotStructure <- function(stmatrix){
-  plot(c(1,nrow(stmatrix)), c(-0.1, 1), t = 'n')
+  plot(c(1,nrow(stmatrix)), c(-0.1, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n')
   dsum <- rep(0, nrow(stmatrix))
   mcol <- 2
   apply(stmatrix, 2, function(x){
@@ -231,6 +231,8 @@ plotStructure <- function(stmatrix){
   names(sahriastrain) <- rownames(stmatrix)
   sahriastrain[names(phenotypes["Strain",])] <- as.character(phenotypes["Strain",])
   text(x = 1:nrow(stmatrix), y = rep(-0.05, nrow(stmatrix)), sahriastrain)
+  axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
+  axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
 }
 
 for(analysis in paste0(loc, "/", results)){
@@ -266,13 +268,13 @@ classicalpheno <- c("WH", "CW", "CH", "NG", "TG", "ChG", "ChD", "ChW", "BLL", "B
 racepheno <- c("Distance (km)", "Speed(km\\hr)")
 
 pClassical <- matrix(NA, length(classicalpheno), 3, dimnames = list(classicalpheno, c("Sex", "Age", "Strain")))
-for(ph in classicalpheno){
+for(ph in classicalpheno) {
   model <- anova(lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + strain))
   pClassical[ph,] <- model[[5]][1:3]
 }
 
 pRace <- matrix(NA, length(racepheno), 3, dimnames=list(racepheno, c("Sex", "Age", "Strain")))
-for(ph in racepheno){
+for(ph in racepheno) {
   model <- anova(lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + strain))
   pRace[ph,] <- model[[5]][1:3]
 }
@@ -283,22 +285,22 @@ write.table(rbind(pClassical, pRace), "output/covariates.txt", sep="\t")
 
 # Calculate the phenotypes after correction
 phenoC <- matrix(NA, length(c(classicalpheno, racepheno)), ncol(phenotypes), dimnames = list(c(classicalpheno, racepheno), colnames(phenotypes)))
-for(ph in classicalpheno){
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + strain)
+for(ph in classicalpheno) {
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
-for(ph in racepheno){
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + strain)
+for(ph in racepheno) {
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
 
 # Do the GWAS using a single QTL model *Do not correct for race of horse
 pvalues <- matrix(NA, length(c(classicalpheno, racepheno)), nrow(genotypes), dimnames = list(c(classicalpheno, racepheno), rownames(genotypes)))
-for(phe in rownames(phenoC)){
-  cat("Cmputing GWAS results for:", phe, "\n")
-  pvalues[phe, ] <- apply(genotypes, 1, function(marker){
+for(phe in rownames(phenoC)) {
+  cat("Computing GWAS results for:", phe, "\n")
+  pvalues[phe, ] <- apply(genotypes, 1, function(marker) {
     tryCatch(res <- anova(lm(as.numeric(phenoC[phe,]) ~ as.factor(marker)))[[5]][1], error = function(e){ res <<- NA })
     return(res)
   })
@@ -307,7 +309,7 @@ write.table(pvalues, "output/pvaluesGWAS.txt", sep="\t")
 
 colorz <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
 
-for(phe in rownames(pvalues)){
+for(phe in rownames(pvalues)) {
   png(paste0("output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
     plot(x = c(1, ncol(pvalues)), y = c(0,10), t='n', main=phe)
     points(-log10(pvalues[phe,]), pch = 19, cex = 0.5, col=colorz)

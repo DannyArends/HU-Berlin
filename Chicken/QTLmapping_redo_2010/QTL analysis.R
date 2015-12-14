@@ -4,10 +4,14 @@
 # last modified Dec, 2014
 # first written Dec, 2014
 
+# TODO use forward selection
+
 setwd("E:/Chicken/ClassicalPhenotypes/QTLanalysis_Mostafa_2010")
 
 genotypes <- read.table("genotypes.txt", sep="\t", na.strings = ".", header=TRUE)                                 # Load the genotypes
 bodycomposition <- read.table("bodycomposition.txt", sep="\t", na.strings = ".", header=TRUE)[, -1]               # Load the phenotypes
+
+bodycomposition <- bodycomposition[]
 
 BCinGT <- which(bodycomposition[,"ID"] %in% genotypes[,"ID"])                                                     # Which body composition traits have genotypes
 bodycomposition <- bodycomposition[BCinGT, ]
@@ -31,23 +35,25 @@ mapQTL <- function(bodycomposition, genotypes, phenotypename = "Body.weight.at.2
     
     okM = which(!is.na(m.dom))
     bc <- bodycomposition[okM,]
+
+    cof <- genotypes[okM,"UMA4.034"]
     
     m <- m[okM]
     m.dom <- m.dom[okM]
     m.add <- m.add[okM]
     
-    mA <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + as.factor(m))
+    mA <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + bc[,"Cross"] + cof + as.factor(m))
     
-    m1 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + m.dom + m.add)
-    m0 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"])
+    m1 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + bc[,"Cross"] + m.dom + m.add)
+    m0 <- lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + bc[,"Cross"])
     res  <- anova(m1)
     pval <- anova(m1, m0)
     ptest <- anova(mA, m0)
     LODscores <- rbind(LODscores, c(-log10(res[[5]]), -log10(pval[[6]][2]), -log10(ptest[[6]][2])))
   }
   rownames(LODscores) <- markersForQTL
-  colnames(LODscores) <- c("HatchDate", "Subfamily", "M.Dom", "M.Add", "Residuals", "ModelDiff", "ModelDiff2")                                      # Add the row names to our result matrix
-  return(LODscores)
+  #colnames(LODscores) <- c("HatchDate", "Subfamily", "Cross", "M.Dom", "M.Add", "Residuals", "ModelDiff", "ModelDiff2")                                      # Add the row names to our result matrix
+   return(LODscores)
 }
 
 phenotypesForQTL <- colnames(bodycomposition)[8:ncol(bodycomposition)]                                           # Phenotypes that are used in QTL mapping
@@ -72,9 +78,23 @@ plot(LODresults$Mesenteric.adipose.tissue..g[,"Marker"], t='l')                 
 ## Small region: rs14488203 => 4 69583407 to rs14494169 => 4 78715886
 ## Extended region: MCW0276 => 4 59553432 to UMA4024 =>    4 84774762
 
+topmarker <- "UMA4.034"
+
 
 c1 <- which(bodycomposition[,"Cross"] == 1)   # NHI x WL77
 c2 <- which(bodycomposition[,"Cross"] == 2)   # WL77 x NHI
+
+
+
+
+ii <- which(!is.na(bc[,phenotypename]))
+m <- genotypes[,topmarker]
+
+pcor <- lm(bc[ii,phenotypename] ~  bc[ii,"HatchDate"] + bc[ii,"Sire"])$residuals
+
+anova(lm(pcor ~ bc[ii,"Cross"] * as.factor(m[ii])))
+
+anova(lm(bc[,phenotypename] ~  bc[,"HatchDate"] + bc[,"Sire"] + bc[,"Cross"] * as.factor(m)))
 
 
 

@@ -86,24 +86,27 @@ write.table(table(map[,"Chromosome"]), "output/GoodMarkerTable.txt", sep="\t")
 genotypesnref <- cbind(genotypes, kabadinergenotypes[,refstrains])
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
-# Write out the data for STRUCTURE
 numGeno <- t(toNumeric(genotypesnref))
-structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
-for(x in 1:nrow(numGeno)){
-  gg <- rbind(rep(NA, ncol(numGeno)), rep(NA, ncol(numGeno)))
-  a1 <- which(numGeno[x,] == 1)
-  a2 <- which(numGeno[x,] == 2)
-  a3 <- which(numGeno[x,] == 3)
-  gg[1, a1] <- 0; gg[2, a1] <- 0
-  gg[1, a2] <- 0; gg[2, a2] <- 1
-  gg[1, a3] <- 1; gg[2, a3] <- 1
-  gg[is.na(gg)] <- 9
-  structGeno <- rbind(structGeno, gg)
-}
 
-rownames(structGeno) <- unlist(lapply(rownames(numGeno), rep, 2))
-colnames(structGeno) <- colnames(numGeno)
-write.table(structGeno, file="input/cleaned_phenotypes_structure.txt", sep = "\t")    # Save the clean phenotypes to disk
+if(!file.exists("input/cleaned_phenotypes_structure.txt")){
+  # Write out the data for STRUCTURE
+  structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
+  for(x in 1:nrow(numGeno)){
+    gg <- rbind(rep(NA, ncol(numGeno)), rep(NA, ncol(numGeno)))
+    a1 <- which(numGeno[x,] == 1)
+    a2 <- which(numGeno[x,] == 2)
+    a3 <- which(numGeno[x,] == 3)
+    gg[1, a1] <- 0; gg[2, a1] <- 0  # Pretty inefficient, but it will do the trick
+    gg[1, a2] <- 0; gg[2, a2] <- 1
+    gg[1, a3] <- 1; gg[2, a3] <- 1
+    gg[is.na(gg)] <- 9
+    structGeno <- rbind(structGeno, gg)
+  }
+
+  rownames(structGeno) <- unlist(lapply(rownames(numGeno), rep, 2))
+  colnames(structGeno) <- colnames(numGeno)
+  write.table(structGeno, file="input/cleaned_phenotypes_structure.txt", sep = "\t")    # Save the clean phenotypes to disk
+}
 
 ## Some basic plots of all the individuals relatedness
 dendrogram <- as.dendrogram(hclust(dist(t(toNumeric(genotypesnref)), method = "manhattan")))         #TODO: perhaps add the reference horse
@@ -117,8 +120,8 @@ names(cols) <- c("K", "S", "H", "P")
 
 labelCol <- function(x) {
   if (is.leaf(x)) {
-    hclass <- strains[attr(x, "label")]            # Fetch the class label
-    hcol <- cols[hclass]     # Label color
+    hclass <- strains[attr(x, "label")]             # Fetch the class label
+    hcol <- cols[hclass]                            # Determine color of the label
     cat(attr(x, "label"), hclass, hcol, "\n")
     attr(x, "nodePar") <- list(lab.col=hcol)
   }
@@ -187,7 +190,6 @@ aa <- apply(cbind(map, F = Fstatistics), 1 ,function(x) {
 axis(1, chromosomes, at=c(1:nrow(chrInfo)), las=1)
 axis(2, seq(0, max(chrInfo[,2]), 10000000)/1000000, at=seq(0, max(chrInfo[,2]), 10000000), cex.axis=0.7)
 
-
 ## Structure results (run Structure)
 structuredir <- "E:/Horse/DNA/Equine60k/STRUCTURE"
 projectname <- "ArabianHorses"
@@ -215,8 +217,25 @@ analyzeStructure <- function(stmatrix, confidence = 0.0){
   return(counts)
 }
 
-plotStructure <- function(stmatrix){
-  plot(c(1,nrow(stmatrix)), c(-0.1, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n')
+plotStructure <- function(stmatrix, doSort = FALSE){
+  if(doSort){
+    ordering <- NULL
+    breaks <- 0
+    stmatrix.copy <- stmatrix
+    for(x in 1:ncol(stmatrix.copy)){
+      sorted <- sort(stmatrix.copy[,x], decreasing = TRUE)
+      samples <- names(sorted[sorted >= 0.5])
+      ordering <- c(ordering, samples)
+      stmatrix.copy <- stmatrix.copy[-which(rownames(stmatrix.copy) %in% samples),]
+      breaks <- c(breaks, breaks[length(breaks)] + length(samples))
+      cat(breaks, samples,"\n")
+    }
+    breaks <- c(breaks, nrow(stmatrix))
+    ordering <- c(ordering, rownames(stmatrix.copy))
+    stmatrix <- stmatrix[ordering,]
+  }
+  
+  plot(c(1,nrow(stmatrix)), c(-0.15, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n')
   dsum <- rep(0, nrow(stmatrix))
   mcol <- 2
   apply(stmatrix, 2, function(x){
@@ -225,14 +244,19 @@ plotStructure <- function(stmatrix){
     }
     dsum <<- dsum + x
     mcol <<- mcol + 1
-    cat(dsum, "\n")
+    #cat(dsum, "\n")
   })
   sahriastrain <- rep("P", length(rownames(stmatrix)))
   names(sahriastrain) <- rownames(stmatrix)
   sahriastrain[names(phenotypes["Strain",])] <- as.character(phenotypes["Strain",])
   text(x = 1:nrow(stmatrix), y = rep(-0.05, nrow(stmatrix)), sahriastrain)
+  mids <- diff(breaks) / 2 + 0.5
+  for(x in 1:length(mids)) mids[x] <- mids[x] + breaks[x]
+  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Group ", 1:length(mids-1))) 
   axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
   axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
+  abline(v = breaks + 0.5,lwd=0.5, lty=2)
+  return(breaks)
 }
 
 for(analysis in paste0(loc, "/", results)){
@@ -249,13 +273,13 @@ for(analysis in paste0(loc, "/", results)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
-  plotStructure(stmatrix)
+  plotStructure(stmatrix, TRUE)
   cat("--All individuals--\n")
   counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   cat("--High purity (> 0.8)--\n")
   counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
   cat("----\n")
-  if(ncol(stmatrix) == 2) break                 # We did more but I want too see if Saria's hypothesis is correct
+  if(ncol(stmatrix) == 6) break                 # We did more but I want too see if Saria's hypothesis is correct
 }
 
 # Analyse the different covariates for the different phenotypes
@@ -307,7 +331,18 @@ for(phe in rownames(phenoC)) {
 }
 write.table(pvalues, "output/pvaluesGWAS.txt", sep="\t")
 
+
+setwd("E:/Horse/DNA/Equine60k/")
+pvalues <- read.csv("output/pvaluesGWAS.txt", sep="\t")
+
 colorz <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
+
+for(phe in rownames(pvalues)) {
+  ii <- which(pvalues[phe, ] < (0.05/46229))
+  if(length(ii) > 0){
+    cat(phe, colnames(pvalues)[ii],"\n")
+  }
+}
 
 for(phe in rownames(pvalues)) {
   png(paste0("output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
@@ -318,3 +353,5 @@ for(phe in rownames(pvalues)) {
     abline(h = -log10(0.01/46229), col="green")
   dev.off()
 }
+
+

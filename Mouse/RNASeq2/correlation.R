@@ -119,8 +119,8 @@ plotPathways <- function(patwaydata, corBFMI, corB6N, corDIFF, name1 = "Endocyto
   iB6N <- apply(iB6N, 1, as.numeric)
   rownames(iB6N) <- expdata[colnames(iB6N),"gene_name"];colnames(iB6N) <- expdata[colnames(iB6N),"gene_name"]
 
-  colz <- c("tomato3", "tomato2", "tomato1", "white", "slategray1", "slategray2", "slategray3")
-  breakz <- c(-1, -0.8, -0.6, -0.5, 0.5, 0.6, 0.8, 1)
+  colz <- c("tomato4", "tomato3", "tomato2", "tomato1", "white", "slategray1", "slategray2", "slategray3", "slategray4")
+  breakz <- c(-1, -0.9, -0.8, -0.6, -0.5, 0.5, 0.6, 0.8, 0.9, 1)
   
   op <- par(mfrow=c(1,3))
   image(iBFMI, col = colz, breaks = breakz, xaxt='n', yaxt='n', main="matBFMI")

@@ -365,7 +365,7 @@ pvalues <- read.csv("output/pvaluesGWAS.txt", sep="\t")
 colorz <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
 
 for(phe in colnames(pvalues)) {
-  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
+  ii <- which(pvalues[, phe] < (0.01/nrow(pvalues)))
   if(length(ii) > 0){
     cat(phe, rownames(pvalues)[ii],"\n")
   }

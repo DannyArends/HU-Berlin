@@ -54,15 +54,31 @@ colnames(genotypes)  <- gsub(".TOP", "", colnames(genotypes))
 ### Data QC
 cat("Left with", nrow(genotypes), "markers\n")
 tables          <- apply(genotypes, 1, table)
-nonInformative  <- which(unlist(lapply(tables,length)) < 2)            # Non informative, since we only have 1 genotype
+nonInformative  <- which(unlist(lapply(tables,length)) < 2)             # Non informative, since we only have 1 genotype
 genotypes       <- genotypes[-nonInformative, ]
 calledgeno      <- calledgeno[-nonInformative, ]
 map             <- map[-nonInformative, ]
 cat("Left with", nrow(genotypes), "markers\n")
 
-notDuplicated <- which(!duplicated(calledgeno))                        # Duplicated markers
+notDuplicated <- which(!duplicated(calledgeno))                         # Duplicated markers
 genotypes     <- genotypes[notDuplicated, ]
 map           <- map[notDuplicated, ]
+cat("Left with", nrow(genotypes), "markers\n")
+
+percMissing <- apply(apply(genotypes,1,is.na),2,sum) / ncol(genotypes)  # Call rates
+keep          <- which(percMissing <= 0.05)
+genotypes     <- genotypes[keep, ]
+map           <- map[keep, ]
+cat("Left with", nrow(genotypes), "markers\n")
+
+allelefreq <- apply(genotypes, 1 , function(x){
+  tbl <- table(unlist(lapply(x, strsplit, "")))
+  min(tbl / sum(tbl))
+})
+
+keep <- which(allelefreq >= 0.05)
+genotypes     <- genotypes[keep, ]
+map           <- map[keep, ]
 cat("Left with", nrow(genotypes), "markers\n")
 
 write.table(map, file="input/cleaned_map.txt", sep = "\t")                                      # Save the clean map to disk
@@ -70,8 +86,11 @@ write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t")          
 write.table(toNumeric(genotypes), file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
 write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")                        # Save the clean phenotypes to disk
 
+# We now clean up the phenotypes manually after this step (fix stuff like "20 " -> "20") and only keep a single date for racing
+phenotypes     <- read.table(file="input/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
+
 refstrains <- c("P0072", "P0078", "P0084")
-kabadinergenotypes[1:10, refstrains]
+write.table(kabadinergenotypes[, refstrains], "input/cleaned_kabadinergenotypes.txt", sep="\t",quote=FALSE)
 
 # Which markers match
 kabadinermap <- kabadinermap[which(rownames(kabadinermap) %in% rownames(map)),]
@@ -86,9 +105,13 @@ write.table(table(map[,"Chromosome"]), "output/GoodMarkerTable.txt", sep="\t")
 genotypesnref <- cbind(genotypes, kabadinergenotypes[,refstrains])
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
+for(x in unique(map[,"Chromosome"])){
+  cat(x, length(which(map[,"Chromosome"] == x)),"\n")
+}
+
 numGeno <- t(toNumeric(genotypesnref))
 
-if(!file.exists("input/cleaned_phenotypes_structure.txt")){
+if(!file.exists("input/cleaned_genotypes_structure.txt")){
   # Write out the data for STRUCTURE
   structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
   for(x in 1:nrow(numGeno)){
@@ -105,7 +128,7 @@ if(!file.exists("input/cleaned_phenotypes_structure.txt")){
 
   rownames(structGeno) <- unlist(lapply(rownames(numGeno), rep, 2))
   colnames(structGeno) <- colnames(numGeno)
-  write.table(structGeno, file="input/cleaned_phenotypes_structure.txt", sep = "\t")    # Save the clean phenotypes to disk
+  write.table(structGeno, file="input/cleaned_genotypes_structure.txt", sep = "\t")    # Save the clean genotypes to disk
 }
 
 ## Some basic plots of all the individuals relatedness
@@ -165,6 +188,8 @@ if(!file.exists("output/WrightFstatistics.txt")) {
   Fstatistics <- read.table("output/WrightFstatistics.txt", sep="\t")
 }
 
+# Do the same now use library: polysat for pairwise Fst values
+
 ### Chromosome plot to show the location of SNPs
 chromosomes  <- as.character(c(1:31, "X", "Y", "MT"))
 
@@ -193,7 +218,7 @@ axis(2, seq(0, max(chrInfo[,2]), 10000000)/1000000, at=seq(0, max(chrInfo[,2]), 
 ## Structure results (run Structure)
 structuredir <- "E:/Horse/DNA/Equine60k/STRUCTURE"
 projectname <- "ArabianHorses"
-paramsetname <- "Analysis_3000_500"
+paramsetname <- "5000-1000"
 
 loc <- paste0(structuredir, "/", projectname, "/", paramsetname, "/Results")
 results <- dir(loc)
@@ -230,12 +255,12 @@ plotStructure <- function(stmatrix, doSort = FALSE){
       breaks <- c(breaks, breaks[length(breaks)] + length(samples))
       cat(breaks, samples,"\n")
     }
-    breaks <- c(breaks, nrow(stmatrix))
+    #breaks <- c(breaks, nrow(stmatrix))
     ordering <- c(ordering, rownames(stmatrix.copy))
     stmatrix <- stmatrix[ordering,]
   }
   
-  plot(c(1,nrow(stmatrix)), c(-0.15, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n')
+  plot(c(1,nrow(stmatrix)), c(-0.15, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n', main=paste0("STRUCTURE, clusters = ", ncol(stmatrix)))
   dsum <- rep(0, nrow(stmatrix))
   mcol <- 2
   apply(stmatrix, 2, function(x){
@@ -252,7 +277,7 @@ plotStructure <- function(stmatrix, doSort = FALSE){
   text(x = 1:nrow(stmatrix), y = rep(-0.05, nrow(stmatrix)), sahriastrain)
   mids <- diff(breaks) / 2 + 0.5
   for(x in 1:length(mids)) mids[x] <- mids[x] + breaks[x]
-  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Group ", 1:length(mids-1))) 
+  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Group ", 1:length(mids-1)), cex=0.8) 
   axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
   axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
   abline(v = breaks + 0.5,lwd=0.5, lty=2)
@@ -279,7 +304,7 @@ for(analysis in paste0(loc, "/", results)){
   cat("--High purity (> 0.8)--\n")
   counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
   cat("----\n")
-  if(ncol(stmatrix) == 6) break                 # We did more but I want too see if Saria's hypothesis is correct
+  if(ncol(stmatrix) == 4) break                 # We did more but I want too see if Saria's hypothesis is correct
 }
 
 # Analyse the different covariates for the different phenotypes
@@ -310,12 +335,12 @@ write.table(rbind(pClassical, pRace), "output/covariates.txt", sep="\t")
 # Calculate the phenotypes after correction
 phenoC <- matrix(NA, length(c(classicalpheno, racepheno)), ncol(phenotypes), dimnames = list(c(classicalpheno, racepheno), colnames(phenotypes)))
 for(ph in classicalpheno) {
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM)
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + strain)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
 for(ph in racepheno) {
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR)
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + strain)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
@@ -329,28 +354,30 @@ for(phe in rownames(phenoC)) {
     return(res)
   })
 }
+pvalues <- t(pvalues)
 write.table(pvalues, "output/pvaluesGWAS.txt", sep="\t")
 
 
 setwd("E:/Horse/DNA/Equine60k/")
 pvalues <- read.csv("output/pvaluesGWAS.txt", sep="\t")
 
+
 colorz <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
 
-for(phe in rownames(pvalues)) {
-  ii <- which(pvalues[phe, ] < (0.05/46229))
+for(phe in colnames(pvalues)) {
+  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
   if(length(ii) > 0){
-    cat(phe, colnames(pvalues)[ii],"\n")
+    cat(phe, rownames(pvalues)[ii],"\n")
   }
 }
 
-for(phe in rownames(pvalues)) {
+for(phe in colnames(pvalues)) {
   png(paste0("output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
-    plot(x = c(1, ncol(pvalues)), y = c(0,10), t='n', main=phe)
-    points(-log10(pvalues[phe,]), pch = 19, cex = 0.5, col=colorz)
-    abline(h = -log10(0.1/46229), col="orange")
-    abline(h = -log10(0.05/46229), col="gold")
-    abline(h = -log10(0.01/46229), col="green")
+    plot(x = c(1, nrow(pvalues)), y = c(0,10), t='n', main=phe)
+    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=colorz)
+    abline(h = -log10(0.1/nrow(pvalues)), col="orange")
+    abline(h = -log10(0.05/nrow(pvalues)), col="gold")
+    abline(h = -log10(0.01/nrow(pvalues)), col="green")
   dev.off()
 }
 

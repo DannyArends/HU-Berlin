@@ -49,10 +49,10 @@ setwd("E:/Horse/DNA/Equine60k/")
 # Read data an pre-process
 arabian <- read.table("input/arabianhorses.txt", header=TRUE, sep = "\t",na.strings=c("--", "x", "unknown", ""), colClasses="character", row.names=1)
 
-phenotypes            <- arabian[1:28, ]              # Row 1 till 29 contains phenotype data
-genotypes             <- arabian[29:nrow(arabian), ]  # Row 30 till the end contains genotype data
+phenotypes            <- arabian[1:28, ]                              # Row 1 till 29 contains phenotype data
+genotypes             <- arabian[29:nrow(arabian), ]                  # Row 30 till the end contains genotype data
 rownames(genotypes)   <- arabian[29:nrow(arabian), 1]
-map                   <- genotypes[,c("Chromosome","Position")]     # Extract the map and split the phenotypes and genotypes
+map                   <- genotypes[,c("Chromosome","Position")]       # Extract the map and split the phenotypes and genotypes
 cat("Starting with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/AllMarkerTable.txt", sep="\t")
 genotypes             <- genotypes[which(as.numeric(genotypes[,"GenTrain.Score"]) > 0.6),]    # Keep only high quality calls
@@ -106,9 +106,13 @@ write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")        
 phenotypes     <- read.table(file="input/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
 
 przewalski_ref   <- c("P0072", "P0078", "P0084")
+write.table(kabadinergenotypes[, przewalski_ref], "input/cleaned_przewalski_genotypes.txt", sep="\t",quote=FALSE)
+
 kabardian_ref    <- c("P3728", "P3421", "P3007", "P3542", "P3454", "P3509", "P3634", "P3420", "P3567", "P3418")
+write.table(kabadinergenotypes[, kabardian_ref], "input/cleaned_kabardian_genotypes.txt", sep="\t",quote=FALSE)
+
 thoroughbred_ref <- c("P3708", "P0031", "P1294", "P3706", "P3751", "P3752")
-write.table(kabadinergenotypes[, przewalski_ref], "input/cleaned_kabadinergenotypes.txt", sep="\t",quote=FALSE)
+write.table(kabadinergenotypes[, thoroughbred_ref], "input/cleaned_thoroughbred_genotypes.txt", sep="\t",quote=FALSE)
 
 # Which markers match
 kabadinermap <- kabadinermap[which(rownames(kabadinermap) %in% rownames(map)),]
@@ -120,7 +124,7 @@ kabadinergenotypes  <- kabadinergenotypes[rownames(kabadinermap), ]
 cat("Left with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/GoodMarkerTable.txt", sep="\t")
 
-genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref])
+genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref])
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
 for(x in unique(map[,"Chromosome"])){
@@ -152,12 +156,12 @@ if(!file.exists("input/cleaned_genotypes_structure.txt")){
 ## Some basic plots of all the individuals relatedness
 dendrogram <- as.dendrogram(hclust(dist(t(toNumeric(genotypesnref)), method = "manhattan")))         #TODO: perhaps add the reference horse
 
-strains <- c(as.character(phenotypes["Strain", ]), rep("Ref",length(przewalski_ref)))
-names(strains) <- c(colnames(phenotypes), przewalski_ref)
+strains <- c(as.character(phenotypes["Strain", ]), rep("P", length(przewalski_ref)), rep("Kab", length(kabardian_ref)), rep("Tho", length(thoroughbred_ref)))
+names(strains) <- c(colnames(phenotypes), przewalski_ref, kabardian_ref, thoroughbred_ref)
 
 # Create colors
-cols <- c("red", "blue", "orange", "black")
-names(cols) <- c("K", "S", "H", "Ref")
+cols <- c("red", "blue", "orange", "black", "purple", "brown")
+names(cols) <- c("K", "S", "H", "P", "Kab", "Tho")
 
 labelCol <- function(x) {
   if (is.leaf(x)) {
@@ -235,7 +239,7 @@ axis(2, seq(0, max(chrInfo[,2]), 10000000)/1000000, at=seq(0, max(chrInfo[,2]), 
 library(StAMPP)
 abGeno <- t(toAB(genotypesnref))
 stammpinput <- abGeno
-strains <- as.character(unlist(c(phenotypes["Strain",rownames(stammpinput)[1:48]], "P", "P", "P")))
+#strains <- as.character(unlist(c(phenotypes["Strain",rownames(stammpinput)[1:48]], "P", "P", "P")))
 stammpinput <- data.frame(cbind(rownames(stammpinput), strains, 2, "BiA", stammpinput))
 colnames(stammpinput)[1:4] <- c("Sample", "Pop", "Ploidy", "Format")
 

@@ -20,6 +20,22 @@ toNumeric <- function(genotypes){
   return(t(numericG))
 }
 
+toAB <- function(genotypes){
+  numericG <- apply(genotypes, 1, function(x){
+    geno <- table(unlist(strsplit(as.character(x),"")))
+    a1 <- paste0(names(geno)[1],names(geno)[1])
+    a2 <- paste0(sort(c(names(geno)[1],names(geno)[2])),collapse="")
+    a3 <- paste0(names(geno)[2],names(geno)[2])
+    ngeno <- rep(NA,length(x))
+    ngeno[x == a1] <- "AA"
+    ngeno[x == a2] <- "AB"
+    ngeno[x == a3] <- "BB"
+    return(ngeno)
+  })
+  rownames(numericG) <- colnames(genotypes)
+  return(t(numericG))
+}
+
 setwd("E:/Horse/DNA/Kabadiner/")
 # Read reference 'kabadiner' map and data
 kabadinermap            <- read.table(file="input/cleaned_map.txt", sep = "\t")
@@ -89,8 +105,10 @@ write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")        
 # We now clean up the phenotypes manually after this step (fix stuff like "20 " -> "20") and only keep a single date for racing
 phenotypes     <- read.table(file="input/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
 
-refstrains <- c("P0072", "P0078", "P0084")
-write.table(kabadinergenotypes[, refstrains], "input/cleaned_kabadinergenotypes.txt", sep="\t",quote=FALSE)
+przewalski_ref   <- c("P0072", "P0078", "P0084")
+kabardian_ref    <- c("P3728", "P3421", "P3007", "P3542", "P3454", "P3509", "P3634", "P3420", "P3567", "P3418")
+thoroughbred_ref <- c("P3708", "P0031", "P1294", "P3706", "P3751", "P3752")
+write.table(kabadinergenotypes[, przewalski_ref], "input/cleaned_kabadinergenotypes.txt", sep="\t",quote=FALSE)
 
 # Which markers match
 kabadinermap <- kabadinermap[which(rownames(kabadinermap) %in% rownames(map)),]
@@ -102,7 +120,7 @@ kabadinergenotypes  <- kabadinergenotypes[rownames(kabadinermap), ]
 cat("Left with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/GoodMarkerTable.txt", sep="\t")
 
-genotypesnref <- cbind(genotypes, kabadinergenotypes[,refstrains])
+genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref])
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
 for(x in unique(map[,"Chromosome"])){
@@ -134,12 +152,12 @@ if(!file.exists("input/cleaned_genotypes_structure.txt")){
 ## Some basic plots of all the individuals relatedness
 dendrogram <- as.dendrogram(hclust(dist(t(toNumeric(genotypesnref)), method = "manhattan")))         #TODO: perhaps add the reference horse
 
-strains <- c(as.character(phenotypes["Strain", ]), "P", "P", "P")
-names(strains) <- c(colnames(phenotypes), refstrains)
+strains <- c(as.character(phenotypes["Strain", ]), rep("Ref",length(przewalski_ref)))
+names(strains) <- c(colnames(phenotypes), przewalski_ref)
 
 # Create colors
 cols <- c("red", "blue", "orange", "black")
-names(cols) <- c("K", "S", "H", "P")
+names(cols) <- c("K", "S", "H", "Ref")
 
 labelCol <- function(x) {
   if (is.leaf(x)) {
@@ -188,8 +206,6 @@ if(!file.exists("output/WrightFstatistics.txt")) {
   Fstatistics <- read.table("output/WrightFstatistics.txt", sep="\t")
 }
 
-# Do the same now use library: polysat for pairwise Fst values
-
 ### Chromosome plot to show the location of SNPs
 chromosomes  <- as.character(c(1:31, "X", "Y", "MT"))
 
@@ -214,6 +230,32 @@ aa <- apply(cbind(map, F = Fstatistics), 1 ,function(x) {
 
 axis(1, chromosomes, at=c(1:nrow(chrInfo)), las=1)
 axis(2, seq(0, max(chrInfo[,2]), 10000000)/1000000, at=seq(0, max(chrInfo[,2]), 10000000), cex.axis=0.7)
+
+# Pairwise population D and Fst values using StAMPP
+library(StAMPP)
+abGeno <- t(toAB(genotypesnref))
+stammpinput <- abGeno
+strains <- as.character(unlist(c(phenotypes["Strain",rownames(stammpinput)[1:48]], "P", "P", "P")))
+stammpinput <- data.frame(cbind(rownames(stammpinput), strains, 2, "BiA", stammpinput))
+colnames(stammpinput)[1:4] <- c("Sample", "Pop", "Ploidy", "Format")
+
+stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
+stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
+#    S         K        H        P
+#S 0.000000 0.018056 0.022127 0.162171
+#K 0.018056 0.000000 0.023948 0.163087
+#H 0.022127 0.023948 0.000000 0.172120
+#P 0.162171 0.163087 0.172120 0.000000
+
+stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
+#            S           K         H  P
+#S          NA          NA        NA NA
+#K 0.002999697          NA        NA NA
+#H 0.008421684 0.009359349        NA NA
+#P 0.196936652 0.196610481 0.2122905 NA
+
+stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE)    # Distance between individuals
+stamppAmova(stammp.D.ind, stammpinput.freq, 100)        # Calculate AMOVA
 
 ## Structure results (run Structure)
 structuredir <- "E:/Horse/DNA/Equine60k/STRUCTURE"
@@ -357,12 +399,10 @@ for(phe in rownames(phenoC)) {
 pvalues <- t(pvalues)
 write.table(pvalues, "output/pvaluesGWAS.txt", sep="\t")
 
-
 setwd("E:/Horse/DNA/Equine60k/")
 pvalues <- read.csv("output/pvaluesGWAS.txt", sep="\t")
 
-
-colorz <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
+chrcols <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
 
 for(phe in colnames(pvalues)) {
   ii <- which(pvalues[, phe] < (0.01/nrow(pvalues)))
@@ -374,11 +414,9 @@ for(phe in colnames(pvalues)) {
 for(phe in colnames(pvalues)) {
   png(paste0("output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
     plot(x = c(1, nrow(pvalues)), y = c(0,10), t='n', main=phe)
-    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=colorz)
+    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=chrcols)
     abline(h = -log10(0.1/nrow(pvalues)), col="orange")
     abline(h = -log10(0.05/nrow(pvalues)), col="gold")
     abline(h = -log10(0.01/nrow(pvalues)), col="green")
   dev.off()
 }
-
-

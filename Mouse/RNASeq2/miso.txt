@@ -1,0 +1,18 @@
+# Get the mean insert size and stddev
+java -Xmx2g -jar /opt/picard-tools-1.99/CollectInsertSizeMetrics.jar INPUT=/home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/4422_GCCAAT_L001.aln.sort.rmdup.rg.realigned.recal.bam HISTOGRAM_FILE=test.png OUTPUT=test.txt
+
+# Run Miso on 2 samples
+miso --run /home/share/genomes/mm10/misoGFF/indexed_gff81/ /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/4422_GCCAAT_L001.aln.sort.rmdup.rg.realigned.recal.bam --output-dir /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/MISO/ --paired-end 349 359 --read-len 50
+miso --run /home/share/genomes/mm10/misoGFF/indexed_gff81/ /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4423_CTTGTA_L001.output/4423_CTTGTA_L001.aln.sort.rmdup.rg.realigned.recal.bam --output-dir /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4423_CTTGTA_L001.output/MISO/ --paired-end 349 359 --read-len 50
+
+summarize_miso --summarize-samples /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/MISO/ /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/MISO/summary/
+
+sudo sashimi_plot --plot-event "chr17:45816186:45816265:-@chr17:45815912:45815950:-@chr17:45814875:45814965:-" /usr/local/lib/python2.7/dist-packages/misopy/sashimi_plot/test-data/event-data/ /usr/local/lib/python2.7/dist-packages/misopy/settings/sashimi_plot_settings.txt --output-dir test-plot
+
+# Compare the 2 samples
+compare_miso --compare-samples /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4422_GCCAAT_L001.output/MISO/ /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/FASTQ/4423_CTTGTA_L001.output/MISO/ /home/arends/NAS/Mouse/RNA/Sequencing/ReciprocalCrossB6xBFMI/MISOcompare
+
+
+
+
+ 

@@ -122,13 +122,19 @@ plotPathways <- function(patwaydata, corBFMI, corB6N, corDIFF, name1 = "Endocyto
   colz <- c("tomato4", "tomato3", "tomato2", "tomato1", "white", "slategray1", "slategray2", "slategray3", "slategray4")
   breakz <- c(-1, -0.9, -0.8, -0.6, -0.5, 0.5, 0.6, 0.8, 0.9, 1)
   
-  op <- par(mfrow=c(1,3))
+  x <- (length(ensID1)-0.5) / (ncol(iBFMI)-1)
+  y <- (length(ensID2)-0.5) / (ncol(iBFMI)-1)
+
+  
+  op <- par(mfrow=c(1,3), mar=c(10,8,4,2) + 0.1)
   image(iBFMI, col = colz, breaks = breakz, xaxt='n', yaxt='n', main="matBFMI")
   box()
   axis(1, at=seq(0, ncol(iBFMI)-1) / (ncol(iBFMI)-1), rownames(iBFMI), las=2)
   axis(2, at=seq(0, ncol(iBFMI)-1) / (ncol(iBFMI)-1), rownames(iBFMI), las=2)
   abline(v=(length(ensID1)-0.5) / (ncol(iBFMI)-1))
   abline(h=(length(ensID1)-0.5) / (ncol(iBFMI)-1))
+  mtext(c(name1,name2),1,5, at = c(x/2, x + 0.5*y),cex=0.7)
+  mtext(c(name1,name2),2,5, at = c(x/2, x + 0.5*y),cex=0.7)
 
   image(iB6N, col = colz, breaks = breakz, xaxt='n', yaxt='n', main="matB6N")
   box()
@@ -136,6 +142,8 @@ plotPathways <- function(patwaydata, corBFMI, corB6N, corDIFF, name1 = "Endocyto
   axis(2, at=seq(0, ncol(iB6N)-1) / (ncol(iB6N)-1), rownames(iB6N), las=2)
   abline(v=(length(ensID1)-0.5) / (ncol(iB6N)-1))
   abline(h=(length(ensID1)-0.5) / (ncol(iB6N)-1))
+  mtext(c(name1,name2),1,5, at = c(x/2, x + 0.5*y),cex=0.7)
+  mtext(c(name1,name2),2,5, at = c(x/2, x + 0.5*y),cex=0.7)
 
   image(iD, col = c("tomato3", "white", "slategray2"), breaks = c(-2, -hide.diff, hide.diff, 2), xaxt='n', yaxt='n', main="Difference: matBFMI - matB6N")
   box()
@@ -143,6 +151,8 @@ plotPathways <- function(patwaydata, corBFMI, corB6N, corDIFF, name1 = "Endocyto
   axis(2, at=seq(0, ncol(iD)-1) / (ncol(iD)-1), rownames(iD), las=2)
   abline(v=(length(ensID1)-0.5) / (ncol(iD)-1))
   abline(h=(length(ensID1)-0.5) / (ncol(iD)-1))
+  mtext(c(name1,name2),1,5, at = c(x/2, x + 0.5*y),cex=0.7)
+  mtext(c(name1,name2),2,5, at = c(x/2, x + 0.5*y),cex=0.7)
 }
 
 # Load input RPKM data from RNA-Seq experiment
@@ -170,9 +180,46 @@ expdata <- alldata[good,]
 # Create a name conversion table
 genename <- function(expdata, name = "Per3") { return(rownames(expdata)[which(expdata[,"gene_name"] == name)]); }
 
+# Load the correlations
 corBFMI <- doCorrelation(expdata, matBFMI, "matBFMI_correlation")
 corB6N  <- doCorrelation(expdata, matB6N, "matB6N_correlation")
 corDIFF <- corBFMI - corB6N
+
+# Which genes show high differential correlation
+nAbove <- apply(corDIFF, 1,function(x){length(which(x > 1.5))})
+interesting <- as.numeric(nAbove > 1)
+names(interesting) <- rownames(corDIFF)
+
+# BIOMART annotation of the MGI_Description
+if(!file.exists("E:/Mouse/DNA/Annotation/biomart/BiomartAnnotation.txt")){
+  library(biomaRt)
+  ensemblIDs <- as.character(dp4datafull[,"gene_id"])
+  bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")                                                # Biomart for mouse genes
+  biomartResults <- NULL
+  for(x in seq(0, length(ensemblIDs), 1000)){                                                                        # Do 1000 per time, just to please biomaRt
+    xend <- min((x + 1000),length(ensemblIDs))                                                                       # Don't walk passed the end of the array
+    cat("Retrieving", x, "/", xend,"\n")
+
+    res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "mgi_id", "mgi_symbol", "mgi_description"), 
+                        filters = c("ensembl_gene_id"), 
+                        values = ensemblIDs[x:xend], mart = bio.mart)
+    biomartResults <- rbind(biomartResults, res.biomart)
+    Sys.sleep(1)
+  }
+  write.table(biomartResults, file="E:/Mouse/DNA/Annotation/biomart/BiomartAnnotation.txt", sep="\t", row.names=FALSE)
+}else{
+  cat("Loading biomart annotation from disk\n")
+  biomartResults <- read.table("E:/Mouse/DNA/Annotation/biomart/BiomartAnnotation.txt", sep="\t", header=TRUE, colClasses=c("character"))
+}
+
+mm <- NULL
+for(x in names(interesting)){
+  symbol <- biomartResults[which(biomartResults[,1] == x),"mgi_symbol"]
+  if(length(symbol) == 0) symbol = "-"
+  if(length(symbol) > 1) symbol = symbol[1]
+  mm <- rbind(mm, as.character(c(x,symbol, interesting[x])))
+}
+
 
 connections <- createNetwork(corDIFF)
 groups <- traverseGraph(connections)

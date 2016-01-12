@@ -186,7 +186,7 @@ corB6N  <- doCorrelation(expdata, matB6N, "matB6N_correlation")
 corDIFF <- corBFMI - corB6N
 
 # Which genes show high differential correlation
-nAbove <- apply(corDIFF, 1,function(x){length(which(x > 1.5))})
+nAbove <- apply(corDIFF, 1,function(x){length(which(abs(x) > 1.5))})
 interesting <- as.numeric(nAbove > 1)
 names(interesting) <- rownames(corDIFF)
 
@@ -220,6 +220,7 @@ for(x in names(interesting)){
   mm <- rbind(mm, as.character(c(x,symbol, interesting[x])))
 }
 
+write.table(mm, file="scores_diffcor_stefan.txt", row.names=FALSE, quote=FALSE, sep="\t")
 
 connections <- createNetwork(corDIFF)
 groups <- traverseGraph(connections)

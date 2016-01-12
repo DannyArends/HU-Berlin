@@ -31,10 +31,6 @@ phased.AHBp[, samples] <- apply(phased.AHBp[, samples], 2, fromVCFcode.AHBp)    
 # Filter the genotypes for markers that are seggregating
 phased.AHBp <- phased.AHBp[-which(lapply(apply(phased.AHBp[, F2], 1, table),length) == 1),]
 
-# Create some H0 versus H1 statistics
-statistics <- apply(phased.AHBp[, F2], 2, table)
-plot(statistics[3,], statistics[4,], xlab="H0 - A from father", ylab="H1 - B from father", main="H0 versus H1 in Generation 28")
-
 # Now we want to do the QTL mapping for a single phenotype
 covariates <- phenotypes[F2, c("Eltern_ID", "WG2", "W.Label", "Season")]
 phenotype  <- phenotypes[F2, "mri70d_fat"]

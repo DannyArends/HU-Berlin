@@ -92,31 +92,3 @@ if(!file.exists("Analysis/population.ped")){
 if(!file.exists("Analysis/phased.vcf.gz")){ # Do beagle phasing
   system(paste0("java -Xmx1000m -jar beagle.v.4.jar gt=Analysis/genotypes.vcf ped=Analysis/population.ped out=Analysis/phased"))
 }
-
-# QTL Analysis of generation 28
-# Filter the genotypes for markers that are seggregating
-phased.AHBp <- phased.AHBp[-which(lapply(apply(phased.AHBp[, F2], 1, table),length) == 1),]
-
-# Create some H0 versus H1 statistics
-statistics <- apply(phased.AHBp[, F2], 2, table)
-plot(statistics[3,], statistics[4,], xlab="H0 - A from father", ylab="H1 - B from father", main="H0 versus H1 in Generation 28")
-
-# Now we want to do the QTL mapping for a single phenotype
-covariates <- phenotypes[F2, c("Eltern_ID", "WG2", "W.Label", "Season")]
-phenotype  <- phenotypes[F2, "mri70d_fat"]
-
-cnt <- 1
-pvalues <- t(apply(phased.AHBp[,F2], 1, function(x){
-  mylm <- lm(phenotype ~ covariates[,"Eltern_ID"] + covariates[,"WG2"] + covariates[,"W.Label"] + covariates[,"Season"] + as.factor(as.character(x)))
-  cnt <<- cnt + 1
-  unlist(anova(mylm)[[5]])
-}))
-plot(-log10(p.adjust(pvalues[,5],"BH")), col = as.numeric(as.factor(phased.AHBp[,"CHROM"])),t ='h')
-
-
-ratios <- apply(phased.AHBp[,F2],1,function(x){
-  return(sum(x == "H0") / (sum(x == "H0")+sum(x == "H1")))
-})
-
-
-

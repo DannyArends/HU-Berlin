@@ -18,35 +18,43 @@ phased.vcf[1:10,1:10]
 phenotypes <- read.table("Phenotypes/allPhenotypes.txt",sep="\t",header=TRUE,na.strings=c(0,"-","NA"))
 rownames(phenotypes) <- phenotypes[,"ID"]
 phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                     # Add the season column to the matrix
-phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.AHBp)),]                # We do not have genotypes for all individuals
+phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.vcf)),]                # We do not have genotypes for all individuals
 
 F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
 
 # Change the genotype coding
-phased.AHBp <- phased.vcf                                                                         # Copy
-phased.AHBp[, samples] <- apply(phased.AHBp[, samples], 2, fromVCFcode.AHBp)                      # Change coding to A H0 H1 B
+phased.AHB <- phased.vcf                                                                         # Copy
+phased.AHB[, samples] <- apply(phased.AHB[, samples], 2, fromVCFcode.AHB)                        # Change coding to A H B
 
 
 # QTL Analysis of generation 28
 # Filter the genotypes for markers that are seggregating
-phased.AHBp <- phased.AHBp[-which(lapply(apply(phased.AHBp[, F2], 1, table),length) == 1),]
+phased.AHB <- phased.AHB[-which(lapply(apply(phased.AHB[, F2], 1, table),length) == 1),]
+
+genotypes <- NULL
+for(x in c(seq(1,19),"X","Y","M")) {  # Reorder the chromosomes and name it genotypes
+  genotypes <- rbind(genotypes, phased.AHB[which(phased.AHB[,"CHROM"] == x), ])
+}
 
 # Now we want to do the QTL mapping for a single phenotype
 covariates <- phenotypes[F2, c("Eltern_ID", "WG2", "W.Label", "Season")]
 phenotype  <- phenotypes[F2, "mri70d_fat"]
 
+getParent <- function(genotypes, phenotypes, individuals = F2, marker = "UNC5048297", parent = "Mutter"){
+  genotypes[marker, as.character(phenotypes[F2, parent])]
+}
+
+parent <- getParent(genotypes, phenotypes)
+
 cnt <- 1
-pvalues <- t(apply(phased.AHBp[,F2], 1, function(x){
-  mylm <- lm(phenotype ~ covariates[,"Eltern_ID"] + covariates[,"WG2"] + covariates[,"W.Label"] + covariates[,"Season"] + as.factor(as.character(x)))
+pvalues <- t(apply(genotypes[, F2], 1, function(marker){
+  mylm <- lm(phenotype ~ covariates[,"Eltern_ID"] + covariates[,"WG2"] + covariates[,"W.Label"] + covariates[,"Season"] + as.factor(unlist(parent)) * as.factor(as.character(marker)))
   cnt <<- cnt + 1
-  unlist(anova(mylm)[[5]])
+  r <- unlist(anova(mylm)[[5]])
+  if(length(r) == 7) return(r)
+  return(rep(NA,7))
 }))
-plot(-log10(p.adjust(pvalues[,5],"BH")), col = as.numeric(as.factor(phased.AHBp[,"CHROM"])),t ='h')
 
-
-ratios <- apply(phased.AHBp[,F2],1,function(x){
-  return(sum(x == "H0") / (sum(x == "H0")+sum(x == "H1")))
-})
-
-
-
+plot(-log10(p.adjust(pvalues[,6],"BH")), col = as.numeric(as.factor(genotypes[,"CHROM"])),t ='h')
+points(-log10(p.adjust(pvalues[,5],"BH")), col = as.numeric(as.factor(genotypes[,"CHROM"])),t ='l')
+points(-log10(p.adjust(pvalues[,7],"BH")), col = as.numeric(as.factor(genotypes[,"CHROM"])),t ='l')

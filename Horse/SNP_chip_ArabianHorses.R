@@ -1,7 +1,7 @@
-# Analysis of Kabadiner horse SNP and performance data
+# Analysis of Arabian horse SNP and performance data
 #
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
-# last modified Feb, 2015
+# last modified Jan, 2016
 # first written Feb, 2015
 
 toNumeric <- function(genotypes){
@@ -376,17 +376,35 @@ for(ph in racepheno) {
 
 write.table(rbind(pClassical, pRace), "output/covariates.txt", sep="\t")
 
+# Haplotype analysis
+
+pred <- as.factor(as.character(phenotypes["mtDNA HT",]))
+
+pClassical <- matrix(NA, length(classicalpheno), 3, dimnames = list(classicalpheno, c("Sex", "Age", "mtDNA HT")))
+for(ph in classicalpheno) {
+  model <- anova(lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + pred))
+  pClassical[ph,] <- model[[5]][1:3]
+}
+
+pRace <- matrix(NA, length(racepheno), 3, dimnames=list(racepheno, c("Sex", "Age", "mtDNA HT")))
+for(ph in racepheno) {
+  model <- anova(lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + pred))
+  pRace[ph,] <- model[[5]][1:3]
+}
+
+write.table(rbind(pClassical, pRace), "output/mtDNA_haplotypes.txt", sep="\t")
+
 # GWAS / QTL analysis
 
 # Calculate the phenotypes after correction
 phenoC <- matrix(NA, length(c(classicalpheno, racepheno)), ncol(phenotypes), dimnames = list(c(classicalpheno, racepheno), colnames(phenotypes)))
 for(ph in classicalpheno) {
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + strain)
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtM + strain + pred)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
 for(ph in racepheno) {
-  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + strain)
+  model <- lm(as.numeric(phenotypes[ph,]) ~ sex + ageAtR + strain + pred)
   pCorrected <- model$residuals + model$coefficients["(Intercept)"]
   phenoC[ph, as.numeric(names(pCorrected))] <- pCorrected
 }
@@ -409,7 +427,7 @@ pvalues <- read.csv("output/pvaluesGWAS.txt", sep="\t")
 chrcols <- 1+ (as.numeric(as.factor(map[,"Chromosome"])) %% 2)
 
 for(phe in colnames(pvalues)) {
-  ii <- which(pvalues[, phe] < (0.01/nrow(pvalues)))
+  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
   if(length(ii) > 0){
     cat(phe, rownames(pvalues)[ii],"\n")
   }

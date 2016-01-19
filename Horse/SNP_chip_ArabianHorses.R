@@ -4,6 +4,18 @@
 # last modified Jan, 2016
 # first written Feb, 2015
 
+opposite <- function(x){
+  if(is.na(x)) return("")
+  ret <- NULL
+  for(e in x){
+    if(e == "A") ret <- c(ret, "T")
+    if(e == "C") ret <- c(ret, "G")
+    if(e == "G") ret <- c(ret, "C")
+    if(e == "T") ret <- c(ret, "A")
+  }
+  return(ret)
+}
+
 toNumeric <- function(genotypes){
   numericG <- apply(genotypes, 1, function(x){
     geno <- table(unlist(strsplit(as.character(x),"")))
@@ -40,7 +52,6 @@ setwd("E:/Horse/DNA/Kabadiner/")
 # Read reference 'kabadiner' map and data
 kabadinermap            <- read.table(file="input/cleaned_map.txt", sep = "\t")
 kabadinergenotypes      <- read.table(file="input/cleaned_genotypes.txt", sep = "\t")
-kabadinerphenotypes     <- read.table(file="input/cleaned_phenotypes.txt", sep = "\t")
 
 # General horse chromosome info
 chrInfo <- read.table("info/chrinfo.txt", sep="\t", header=TRUE)
@@ -53,6 +64,20 @@ phenotypes            <- arabian[1:28, ]                              # Row 1 ti
 genotypes             <- arabian[29:nrow(arabian), ]                  # Row 30 till the end contains genotype data
 rownames(genotypes)   <- arabian[29:nrow(arabian), 1]
 map                   <- genotypes[,c("Chromosome","Position")]       # Extract the map and split the phenotypes and genotypes
+
+rownames(genotypes) <- gsub("-","_",rownames(genotypes))
+rownames(map) <- gsub("-","_",rownames(map))
+
+# Change the coding to match the reference
+for(x in 1:nrow(genotypes)){
+  i <- which(markerdata[,"Name"] == rownames(genotypes)[x])
+  if(length(i) == 1 && markerdata[i,"IlmnStrand"] == "BOT"){
+    genotypes[x,] <- unlist(lapply(lapply(strsplit(as.character(genotypes[x,]),""), opposite), paste0, collapse=""))
+    cat(x, "\n")
+  }
+}
+write.table(genotypes, "input/genotypes_arabianhorses_ref.txt", sep="\t")
+
 cat("Starting with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/AllMarkerTable.txt", sep="\t")
 genotypes             <- genotypes[which(as.numeric(genotypes[,"GenTrain.Score"]) > 0.6),]    # Keep only high quality calls
@@ -122,11 +147,19 @@ map                 <- map[rownames(kabadinermap),]
 genotypes           <- genotypes[rownames(kabadinermap), ]
 kabadinergenotypes  <- kabadinergenotypes[rownames(kabadinermap), ]
 cat("Left with", nrow(genotypes), "markers\n")
-write.table(table(map[,"Chromosome"]), "output/GoodMarkerTable.txt", sep="\t")
+write.table(table(map[,"Chromosome"]), "output/cleaned_genotypes_combined.txt", sep="\t")
 
-genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref])
+# Load in the Peterson data
+pdata <- read.table("input/cleaned_arabian_petersen.txt", sep = "\t")
+pdata <- pdata[rownames(genotypes), ]
+
+genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref], pdata)
+write.table(genotypesnref, "input/allgenotypes.txt",sep="\t",quote=FALSE)
+genotypesnref <- read.table("input/allgenotypes.txt",sep="\t", colClasses="character")
+
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
+# How many markers on each chromosome
 for(x in unique(map[,"Chromosome"])){
   cat(x, length(which(map[,"Chromosome"] == x)),"\n")
 }
@@ -156,8 +189,8 @@ if(!file.exists("input/cleaned_genotypes_structure.txt")){
 ## Some basic plots of all the individuals relatedness
 dendrogram <- as.dendrogram(hclust(dist(t(toNumeric(genotypesnref)), method = "manhattan")))         #TODO: perhaps add the reference horse
 
-strains <- c(as.character(phenotypes["Strain", ]), rep("P", length(przewalski_ref)), rep("Kab", length(kabardian_ref)), rep("Tho", length(thoroughbred_ref)))
-names(strains) <- c(colnames(phenotypes), przewalski_ref, kabardian_ref, thoroughbred_ref)
+strains <- c(as.character(phenotypes["Strain", ]), rep("P", length(przewalski_ref)), rep("Kab", length(kabardian_ref)), rep("Tho", length(thoroughbred_ref)), rep("Pet", ncol(pdata)))
+names(strains) <- c(colnames(phenotypes), przewalski_ref, kabardian_ref, thoroughbred_ref, colnames(pdata))
 
 # Create colors
 cols <- c("red", "blue", "orange", "black", "purple", "brown")

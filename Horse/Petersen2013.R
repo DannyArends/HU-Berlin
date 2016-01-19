@@ -4,59 +4,53 @@
 # last modified Jan, 2016
 # first written Jan, 2016
 
-setwd("E:/Horse/DNA/Petersen2013")
-
-description <- read.table("KSF1385391590.txt", header = FALSE, sep = "\t")
-colnames(description) <- c("shortname", "fullname")
-
-map <- read.table("AZK1385391535.map", row.names = 2)[,-2]
-
-genotypedata <- read.table("JXB1385391482.ped", na.strings = c("NA", "-9", "0"))
-individuals <- genotypedata[,1:6]
-genotypedata <- genotypedata[,7:ncol(genotypedata)]
-
-coding <- c("A","C","T","G")
-x <- 1; paste0(coding[genotypedata[,x]],coding[genotypedata[,x+1]])
-
-genotypes <- matrix(NA, dim(genotypedata)[1], nrow(map))
-cnt <- 1
-for(x in seq(1, ncol(genotypedata),2)){
-  na <- c(which(is.na(genotypedata[,x])),which(is.na(genotypedata[,x+1])))
-  marker <- paste0(coding[genotypedata[,x]],coding[genotypedata[,x+1]])
-  if(length(na >= 1)) marker[na] <- NA
-  genotypes[,cnt] <- marker
-  cnt <- cnt + 1
+toNumeric <- function(genotypes){
+  numericG <- apply(genotypes, 1, function(x){
+    geno <- table(unlist(strsplit(as.character(x),"")))
+    a1 <- paste0(names(geno)[1],names(geno)[1])
+    a2 <- paste0(sort(c(names(geno)[1],names(geno)[2])),collapse="")
+    a3 <- paste0(names(geno)[2],names(geno)[2])
+    ngeno <- rep(NA,length(x))
+    ngeno[x == a1] <- 1
+    ngeno[x == a2] <- 2
+    ngeno[x == a3] <- 3
+    return(ngeno)
+  })
+  rownames(numericG) <- colnames(genotypes)
+  return(t(numericG))
 }
 
-rownames(genotypes) <- paste0(individuals[,1],"_", individuals[,2])
-colnames(genotypes) <- rownames(map)
+setwd("E:/Horse/DNA/")
+if(!file.exists("Equine60k/input/cleaned_arabian_petersen.txt")){
+  # Create a matrix of genotypes
+  raw_data <- read.csv("Petersen2013/ArabianHorses.csv", header = FALSE, sep = ",")
+  samples <- as.character(unique(raw_data[,2]))
+  markers <- unique(raw_data[,1])
 
-# Load in our data
+  mdata <- matrix(NA, length(markers), length(samples), dimnames=list(markers, samples))
+  for(x in 1:nrow(raw_data)){
+    if(!is.nan(raw_data[x, 7]) && raw_data[x, 7] >= 0.15) mdata[as.character(raw_data[x, 1]), as.character(raw_data[x, 2])] <- paste0(raw_data[x, 5], raw_data[x, 6])
+  }
 
-setwd("E:/Horse/DNA/Equine60k/")
-mapA <- read.table(file="input/cleaned_map.txt", sep = "\t")
-genotypesA <- read.table(file="input/cleaned_genotypes.txt", sep = "\t")                          # Save the clean genotypes to disk
+  rownames(mdata) <- gsub("-", "_", rownames(mdata))
+  write.table(mdata, file="Equine60k/input/cleaned_arabian_petersen.txt", sep = "\t")
+}else{
+  mdata <- read.table("Equine60k/input/cleaned_arabian_petersen.txt", sep = "\t")
+}
 
-shared <- which(rownames(map) %in% paste0("chr", mapA[,1],".",mapA[,2]))
-
-map <- map[shared,]
-genotypes <- genotypes[,shared]
-
-shared <- which(paste0("chr", mapA[,1],".",mapA[,2]) %in% rownames(map))
-
-mapA <- mapA[shared,]
-genotypesA <- genotypesA[shared,]
-
-rownames(mapA) <- paste0("chr", mapA[,1],".",mapA[,2])
-rownames(genotypesA) <- paste0("chr", mapA[,1],".",mapA[,2])
-
-# Combine the data
-mapA <- mapA[match(rownames(map), rownames(mapA)),]
-genotypesA <- genotypesA[match(rownames(map), rownames(genotypesA)),]
+# Read our data
+map <- read.table(file="Equine60k/input/cleaned_map.txt", sep = "\t")                                      # Save the clean map to disk
+genotypes <- read.table(file="Equine60k/input/cleaned_genotypes.txt", sep = "\t")                          # Save the clean genotypes to disk
 
 
+mdata <- mdata[which(rownames(mdata) %in% rownames(genotypes)),]  # 28K markers are shared
+genotypes <- genotypes[which(rownames(genotypes) %in% rownames(mdata)),]  # 28K markers are shared
 
 
+combined <- cbind(genotypes, mdata)
+
+numGeno <- t(toNumeric(combined))
 
 
-arabianHorses <- genotypes[which(grepl("_ARR", rownames(genotypes))),]
+## Some basic plots of all the individuals relatedness
+dendrogram <- as.dendrogram(hclust(dist(numGeno, method = "manhattan")))         #TODO: perhaps add the reference horse

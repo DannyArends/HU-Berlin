@@ -3,15 +3,49 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Feb, 2015
 # first written Feb, 2015
+
+opposite <- function(x){
+  if(is.na(x)) return("")
+  ret <- NULL
+  for(e in x){
+    if(e == "A") ret <- c(ret, "T")
+    if(e == "C") ret <- c(ret, "G")
+    if(e == "G") ret <- c(ret, "C")
+    if(e == "T") ret <- c(ret, "A")
+  }
+  return(ret)
+}
+
+setwd("E:/Horse/DNA/60Karray/")
+markerdata <- read.csv("GGP_Equine.csv", skip=7, header=TRUE)
+
 setwd("E:/Horse/DNA/Kabadiner/")
 
-horsedata   <- read.table("input/Kabadiner.txt", header=TRUE, sep = "\t",na.strings=c("--", "x", "unknown", ""), colClasses="character", row.names=2)
-chrInfo     <- read.table("info/chrinfo.txt", sep="\t", header=TRUE)
+horsedata1   <- read.table("input/kabadiner-1.txt", header=TRUE, sep = "\t",na.strings=c("--", "x", "unknown", ""), colClasses="character", row.names=2)
+horsedata2   <- read.table("input/kabadiner-2.txt", header=TRUE, sep = "\t",na.strings=c("--", "x", "unknown", ""), colClasses="character", row.names=2)
+chrInfo      <- read.table("info/chrinfo.txt", sep="\t", header=TRUE)
 
-phenotypes  <- horsedata[1:13, ]                                                    # Row 1 till 13 contains phenotype data
-genotypes   <- horsedata[14:nrow(horsedata), ]                                      # Row 14 till the end contains genotype data
-genotypes   <- genotypes[which(as.numeric(genotypes[,"GenTrain.Score"]) > 0.6),]    # Keep only high quality calls
+nc1 <- ncol(horsedata1); nc2 <- ncol(horsedata2)
+
+for(x in 15:nrow(horsedata1)){
+  if(horsedata1[x,5] <= 0.6) horsedata1[x,6:nc1] <- NA
+  cat(x, "\n")
+}
+
+for(x in 15:nrow(horsedata2)){
+  if(horsedata2[x,5] <= 0.6) horsedata2[x,6:nc2] <- NA
+  cat(x, "\n")
+}
+
+horsedata <- cbind(horsedata1, horsedata2[,-c(1:5)])
+colnames(horsedata) <- gsub("TOP", "Top.Alleles", colnames(horsedata))
+
+phenotypes  <- horsedata[1:14, ]                                                    # Row 1 till 13 contains phenotype data
+genotypes   <- horsedata[15:nrow(horsedata), ]                                      # Row 14 till the end contains genotype data
 map         <- genotypes[,c("Chr","Position")]                                      # Extract the map and split the phenotypes and genotypes
+
+rownames(genotypes) <- gsub("-","_",rownames(genotypes))                            # Fix the names inconsistency between _ and -
+rownames(map) <- gsub("-","_",rownames(map))                                        # Fix the names inconsistency between _ and -
 
 calledgeno  <- genotypes[,grep("GType", colnames(genotypes))]
 genotypes   <- genotypes[,grep("Top.Alleles", colnames(genotypes))]
@@ -20,6 +54,17 @@ phenotypes  <- phenotypes[,grep("GType", colnames(phenotypes))]
 colnames(phenotypes) <- gsub(".GType", "", colnames(phenotypes))
 colnames(calledgeno) <- gsub(".GType", "", colnames(calledgeno))
 colnames(genotypes)  <- gsub(".Top.Alleles", "", colnames(genotypes))
+
+# Change the coding to match the reference
+for(x in 1:nrow(genotypes)){
+  i <- which(markerdata[,"Name"] == rownames(genotypes)[x])
+  if(length(i) == 1 && markerdata[i,"IlmnStrand"] == "BOT"){
+    genotypes[x,] <- unlist(lapply(lapply(strsplit(as.character(genotypes[x,]),""), opposite), paste0, collapse=""))
+    cat(x, "\n")
+  }
+}
+
+write.table(genotypes, file="input/matched_phenotypes.txt", sep="\t", quote=FALSE, na  = "")
 
 ### Data QC
 tables          <- apply(genotypes, 1, table)
@@ -33,9 +78,9 @@ genotypes     <- genotypes[notDuplicated, ]
 map           <- map[notDuplicated, ]
 cat("Left with", nrow(genotypes), "markers\n")
 
-write.table(map, file="input/cleaned_map.txt", sep = "\t")                          # Save the clean map to disk
-write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t")              # Save the clean genotypes to disk
-write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")            # Save the clean phenotypes to disk
+write.table(map, file="input/cleaned_map.txt", sep = "\t", na  = "")                          # Save the clean map to disk
+write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t", na  = "")              # Save the clean genotypes to disk
+write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t", na  = "")            # Save the clean phenotypes to disk
 
 ## Some basic QG plots of all the individuals relatedness
 numgeno <- apply(genotypes, 2, function(x){as.numeric(as.factor(x))})
@@ -43,12 +88,12 @@ numgeno <- apply(genotypes, 2, function(x){as.numeric(as.factor(x))})
 numgeno <- numgeno[,-which(colnames(numgeno) %in% c("P3691", "P3611", "P3625","P3525","P3422","P3613","P3423"))]
 dendrogram <- as.dendrogram(hclust(dist(t(numgeno), method = "manhattan")))         #TODO: perhaps add the reference horse
 
-cols <- c("red","blue","black")
-names(cols) <- unique(as.character(phenotypes[6,]))
+cols <- c(1:7)
+names(cols) <- unique(as.character(phenotypes[3,]))
 
 labelCol <- function(x) {
   if (is.leaf(x)) {
-    hclass <- phenotypes[6, attr(x, "label")]                                       # Fetch the class label
+    hclass <- phenotypes[3, attr(x, "label")]                                       # Fetch the class label
     hcol <- cols[hclass]                                                            # Label color
     cat(attr(x, "label"), hclass, hcol, "\n")
     attr(x, "nodePar") <- list(lab.col=hcol)

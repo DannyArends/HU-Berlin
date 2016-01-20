@@ -67,6 +67,7 @@ classicalpheno <- c("WH", "CW", "CH", "NG", "TG", "ChG", "ChD", "ChW", "BLL", "B
 
 racepheno <- c("Distance..km.", "Speed.km.hr.")
 
+# Calculate thesignificance of the fixed effects
 pClassical <- matrix(NA, length(classicalpheno), 3, dimnames = list(classicalpheno, c("Sex", "Age", "Strain")))
 for(ph in classicalpheno) {
   model <- anova(lm(as.numeric(phenotypes[ii,ph]) ~ sex + ageAtM + strain))
@@ -81,7 +82,7 @@ for(ph in racepheno) {
 
 write.table(rbind(pClassical, pRace), "combined/output/covariates.txt", sep="\t")
 
-# Calculate the phenotypes after correction
+# Calculate the phenotypes after adjusting the fixed effects
 phenoC <- matrix(NA, length(c(classicalpheno, racepheno)), nrow(phenotypes[ii,]), dimnames = list(c(classicalpheno, racepheno), rownames(phenotypes[ii,])))
 for(ph in classicalpheno) {
   model <- lm(as.numeric(phenotypes[ii,ph]) ~ sex + ageAtM + strain)
@@ -96,7 +97,7 @@ for(ph in racepheno) {
 
 genotypes <- genotypes_num[,ii]
 
-# Do the GWAS using a single QTL model *Do not correct for race of horse
+# Do the GWAS using a single QTL model on the data adjusted for fixed effects
 pvalues <- matrix(NA, length(c(classicalpheno, racepheno)), nrow(genotypes), dimnames = list(c(classicalpheno, racepheno), rownames(genotypes)))
 for(phe in rownames(phenoC)) {
   cat("Computing GWAS results for:", phe, "\n")
@@ -107,4 +108,46 @@ for(phe in rownames(phenoC)) {
 }
 pvalues <- t(pvalues)
 write.table(pvalues, "combined/output/pvaluesGWAS.txt", sep="\t")
+
+pvalues     <- read.table("combined/output/pvaluesGWAS.txt", sep="\t")
+markerinfo  <- read.csv("combined/input/map.txt", sep="\t")
+
+# Summarize significant results in a file
+results <- NULL
+for(phe in colnames(pvalues)) {
+  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
+  if(length(ii) > 0){
+    for(i in ii){
+      results <- rbind(results, c(phe, rownames(pvalues)[i], markerinfo[rownames(pvalues)[i],"Chr"], markerinfo[rownames(pvalues)[i],"MapInfo"], pvalues[i, phe]))
+    }
+    cat(phe, rownames(pvalues)[ii],"\n")
+  }
+}
+write.table(results, "combined/output/pvaluesGWAS_0.1.txt", sep="\t", col.names=FALSE, row.names=FALSE)
+
+# Create the manhattan plots
+neworder <- order(markerinfo[,"Chr"], markerinfo[,"MapInfo"])
+markerinfo <- markerinfo[neworder, ]
+pvalues <- pvalues[neworder, ]
+chrcols <- 1+ (as.numeric(as.factor(markerinfo[,"Chr"])) %% 2)
+
+for(phe in colnames(pvalues)) {
+  png(paste0("combined/output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
+    plot(x = c(1, nrow(pvalues)), y = c(0,10), t='n', main=phe, ylab = "LOD score (-log10(p))", xlab = "Marker")
+    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=chrcols)
+    abline(h = -log10(0.1/nrow(pvalues)), col="orange")
+    abline(h = -log10(0.05/nrow(pvalues)), col="gold")
+    abline(h = -log10(0.01/nrow(pvalues)), col="green")
+  dev.off()
+}
+
+#Principal component analysis
+library(pcaMethods)
+resSvd <- pca(genotypes_num, method = "svd", nPcs = 5, center = FALSE)
+
+colz <- as.numeric(as.factor(phenotypes[rownames(resSvd@loadings),"Strain"])) + 1
+cc <- as.numeric(as.factor(unique(phenotypes[rownames(resSvd@loadings),"Strain"]))) + 1
+names(cc) <- unique(phenotypes[rownames(resSvd@loadings),"Strain"])
+
+plot(resSvd@loadings[,1:2], col=colz, pch=18)
 

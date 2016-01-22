@@ -115,10 +115,10 @@ markerinfo  <- read.csv("combined/input/map.txt", sep="\t")
 # Summarize significant results in a file
 results <- NULL
 for(phe in colnames(pvalues)) {
-  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
+  ii <- which(pvalues[, phe] < (0.1/nrow(pvalues)))
   if(length(ii) > 0){
     for(i in ii){
-      results <- rbind(results, c(phe, rownames(pvalues)[i], markerinfo[rownames(pvalues)[i],"Chr"], markerinfo[rownames(pvalues)[i],"MapInfo"], pvalues[i, phe]))
+      results <- rbind(results, c(phe, rownames(pvalues)[i], as.character(markerinfo[as.character(rownames(pvalues)[i]),"Chr"]), markerinfo[as.character(rownames(pvalues)[i]),"MapInfo"], pvalues[i, phe]))
     }
     cat(phe, rownames(pvalues)[ii],"\n")
   }
@@ -151,3 +151,4 @@ names(cc) <- unique(phenotypes[rownames(resSvd@loadings),"Strain"])
 
 plot(resSvd@loadings[,1:2], col=colz, pch=18)
 
+table(phenotypes[which(!phenotypes[,"Strain"] %in% c("K","H","S","Kab", "Arab", "EV", "PrzH", "ExP", "AnK")), "Strain"]

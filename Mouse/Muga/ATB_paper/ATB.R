@@ -265,5 +265,3 @@ for(x in 1:19){
   points(rep(x+,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col="gray", cex=1.8)
 }
 
-
-

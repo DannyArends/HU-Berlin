@@ -57,6 +57,9 @@ stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst val
 
 ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S"))
 
+# Correlation matrix over classical phenotypes
+cor(phenotypes[,c("WH", "CW", "CH", "NG", "TG", "ChG", "ChD", "ChW", "BLL", "BL", "FCL", "HCL", "Distance..km.", "Speed.km.hr.")], use="pair", method="spearman")
+
 # Analyse the different covariates for the different phenotypes
 sex     <- as.factor(unlist(phenotypes[ii,"Sex"]))
 strain  <- as.factor(unlist(phenotypes[ii,"Strain"]))

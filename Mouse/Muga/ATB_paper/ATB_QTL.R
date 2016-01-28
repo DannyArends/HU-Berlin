@@ -1,3 +1,7 @@
+#
+# Analyse ATB in megaMuga data from multiple generations after beagle phasing
+#
+
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
 

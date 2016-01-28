@@ -223,6 +223,7 @@ for(x in table(allRegions[,"Chr"])){
 legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "gray", "yellow", "orange", "red"),cex=0.7, bg="white")
 box()
 
+# retrieve entrez gene ID
 require("biomaRt")
 mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl", host="www.ensembl.org")
 res <- getBM(attributes = c("ensembl_gene_id", "entrezgene"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)

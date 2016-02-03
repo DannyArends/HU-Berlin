@@ -113,13 +113,18 @@ plot(aa[markers,"d70"])
 
 allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
 allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
-rownames(allRegions) <- 1:nrow(allRegions)
+
+
+regionnames <- paste0(allRegions[,"Chr"],":", 
+          round(allRegions[,"Start"] / 1000000, 0),"-",
+          round(allRegions[,"Stop"] / 1000000, 0), " ", 
+          allRegions[,"origin"])
+
+rownames(allRegions) <- regionnames
 
 ## new idea compare 2 regions against each other:
 results <- matrix(0, nrow(allRegions), nrow(allRegions))
 results2 <- matrix(0, nrow(allRegions), nrow(allRegions))
-
-sG <- c("AA", "AB", "BA", "BB")
 
 for(y in 1:nrow(allRegions)){
   mR1 <- genotypes[as.character(allRegions[y,"Flanking.Marker"]), F2]
@@ -128,70 +133,22 @@ for(y in 1:nrow(allRegions)){
     mR2 <- genotypes[as.character(allRegions[x,"Flanking.Marker"]), F2]
     chrR2 <- allRegions[x,"Chr"]
     if(chrR1 == chrR2){
-      results[y,x] <- NA
+      results[x,y] <- NA
+      results2[x,y] <- NA
     }else{
-      observed <- rep(0, 9)
-      names(observed) <- c("AA", "AH", "AB", "HA", "HH", "HB", "BA", "BH", "BB")
-      for(l in gsub("NANA", "", paste0(mR1,mR2))){
-        if(l == "AA") observed["AA"] <- observed["AA"] + 1
-        if(l == "AH") observed["AH"] <- observed["AH"] + 1
-        if(l == "HA") observed["HA"] <- observed["HA"] + 1
-        if(l == "AB") observed["AB"] <- observed["AB"] + 1
-        
-        if(l == "HH") observed["HH"] <- observed["HH"] + 1
-
-        if(l == "BA") observed["BA"] <- observed["BA"] + 1
-        if(l == "BH") observed["BH"] <- observed["BH"] + 1
-        if(l == "HB") observed["HB"] <- observed["HB"] + 1
-        if(l == "BB") observed["BB"] <- observed["BB"] + 1
-      }
-      lt1 <- table(unlist(mR1))
-      lt2 <- table(unlist(mR2))
-      expected <- rep(0, 9)
-      names(expected) <- c("AA", "AH", "AB", "HA", "HH", "HB", "BA", "BH", "BB")
-      for(e1 in c("A", "H", "B")){
-        for(e2 in c("A", "H", "B")){
-          expected[paste0(e1, e2)] <- (lt1[e1] / sum(lt1)) * (lt2[e2] / sum(lt2))
-        }
-      }
-      expected[is.na(expected)] <- 0
-      
-      expe <- sum(observed) * expected[sG]
-      
-      chiSQ <- 0
-      for(ijkik in  c("AA", "AB", "BA", "BB")){
-        if(expe[ijkik] != 0) chiSQ <- chiSQ + (((observed[ijkik] - expe[ijkik]) ^ 2) / expe[ijkik])
-      }
-      cat(observed[sG], "-", expe, "chiSQ:", chiSQ, "\n")
-      results[y, x] <- chiSQ
-      
-      
-      m1o <-  rep("", length(F2))
-      m1o[genotypes[as.character(allRegions[x,"Flanking.Marker"]), F2] == "A"] <- "I/I"
-      m1o[genotypes[as.character(allRegions[x,"Flanking.Marker"]), F2] == "H"] <- ""
-      m1o[genotypes[as.character(allRegions[x,"Flanking.Marker"]), F2] == "B"] <- "D/D"
-
-      m2o <-  rep("", length(F2))
-      m2o[genotypes[as.character(allRegions[y,"Flanking.Marker"]), F2] == "A"] <- "I/I"
-      m2o[genotypes[as.character(allRegions[y,"Flanking.Marker"]), F2] == "H"] <- ""
-      m2o[genotypes[as.character(allRegions[y,"Flanking.Marker"]), F2] == "B"] <- "D/D"
-
-      m1   <- genotype(m1o)
-      m2   <- genotype(m2o)
-      tryCatch(
-       results2[y, x] <- unlist(LD(m1,m2))$"X^2"
-      , error = function(e){ results2[y, x] <- NA; }
-      )
-
+      results[x,y] <- incompatible(mR1, mR2)$chisq
+      results2[x,y] <- doLD(mR1, mR2)
     }
   }
 }
-rownames(results) <- allRegions[,"Flanking.Marker"]
-colnames(results) <- allRegions[,"Flanking.Marker"]
+rownames(results) <- regionnames
+colnames(results) <- regionnames
 
-bfmipref <- which(allRegions[match(allRegions[,1], colnames(results)),"Prefered.Allele"] == "BFMI")
-b6npref <- which(allRegions[match(allRegions[,1], colnames(results)),"Prefered.Allele"] == "B6N")
-nopref <- which(allRegions[match(allRegions[,1], colnames(results)),"Prefered.Allele"] == "?")
+# Generate an overview plot
+
+bfmipref <- which(allRegions[,"Prefered.Allele"] == "BFMI")
+b6npref <- which(allRegions[,"Prefered.Allele"] == "B6N")
+nopref <- which(allRegions[,"Prefered.Allele"] == "?")
 
 locations <- seq(0, 1, length.out=ncol(results))
 
@@ -199,20 +156,25 @@ colz <- rep("black", nrow(allRegions))
 colz[bfmipref] <- "orange"
 colz[b6npref] <- "gray"
 
-namez <- paste0(allRegions[,"Chr"],":", 
-          round(allRegions[,"Start"] / 1000000, 0),"-",
-          round(allRegions[,"Stop"] / 1000000, 0), " ", 
-          allRegions[,"origin"])
+LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
+threshold <- -log10(0.05 / nTests)
+
+#apply(LODscores, 1, function(x){
+  #which(x > threshold)
+#})
 
 nTests <- (ncol(results) * ncol(results)) / 2
 op <- par(mar= c(6, 6, 4, 2) + 0.1)
 image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white", "gray", "yellow", "orange", "red"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
-axis(1, at=locations[bfmipref], namez[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-axis(1, at=locations[b6npref], namez[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-axis(1, at=locations[nopref], namez[nopref], las=2, cex.axis=0.7, col.axis="black")
-axis(2, at=locations[bfmipref], namez[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-axis(2, at=locations[b6npref], namez[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-axis(2, at=locations[nopref], namez[nopref], las=2, cex.axis=0.7, col.axis="black")
+
+axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
+axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
+axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+
+axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
+axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
+axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+
 grid(ncol(results),ncol(results))
 sx <- 0
 for(x in table(allRegions[,"Chr"])){
@@ -223,13 +185,6 @@ for(x in table(allRegions[,"Chr"])){
 legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "gray", "yellow", "orange", "red"),cex=0.7, bg="white")
 box()
 
-# retrieve entrez gene ID
-require("biomaRt")
-mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl", host="www.ensembl.org")
-res <- getBM(attributes = c("ensembl_gene_id", "entrezgene"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)
-write.table(res, "genesToEntrez.txt",sep="\t")
-
-
 # Get all genes in each regions
 allgenes <- NULL
 allgenes <- read.table("Analysis/Mat_B6NgenesInfo.txt", sep="\t", header=TRUE)
@@ -237,29 +192,85 @@ allgenes <- rbind(allgenes, read.table("Analysis/Mat_BFMIgenesInfo.txt", sep="\t
 allgenes <- rbind(allgenes, read.table("Analysis/Pat_B6NgenesInfo.txt", sep="\t", header=TRUE))
 allgenes <- rbind(allgenes, read.table("Analysis/Pat_BFMIgenesInfo.txt", sep="\t", header=TRUE))
 
-# Look at P:P interactions in BIOGRID
-dd <- read.csv("stringdb/BIOGRID-ALL-3.4.132.tab2.txt",sep="\t")
-dd <- dd[which(dd[,"Organism.Interactor.A"] == 10090 & dd[,"Organism.Interactor.B"] == 10090),]
-dd <- dd[which(as.character(dd[,"Entrez.Gene.Interactor.A"]) %in% as.character(res[,2]) & dd[,"Entrez.Gene.Interactor.B"] %in% res[,2]),]
-rr <- dd[which(as.character(dd[,c(2,3,8,9)][,3]) != as.character(dd[,c(2,3,8,9)][,4])), c(2,3,8,9)]
+# retrieve entrez gene ID
+require("biomaRt")
+mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl", host="www.ensembl.org")
+ensembltoentrez <- getBM(attributes = c("ensembl_gene_id", "entrezgene"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)
+write.table(ensembltoentrez, "genesToEntrez.txt",sep="\t")
 
-rr <- cbind(rr, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA)
+# Look at P:P interactions in BIOGRID
+biogriddata <- read.csv("stringdb/BIOGRID-ALL-3.4.132.tab2.txt",sep="\t")
+biogriddata <- biogriddata[which(biogriddata[,"Organism.Interactor.A"] == 10090 & biogriddata[,"Organism.Interactor.B"] == 10090),]
+biogriddata <- biogriddata[which(as.character(biogriddata[,"Entrez.Gene.Interactor.A"]) %in% as.character(ensembltoentrez[,2]) & biogriddata[,"Entrez.Gene.Interactor.B"] %in% ensembltoentrez[,2]),]
+
+# Create results
+interacting <- biogriddata[which(as.character(biogriddata[,c(2,3,8,9)][,3]) != as.character(biogriddata[,c(2,3,8,9)][,4])), c(2,3,8,9)]
+interacting <- cbind(interacting, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA, LOD = NA)
 
 # Which region the gene is in
-whichRegion <- function(ensgid){
-  qqqq <- allgenes[which(allgenes[,1] == ensgid),]
-  gChr <- qqqq[1,"chromosome_name"]
-  gLoc <- qqqq[1,"start_position"]
+geneLocation <- function(allgenes, ensgid, verbose = TRUE){
+  ii <- allgenes[which(allgenes[,1] == ensgid),]
+  cat(ensgid, ": Found", nrow(ii), "matching genes\n")
+  gChr <- ii[1,"chromosome_name"];gLoc <- ii[1,"start_position"]; gLoc1 <- ii[1,"end_position"]  # Chr:Location
+  cat(ensgid, ": ", gChr, "-", gLoc, "\n")
+  return(paste0(gChr,":", round(gLoc / 1000000,d = 2),"-", round(gLoc1/ 1000000, d = 2)))
+}
+
+
+# Which region the gene is in
+whichRegion <- function(allgenes, ensgid, verbose = TRUE){
+  ii <- allgenes[which(allgenes[,1] == ensgid),]
+  cat(ensgid, ": Found", nrow(ii), "matching genes\n")
+  gChr <- ii[1,"chromosome_name"];gLoc <- ii[1,"start_position"]  # Chr:Location
+  cat(ensgid, ": ", gChr, "-", gLoc, "\n")
   rownames(allRegions[which(allRegions[,"Chr"] == gChr & as.numeric(allRegions[,"Start"]) < gLoc & as.numeric(allRegions[,"Stop"]) > gLoc ),])
 }
 
-## get regions and Chi2 scores
-for(x in 1:nrow(rr)){
-  ensgidA <- res[which(res[,2] == rr[x,1]),1]
-  ensgidB <- res[which(res[,2] == rr[x,2]),1]
-  rr[x, "RegionGeneA"] <- whichRegion(ensgidA)[1]
-  rr[x, "RegionGeneB"] <- whichRegion(ensgidB)[1]
-  if(!is.na(rr[x, "RegionGeneA"]) && !is.na(rr[x, "RegionGeneB"])){
-    rr[x, "ChiSq"] <- results[as.numeric(rr[x, "RegionGeneA"]) , as.numeric(rr[x, "RegionGeneB"]) ]
+## Get regions and Chi2 scores
+for(x in 1:nrow(interacting)){
+  ensgidA <- ensembltoentrez[which(ensembltoentrez[,2] == interacting[x,1]),1]
+  ensgidB <- ensembltoentrez[which(ensembltoentrez[,2] == interacting[x,2]),1]
+  interacting[x, "RegionGeneA"] <- whichRegion(allgenes, ensgidA)[1]
+  interacting[x, "RegionGeneB"] <- whichRegion(allgenes, ensgidB)[1]
+  if(!is.na(interacting[x, "RegionGeneA"]) && !is.na(interacting[x, "RegionGeneB"])){
+    interacting[x, "ChiSq"] <- results[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
+    interacting[x, "LOD"] <- LODscores[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
   }
 }
+colnames(interacting)[1:4] <- c("Entrez.A","Entrez.B","Symbol.A", "Symbol.B")
+
+
+# Look at P:P interactions in STRINGDB
+stringdbdata <- read.csv("stringdb/10090.protein.actions.v10.txt",sep="\t")
+ensembltopeptide <- getBM(attributes = c("ensembl_gene_id", "ensembl_peptide_id", "mgi_symbol"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)
+write.table(ensembltopeptide, "genesToPeptide.txt",sep="\t")
+
+stringdbdata <- stringdbdata[as.numeric(stringdbdata[,"score"]) > 700,]
+dim(stringdbdata)
+stringdbdata <- stringdbdata[which(as.character(stringdbdata[,"item_id_a"]) %in% paste0("10090.",as.character(ensembltopeptide[,2])) & 
+                                                stringdbdata[,"item_id_b"] %in% paste0("10090.",as.character(ensembltopeptide[,2]))),]
+dim(stringdbdata)
+interacting <- stringdbdata[which(stringdbdata[,1] != stringdbdata[,2]),]
+interacting <- cbind(interacting, MGI_A = NA, LOC_A = NA, MGI_B = NA, LOC_B = NA, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA, LOD = NA)
+
+## Get regions and Chi2 scores
+for(x in 1:nrow(interacting)){
+  ensgidA <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,1])),1]
+  mgiIDA  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,1])),3]
+  ensgidB <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,2])),1]
+  mgiIDB  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,2])),3]
+  interacting[x, "RegionGeneA"] <- whichRegion(allgenes, ensgidA)[1]
+  interacting[x, "RegionGeneB"] <- whichRegion(allgenes, ensgidB)[1]
+  if(!is.na(interacting[x, "RegionGeneA"]) && !is.na(interacting[x, "RegionGeneB"])){
+    interacting[x, "ChiSq"] <- results[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
+    interacting[x, "LOD"] <- LODscores[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
+    interacting[x, "MGI_A"] <- mgiIDA
+    interacting[x, "MGI_B"] <- mgiIDB
+    interacting[x, "LOC_A"] <- geneLocation(allgenes, ensgidA)
+    interacting[x, "LOC_B"] <- geneLocation(allgenes, ensgidB)
+  }
+}
+write.table(interacting[which(interacting[,"LOD"] > threshold),], "interactionsInRegions_Sign.txt",sep="\t", row.names=FALSE)
+
+
+sift[which(paste0("10090.", as.character(sift[, 7])) %in%  c(as.character(interacting[,"item_id_a"]), as.character(interacting[,"item_id_b"]))),]

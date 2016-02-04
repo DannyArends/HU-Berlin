@@ -8,7 +8,7 @@ if(!file.exists("20140515_VEP_BFMI860mm10.txt")){
   }
   write.table(snpdata, "20140515_VEP_BFMI860mm10.txt", sep = "\t", row.names=FALSE)
 }else{
-  snpdata <- read.table("20140515_VEP_BFMI860mm10.txt", sep = "\t")
+  snpdata <- read.table("20140515_VEP_BFMI860mm10.txt", sep = "\t", header=TRUE)
 }
 
 setwd("E:/Mouse/DNA/MegaMuga/")
@@ -47,18 +47,24 @@ whichRegion <- function(allgenes, ensgid, verbose = TRUE){
 
 genenames <- unique(as.character(allgenes[,"mgi_symbol"]))    # All genes in the regions
 
-# All genes with non-synonimous SNPs
+# How many genes in the TRD regions with non-synonimous SNPs
 shortlist <- snpdata[which(as.character(snpdata[,"Gene_Name"]) %in% genenames & grepl("CODING_REGION", snpdata[,"Region"]) & snpdata[,"FuncClass"] == "NON_SYNONYMOUS_CODING"), c(1:5,8,12,13,14,15,16,19)]
+write.table(shortlist[-which(duplicated(shortlist[,"SNP_ID"])), ], "AllRegionsNonSynonimousGenes.txt", sep = "\t", row.names=FALSE)
+nrow(shortlist[-which(duplicated(shortlist[,"SNP_ID"])), ])
+
+# 5% threshold for the genetic incompatibilities
 threshold <- -log10(0.05 / ((ncol(LODscores) * ncol(LODscores)) / 2))
 
 allgenes <- allgenes[which(allgenes[,1] %in% shortlist[,"Gene_ID"]),]
 allgenes <- allgenes[-which(duplicated(allgenes[,5])),]
 allgenes <- cbind(allgenes, region = NA)
 
+# Find which region each gene is in
 for(x in 1:nrow(allgenes)){
   allgenes[x, "region"] <- whichRegion(allgenes, allgenes[x,"ensembl_gene_id"])[1]
 }
 
+# List possible interactions between genes showing non-synonymous SNPs
 results <- NULL
 for(x in 1:nrow(allgenes)){
   gene1 <- as.character(allgenes[x, "mgi_symbol"])
@@ -85,5 +91,13 @@ colnames(results) <- c("ensembl_gene_id", "chr", "start", "end", "mgi_symbol", "
 
 write.table(results,"InteractionsNonSynGenes.txt",sep="\t", row.names=FALSE)
 
-# Compare back to provean
-which(LODscores[,] > threshold)
+# Load all the known genes with MGI symbols
+completegenome <- read.table("Additional/MGI_Gene_Model_Coord.rpt", sep='\t')
+# Permutation of the amount of non-synonymous SNPs
+perms <- NULL
+for(x in 1:10000) {
+  rselection <- as.character(completegenome[sample(nrow(completegenome),1158),3])
+  shortlist <- snpdata[which(as.character(snpdata[,"Gene_Name"]) %in% rselection & grepl("CODING_REGION", snpdata[,"Region"]) & snpdata[,"FuncClass"] == "NON_SYNONYMOUS_CODING"), c(1:5,8,12,13,14,15,16,19)]
+  perms <- c(perms, nrow(shortlist[-which(duplicated(shortlist[,"SNP_ID"])), ]))
+}
+

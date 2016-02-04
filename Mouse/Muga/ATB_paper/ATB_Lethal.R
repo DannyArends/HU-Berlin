@@ -136,13 +136,15 @@ for(y in 1:nrow(allRegions)){
       results[x,y] <- NA
       results2[x,y] <- NA
     }else{
-      results[x,y] <- incompatible(mR1, mR2)$chisq
-      results2[x,y] <- doLD(mR1, mR2)
+      results[x,y] <- incompatible(mR1, mR2, TRUE)$chisq
+      #results2[x,y] <- doLD(mR1, mR2)
     }
   }
 }
 rownames(results) <- regionnames
 colnames(results) <- regionnames
+
+write.table(results, "ChiSqScores_Incompatible.txt", sep="\t")
 
 # Generate an overview plot
 
@@ -159,32 +161,33 @@ colz[b6npref] <- "gray"
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
 threshold <- -log10(0.05 / nTests)
 
-#apply(LODscores, 1, function(x){
-  #which(x > threshold)
-#})
+sum(LODscores > -log10(0.1 / nTests), na.rm=TRUE) / 2
+sum(LODscores > -log10(0.05 / nTests), na.rm=TRUE) / 2
+sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 
-nTests <- (ncol(results) * ncol(results)) / 2
-op <- par(mar= c(6, 6, 4, 2) + 0.1)
-image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white", "gray", "yellow", "orange", "red"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
+tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
+  nTests <- (ncol(results) * ncol(results)) / 2
+  op <- par(mar= c(6, 6, 4, 2) + 0.1)
+  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white", "gray", "yellow", "orange", "red"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
 
-axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
+  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
+  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
 
-axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
+  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
+  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
 
-grid(ncol(results),ncol(results))
-sx <- 0
-for(x in table(allRegions[,"Chr"])){
-  l <- (locations[sx] + locations[sx + 1]) / 2
-  abline(h=l); abline(v=l)
-  sx = sx + x
-}
-legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "gray", "yellow", "orange", "red"),cex=0.7, bg="white")
-box()
-
+  grid(ncol(results),ncol(results))
+  sx <- 0
+  for(x in table(allRegions[,"Chr"])){
+    l <- (locations[sx] + locations[sx + 1]) / 2
+    abline(h=l); abline(v=l)
+    sx = sx + x
+  }
+  legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "gray", "yellow", "orange", "red"),cex=0.7, bg="white")
+  box()
+dev.off()
 # Get all genes in each regions
 allgenes <- NULL
 allgenes <- read.table("Analysis/Mat_B6NgenesInfo.txt", sep="\t", header=TRUE)
@@ -270,7 +273,31 @@ for(x in 1:nrow(interacting)){
     interacting[x, "LOC_B"] <- geneLocation(allgenes, ensgidB)
   }
 }
-write.table(interacting[which(interacting[,"LOD"] > threshold),], "interactionsInRegions_Sign.txt",sep="\t", row.names=FALSE)
+write.table(interacting[which(interacting[,"LOD"] > threshold),], "interactionsInRegions_Sign3x3.txt",sep="\t", row.names=FALSE)
+
+significant <- interacting[which(interacting[,"LOD"] > threshold),]
 
 
 sift[which(paste0("10090.", as.character(sift[, 7])) %in%  c(as.character(interacting[,"item_id_a"]), as.character(interacting[,"item_id_b"]))),]
+
+
+setwd("E:/Mouse/DNA/Sequencing/BFMI")
+
+if(!file.exists("20140515_VEP_BFMI860mm10.txt")){
+  library(openxlsx)
+  snpdata <- NULL
+  for(x in 1:22){
+    snpdata <- rbind(snpdata, read.xlsx("20140515_VEP_BFMI860mm10.xlsx", sheet = x))
+  }
+  write.table(snpdata, "20140515_VEP_BFMI860mm10.txt", sep = "\t", row.names=FALSE)
+}else{
+  snpdata <- read.table("20140515_VEP_BFMI860mm10.txt", sep = "\t", header=TRUE)
+}
+
+setwd("E:/Mouse/DNA/MegaMuga/")
+
+snpsubset <- snpdata[which(as.character(snpdata[, "Gene_Name"]) %in%  c(as.character(significant[,"MGI_A"]), as.character(significant[,"MGI_B"]))),]
+shortlist <- snpsubset[which(grepl("CODING_REGION", snpsubset[,"Region"]) & snpsubset[,"FuncClass"] == "NON_SYNONYMOUS_CODING"), c(1:5,8,12,13,14,15,16,19)]
+
+write.table(shortlist, "mutationsInRegions_Sign3x3.txt",sep="\t", row.names=FALSE)
+

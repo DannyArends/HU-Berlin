@@ -1,4 +1,4 @@
-incompatible <- function(marker1, marker2){
+incompatible <- function(marker1, marker2, homozygous = FALSE){
   nodata <- c(which(is.na(marker1)), which(is.na(marker2)))
   if(length(nodata) > 0){
     marker1 <- marker1[-nodata]
@@ -28,12 +28,16 @@ incompatible <- function(marker1, marker2){
   
   chiSQ <- 0
   for(combi in combinations) {
-    if(expected[combi] != 0){
-      n <- (as.numeric(observed[combi] - expected[combi]) ^ 2) / expected[combi]
-      chiSQ <- chiSQ + n
+    if(homozygous && grepl("H", combi)){
+
+    }else{
+      if(expected[combi] != 0){
+        n <- (as.numeric(observed[combi] - expected[combi]) ^ 2) / expected[combi]
+        chiSQ <- chiSQ + n
+      }
     }
   }
-  
+
   list(obs = observed, exp = expected, chisq = chiSQ)
 }
 
@@ -58,9 +62,8 @@ doLD <- function(marker1, marker2){
 
 MAF <- function(marker){
   nodata <- which(is.na(marker))
-  if(length(nodata) > 0){
-    marker <- marker[-nodata]
-  }
+  if(length(nodata) > 0) marker <- marker[-nodata]
+
   mR1 <- table(as.character(marker))
   minAllele <- names(which.min(mR1))
   return(as.numeric((mR1[minAllele] *2 + mR1["H"]) / (2*sum(mR1))))

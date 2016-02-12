@@ -51,8 +51,9 @@ op <- par(mfrow=c(1,2))
 boxplot(adjust.phenotype(AKR_Geno, "fat70") ~ AKR_Geno[,"C3GAB5"], main="F1 - AKR x (BFMI x B6N)", sub=paste0("Fat Day 70"))
 boxplot(adjust.phenotype(NZO_geno, "fat70") ~ NZO_geno[,"C3GAB5"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Fat Day 70"))
 
+op <- par(mfrow=c(3,3))
 for(x in colnames(NZO_geno)[9:16]){
-  op <- par(mfrow=c(1,3))
+
   boxplot(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"C3GAB5"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Day ",x))
   cat("NZO:", anova(lm(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"C3GAB5"]))[[5]][1], "\n")
   boxplot(adjust.phenotype(TRPC_geno, x) ~ TRPC_geno[,"C3GAB5"], main="F1 - TRPC x (BFMI x B6N)", sub=paste0("Day ",x))

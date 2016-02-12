@@ -25,7 +25,6 @@ segments(36573142, 1, 36613477, 1, col = "steelblue", lty = 1, lwd = 2)   # Bbs7
 rect(36572000, 6.4, 36614700, 10,      density= NA, col = "grey60", border = NULL, angle = 135, lwd = 0.1)
 rect(36572000, 3   , 36614700, 6.3 , density= NA, col = "orange", border = NULL, angle = 45, lwd = 0.1)
 
-
 ## show intron/exons
 is.odd <- function(x) x %% 2 != 0 
 for(x in 1:nrow(bbs7)){

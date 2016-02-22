@@ -147,25 +147,37 @@ GF_B6N  <- arrays[which(arrays[,"Tissue"] == "GF" & arrays[,"Strain"] == "B6N") 
 GF_F1   <- arrays[which(arrays[,"Tissue"] == "GF" & arrays[,"Strain"] == "F1")  ,"AtlasID"]
 
 # Add the mean values per group
-arraydata <- cbind(arraydata, HT          = round(apply(arraydata[,HT],1,mean), 2))
-arraydata <- cbind(arraydata, HT_SD       = round(apply(arraydata[,HT],1,sd), 2))
-arraydata <- cbind(arraydata, GF          = round(apply(arraydata[,GF],1,mean), 2))
-arraydata <- cbind(arraydata, GF_SD       = round(apply(arraydata[,GF],1,sd), 2))
+arraydata <- cbind(arraydata, HT_Mean         = round(apply(arraydata[,HT],1,mean), 2))
+arraydata <- cbind(arraydata, HT_SD           = round(apply(arraydata[,HT],1,sd), 2))
+arraydata <- cbind(arraydata, GF_Mean         = round(apply(arraydata[,GF],1,mean), 2))
+arraydata <- cbind(arraydata, GF_SD           = round(apply(arraydata[,GF],1,sd), 2))
+arraydata <- cbind(arraydata, ratio_HT_vs_GF  = round(apply(arraydata[,HT],1,mean) / apply(arraydata[,GF],1,mean), 2))
 
-arraydata <- cbind(arraydata, HT_BFMI = round(apply(arraydata[,HT_BFMI],1,mean), 2))
-arraydata <- cbind(arraydata, HT_BFMI_SD = round(apply(arraydata[,HT_BFMI],1,sd), 2))
-arraydata <- cbind(arraydata, GF_BFMI = round(apply(arraydata[,GF_BFMI],1,mean), 2))
-arraydata <- cbind(arraydata, GF_BFMI_SD = round(apply(arraydata[,GF_BFMI],1,sd), 2))
+arraydata <- cbind(arraydata, HT_BFMI_Mean    = round(apply(arraydata[,HT_BFMI],1,mean), 2))
+arraydata <- cbind(arraydata, HT_BFMI_SD      = round(apply(arraydata[,HT_BFMI],1,sd), 2))
+arraydata <- cbind(arraydata, GF_BFMI_Mean    = round(apply(arraydata[,GF_BFMI],1,mean), 2))
+arraydata <- cbind(arraydata, GF_BFMI_SD      = round(apply(arraydata[,GF_BFMI],1,sd), 2))
+arraydata <- cbind(arraydata, ratio_HT_BFMI_vs_GF_BFMI  = round(apply(arraydata[,HT_BFMI],1,mean) / apply(arraydata[,GF_BFMI],1,mean), 2))
 
-arraydata <- cbind(arraydata, HT_B6N  = round(apply(arraydata[,HT_B6N],1,mean), 2))
-arraydata <- cbind(arraydata, HT_B6N_SD  = round(apply(arraydata[,HT_B6N],1,sd), 2))
-arraydata <- cbind(arraydata, GF_B6N  = round(apply(arraydata[,GF_B6N],1,mean), 2))
-arraydata <- cbind(arraydata, GF_B6N_SD  = round(apply(arraydata[,GF_B6N],1,sd), 2))
+arraydata <- cbind(arraydata, HT_B6N_Mean     = round(apply(arraydata[,HT_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, HT_B6N_SD       = round(apply(arraydata[,HT_B6N],1,sd), 2))
+arraydata <- cbind(arraydata, GF_B6N_Mean     = round(apply(arraydata[,GF_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, GF_B6N_SD       = round(apply(arraydata[,GF_B6N],1,sd), 2))
+arraydata <- cbind(arraydata, ratio_HT_B6N_vs_GF_B6N  = round(apply(arraydata[,HT_B6N],1,mean) / apply(arraydata[,GF_B6N],1,mean), 2))
 
-arraydata <- cbind(arraydata, HT_F1 = round(apply(arraydata[,HT_F1],1,mean), 2))
-arraydata <- cbind(arraydata, HT_F1_SD = round(apply(arraydata[,HT_F1],1,sd), 2))
-arraydata <- cbind(arraydata, GF_F1 = round(apply(arraydata[,GF_F1],1,mean), 2))
-arraydata <- cbind(arraydata, GF_F1_SD = round(apply(arraydata[,GF_F1],1,sd), 2))
+arraydata <- cbind(arraydata, HT_F1_Mean      = round(apply(arraydata[,HT_F1],1,mean), 2))
+arraydata <- cbind(arraydata, HT_F1_SD        = round(apply(arraydata[,HT_F1],1,sd), 2))
+arraydata <- cbind(arraydata, GF_F1_Mean      = round(apply(arraydata[,GF_F1],1,mean), 2))
+arraydata <- cbind(arraydata, GF_F1_SD        = round(apply(arraydata[,GF_F1],1,sd), 2))
+arraydata <- cbind(arraydata, ratio_HT_F1_vs_GF_F1  = round(apply(arraydata[,HT_F1],1,mean) / apply(arraydata[,GF_F1],1,mean), 2))
+
+arraydata <- cbind(arraydata, ratio_HT_BFMI_vs_HT_B6N   = round(apply(arraydata[,HT_BFMI],1,mean) / apply(arraydata[,HT_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, ratio_HT_BFMI_vs_HT_F1    = round(apply(arraydata[,HT_BFMI],1,mean) / apply(arraydata[,HT_F1],1,mean), 2))
+arraydata <- cbind(arraydata, ratio_HT_B6N_vs_HT_F1     = round(apply(arraydata[,HT_B6N],1,mean) / apply(arraydata[,HT_F1],1,mean), 2))
+
+arraydata <- cbind(arraydata, ratio_GF_BFMI_vs_GF_B6N   = round(apply(arraydata[,GF_BFMI],1,mean) / apply(arraydata[,GF_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, ratio_GF_BFMI_vs_GF_F1    = round(apply(arraydata[,GF_BFMI],1,mean) / apply(arraydata[,GF_F1],1,mean), 2))
+arraydata <- cbind(arraydata, ratio_GF_B6N_vs_GF_F1     = round(apply(arraydata[,GF_B6N],1,mean) / apply(arraydata[,GF_F1],1,mean), 2))
 
 arraydata <- cbind(arraydata, Ttest_HT_GF = apply(arraydata[,c(HT, GF)],1,function(x){
   res <- NA
@@ -234,7 +246,7 @@ arraydata <- cbind(arraydata, Ttest_GF_F1_GF_B6N = apply(arraydata[,c(GF_F1, GF_
 # Add the information about which probe are MultiMapping
 annotationmatrix <- cbind(annotationmatrix, MultiMap = annotationmatrix[,"ProbeName"] %in% dupprobes)
 
-if(!file.exists("Analysis/geneexpression_Tests.txt")){
+if(!file.exists("Analysis/geneexpression_TestsNew.txt")){
   alldata <- NULL
   cnt <- 1
   ensgenes <- unique(annotationmatrix[,"ensembl_gene_id"])
@@ -248,8 +260,8 @@ if(!file.exists("Analysis/geneexpression_Tests.txt")){
     alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
     cnt <- cnt + 1
   }
-  write.table(alldata, file="Analysis/geneexpression_Tests.txt", sep="\t", row.names=FALSE)
+  write.table(alldata, file="Analysis/geneexpression_TestsNew.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading gene expression data from disk\n")
-  alldata <- read.table("Analysis/geneexpression_Tests.txt", sep="\t", header=TRUE)
+  alldata <- read.table("Analysis/geneexpression_TestsNew.txt", sep="\t", header=TRUE)
 }

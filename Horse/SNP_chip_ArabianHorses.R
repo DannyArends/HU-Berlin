@@ -76,7 +76,7 @@ for(x in 1:nrow(genotypes)){
     cat(x, "\n")
   }
 }
-write.table(genotypes, "input/genotypes_arabianhorses_ref.txt", sep="\t")
+#write.table(genotypes, "input/genotypes_arabianhorses_ref.txt", sep="\t")
 
 cat("Starting with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/AllMarkerTable.txt", sep="\t")
@@ -321,7 +321,7 @@ analyzeStructure <- function(stmatrix, confidence = 0.0){
   return(counts)
 }
 
-plotStructure <- function(stmatrix, doSort = FALSE){
+plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
   if(doSort){
     ordering <- NULL
     breaks <- 0
@@ -338,6 +338,20 @@ plotStructure <- function(stmatrix, doSort = FALSE){
     ordering <- c(ordering, rownames(stmatrix.copy))
     stmatrix <- stmatrix[ordering,]
   }
+
+  sahriastrain <- rep("P", length(rownames(stmatrix)))
+  names(sahriastrain) <- rownames(stmatrix)
+  sahriastrain[names(phenotypes["Strain",])] <- as.character(phenotypes["Strain",])
+
+  
+  if(sortTwice){
+    cat(sahriastrain,"\n")
+    newOrder <- order(sahriastrain)
+    cat(sahriastrain[newOrder],"\n")
+    sahriastrain <- sahriastrain[newOrder]
+    stmatrix <- stmatrix[newOrder, ]
+    breaks <- c(0,14, 30, 33, 51)
+  }
   
   plot(c(1,nrow(stmatrix)), c(-0.15, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n', main=paste0("STRUCTURE, clusters = ", ncol(stmatrix)))
   dsum <- rep(0, nrow(stmatrix))
@@ -350,9 +364,6 @@ plotStructure <- function(stmatrix, doSort = FALSE){
     mcol <<- mcol + 1
     #cat(dsum, "\n")
   })
-  sahriastrain <- rep("P", length(rownames(stmatrix)))
-  names(sahriastrain) <- rownames(stmatrix)
-  sahriastrain[names(phenotypes["Strain",])] <- as.character(phenotypes["Strain",])
   text(x = 1:nrow(stmatrix), y = rep(-0.05, nrow(stmatrix)), sahriastrain)
   mids <- diff(breaks) / 2 + 0.5
   for(x in 1:length(mids)) mids[x] <- mids[x] + breaks[x]
@@ -377,7 +388,7 @@ for(analysis in paste0(loc, "/", results)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
-  plotStructure(stmatrix, TRUE)
+  plotStructure(stmatrix, TRUE, TRUE)
   cat("--All individuals--\n")
   counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   cat("--High purity (> 0.8)--\n")

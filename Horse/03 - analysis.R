@@ -118,7 +118,7 @@ markerinfo  <- read.csv("combined/input/map.txt", sep="\t")
 # Summarize significant results in a file
 results <- NULL
 for(phe in colnames(pvalues)) {
-  ii <- which(pvalues[, phe] < (0.1/nrow(pvalues)))
+  ii <- which(pvalues[, phe] < (0.05/nrow(pvalues)))
   if(length(ii) > 0){
     for(i in ii){
       results <- rbind(results, c(phe, rownames(pvalues)[i], as.character(markerinfo[as.character(rownames(pvalues)[i]),"Chr"]), markerinfo[as.character(rownames(pvalues)[i]),"MapInfo"], pvalues[i, phe]))
@@ -126,12 +126,30 @@ for(phe in colnames(pvalues)) {
     cat(phe, rownames(pvalues)[ii],"\n")
   }
 }
-write.table(results, "combined/output/pvaluesGWAS_0.1.txt", sep="\t", col.names=FALSE, row.names=FALSE)
+write.table(results, "combined/output/pvaluesGWAS_0.05.txt", sep="\t", col.names=FALSE, row.names=FALSE)
+
+
+pvalues     <- read.table("combined/output/pvaluesGWAS.txt", sep="\t")
+markerinfo  <- read.csv("combined/input/map.txt", sep="\t")
+
 
 # Create the manhattan plots
-neworder <- order(markerinfo[,"Chr"], markerinfo[,"MapInfo"])
+neworder <- order(markerinfo[,"MapInfo"])
 markerinfo <- markerinfo[neworder, ]
 pvalues <- pvalues[neworder, ]
+
+newmarkerinfo <- NULL
+newpvalues <- NULL
+
+for(x in c("1", "2", "3", "4", "5", "6", "7", "8", "9","10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "X")){
+  msubset <- markerinfo[which(markerinfo[, "Chr"] == x),]
+  newmarkerinfo <- rbind(newmarkerinfo, msubset)
+  newpvalues <- rbind(newpvalues, pvalues[rownames(msubset),])
+}
+
+markerinfo <- newmarkerinfo
+pvalues <- newpvalues
+
 chrcols <- 1+ (as.numeric(as.factor(markerinfo[,"Chr"])) %% 2)
 
 for(phe in colnames(pvalues)) {

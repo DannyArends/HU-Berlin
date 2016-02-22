@@ -147,26 +147,94 @@ GF_B6N  <- arrays[which(arrays[,"Tissue"] == "GF" & arrays[,"Strain"] == "B6N") 
 GF_F1   <- arrays[which(arrays[,"Tissue"] == "GF" & arrays[,"Strain"] == "F1")  ,"AtlasID"]
 
 # Add the mean values per group
-arraydata <- cbind(arraydata, HT      = round(apply(arraydata[,HT],1,mean), 2))
-arraydata <- cbind(arraydata, GF      = round(apply(arraydata[,GF],1,mean), 2))
+arraydata <- cbind(arraydata, HT          = round(apply(arraydata[,HT],1,mean), 2))
+arraydata <- cbind(arraydata, HT_SD       = round(apply(arraydata[,HT],1,sd), 2))
+arraydata <- cbind(arraydata, GF          = round(apply(arraydata[,GF],1,mean), 2))
+arraydata <- cbind(arraydata, GF_SD       = round(apply(arraydata[,GF],1,sd), 2))
 
 arraydata <- cbind(arraydata, HT_BFMI = round(apply(arraydata[,HT_BFMI],1,mean), 2))
+arraydata <- cbind(arraydata, HT_BFMI_SD = round(apply(arraydata[,HT_BFMI],1,sd), 2))
 arraydata <- cbind(arraydata, GF_BFMI = round(apply(arraydata[,GF_BFMI],1,mean), 2))
+arraydata <- cbind(arraydata, GF_BFMI_SD = round(apply(arraydata[,GF_BFMI],1,sd), 2))
 
 arraydata <- cbind(arraydata, HT_B6N  = round(apply(arraydata[,HT_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, HT_B6N_SD  = round(apply(arraydata[,HT_B6N],1,sd), 2))
 arraydata <- cbind(arraydata, GF_B6N  = round(apply(arraydata[,GF_B6N],1,mean), 2))
+arraydata <- cbind(arraydata, GF_B6N_SD  = round(apply(arraydata[,GF_B6N],1,sd), 2))
 
-arraydata <- cbind(arraydata, HT_F1   = round(apply(arraydata[,HT_F1],1,mean), 2))
-arraydata <- cbind(arraydata, GF_F1   = round(apply(arraydata[,GF_F1],1,mean), 2))
+arraydata <- cbind(arraydata, HT_F1 = round(apply(arraydata[,HT_F1],1,mean), 2))
+arraydata <- cbind(arraydata, HT_F1_SD = round(apply(arraydata[,HT_F1],1,sd), 2))
+arraydata <- cbind(arraydata, GF_F1 = round(apply(arraydata[,GF_F1],1,mean), 2))
+arraydata <- cbind(arraydata, GF_F1_SD = round(apply(arraydata[,GF_F1],1,sd), 2))
+
+arraydata <- cbind(arraydata, Ttest_HT_GF = apply(arraydata[,c(HT, GF)],1,function(x){
+  res <- NA
+  tryCatch(res <- t.test(x[1:length(HT)], x[(length(HT)+1):(length(HT)+length(GF))])$p.value,  error = function(e){ res <<- NA; })
+  res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_BFMI_GF_BFMI = apply(arraydata[,c(HT_BFMI, GF_BFMI)],1,function(x){
+    res <- NA
+    tryCatch(res <- t.test(x[1:length(HT_BFMI)], x[(length(HT_BFMI)+1):(length(HT_BFMI)+length(GF_BFMI))])$p.value,  error = function(e){ res <- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_B6N_GF_B6N = apply(arraydata[,c(HT_B6N, GF_B6N)],1,function(x){
+      res <- NA
+    tryCatch(res <- t.test(x[1:length(HT_B6N)], x[(length(HT_B6N)+1):(length(HT_B6N)+length(GF_B6N))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_B6N_HT_BFMI = apply(arraydata[,c(HT_B6N, HT_BFMI)],1,function(x){
+      res <- NA
+    tryCatch(res <- t.test(x[1:length(HT_B6N)], x[(length(HT_B6N)+1):(length(HT_B6N)+length(HT_BFMI))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_GF_B6N_GF_BFMI = apply(arraydata[,c(GF_B6N, GF_BFMI)],1,function(x){
+     res <- NA
+   tryCatch(res <-  t.test(x[1:length(GF_B6N)], x[(length(GF_B6N)+1):(length(GF_B6N)+length(GF_BFMI))])$p.value,  error = function(e){ res <<- NA; })
+   res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_F1_GF_F1 = apply(arraydata[,c(HT_F1, GF_F1)],1,function(x){
+      res <- NA
+    tryCatch(res <- t.test(x[1:length(HT_F1)], x[(length(HT_F1)+1):(length(HT_F1)+length(GF_F1))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_F1_HT_BFMI = apply(arraydata[,c(HT_F1, HT_BFMI)],1,function(x){
+     res <- NA
+   tryCatch(res <-  t.test(x[1:length(HT_F1)], x[(length(HT_F1)+1):(length(HT_F1)+length(HT_BFMI))])$p.value,  error = function(e){ res <<- NA; })
+   res
+}))
+
+arraydata <- cbind(arraydata, Ttest_GF_F1_GF_BFMI = apply(arraydata[,c(GF_F1, GF_BFMI)],1,function(x){
+      res <- NA
+    tryCatch(res <- t.test(x[1:length(GF_F1)], x[(length(GF_F1)+1):(length(GF_F1)+length(GF_BFMI))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_F1_HT_B6N = apply(arraydata[,c(HT_F1, HT_B6N)],1,function(x){
+  res <- NA
+    tryCatch(res <- t.test(x[1:length(HT_F1)], x[(length(HT_F1)+1):(length(HT_F1)+length(HT_B6N))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_GF_F1_GF_B6N = apply(arraydata[,c(GF_F1, GF_B6N)],1,function(x){
+  res <- NA
+    tryCatch(res <- t.test(x[1:length(GF_F1)], x[(length(GF_F1)+1):(length(GF_F1)+length(GF_B6N))])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
 
 # Create some plots
-heatmap(cor(arraydata[DEtissue, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between tissues
-heatmap(cor(arraydata[DEstrain, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between strains
+#heatmap(cor(arraydata[DEtissue, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between tissues
+#heatmap(cor(arraydata[DEstrain, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between strains
 
 # Add the information about which probe are MultiMapping
 annotationmatrix <- cbind(annotationmatrix, MultiMap = annotationmatrix[,"ProbeName"] %in% dupprobes)
 
-if(!file.exists("Analysis/geneexpression.txt")){
+if(!file.exists("Analysis/geneexpression_Tests.txt")){
   alldata <- NULL
   cnt <- 1
   ensgenes <- unique(annotationmatrix[,"ensembl_gene_id"])
@@ -180,8 +248,8 @@ if(!file.exists("Analysis/geneexpression.txt")){
     alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
     cnt <- cnt + 1
   }
-  write.table(alldata, file="Analysis/geneexpression.txt", sep="\t", row.names=FALSE)
+  write.table(alldata, file="Analysis/geneexpression_Tests.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading gene expression data from disk\n")
-  alldata <- read.table("Analysis/geneexpression.txt", sep="\t", header=TRUE)
+  alldata <- read.table("Analysis/geneexpression_Tests.txt", sep="\t", header=TRUE)
 }

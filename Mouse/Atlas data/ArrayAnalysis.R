@@ -239,6 +239,18 @@ arraydata <- cbind(arraydata, Ttest_GF_F1_GF_B6N = apply(arraydata[,c(GF_F1, GF_
     res
 }))
 
+arraydata <- cbind(arraydata, Ttest_GF_F1nB6N_GF_BFMI = apply(arraydata[,c(GF_F1, GF_B6N, GF_BFMI)],1,function(x){
+  res <- NA
+    tryCatch(res <- t.test(x[1:(length(GF_F1)+length(GF_B6N))], x[ (length(GF_F1)+length(GF_B6N)+1):length(x) ])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
+arraydata <- cbind(arraydata, Ttest_HT_F1nB6N_HT_BFMI = apply(arraydata[,c(HT_F1, HT_B6N, HT_BFMI)],1,function(x){
+  res <- NA
+    tryCatch(res <- t.test(x[1:(length(HT_F1)+length(HT_B6N))], x[ (length(HT_F1)+length(HT_B6N)+1):length(x) ])$p.value,  error = function(e){ res <<- NA; })
+    res
+}))
+
 # Create some plots
 #heatmap(cor(arraydata[DEtissue, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between tissues
 #heatmap(cor(arraydata[DEstrain, arrays[,"AtlasID"]], method="spearman"))             # Correlation of samples using the probes DE between strains
@@ -246,7 +258,7 @@ arraydata <- cbind(arraydata, Ttest_GF_F1_GF_B6N = apply(arraydata[,c(GF_F1, GF_
 # Add the information about which probe are MultiMapping
 annotationmatrix <- cbind(annotationmatrix, MultiMap = annotationmatrix[,"ProbeName"] %in% dupprobes)
 
-if(!file.exists("Analysis/geneexpression_TestsNew.txt")){
+if(!file.exists("Analysis/geneexpression_TestsNewNew.txt")){
   alldata <- NULL
   cnt <- 1
   ensgenes <- unique(annotationmatrix[,"ensembl_gene_id"])
@@ -260,8 +272,8 @@ if(!file.exists("Analysis/geneexpression_TestsNew.txt")){
     alldata <- rbind(alldata, cbind(annotsubset, probeinformation))
     cnt <- cnt + 1
   }
-  write.table(alldata, file="Analysis/geneexpression_TestsNew.txt", sep="\t", row.names=FALSE)
+  write.table(alldata, file="Analysis/geneexpression_TestsNewNew.txt", sep="\t", row.names=FALSE)
 }else{
   cat("Loading gene expression data from disk\n")
-  alldata <- read.table("Analysis/geneexpression_TestsNew.txt", sep="\t", header=TRUE)
+  alldata <- read.table("Analysis/geneexpression_TestsNewNew.txt", sep="\t", header=TRUE)
 }

@@ -128,7 +128,7 @@ write.table(toNumeric(genotypes), file="input/cleaned_numeric_genotypes.txt", se
 write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")                        # Save the clean phenotypes to disk
 
 # We now clean up the phenotypes manually after this step (fix stuff like "20 " -> "20") and only keep a single date for racing
-phenotypes     <- read.table(file="input/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
+phenotypes     <- read.table(file="input/OLDWORNG/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
 
 przewalski_ref   <- c("P0072", "P0078", "P0084")
 write.table(kabadinergenotypes[, przewalski_ref], "input/cleaned_przewalski_genotypes.txt", sep="\t",quote=FALSE)
@@ -150,7 +150,7 @@ cat("Left with", nrow(genotypes), "markers\n")
 write.table(table(map[,"Chromosome"]), "output/cleaned_genotypes_combined.txt", sep="\t")
 
 # Load in the Peterson data
-pdata <- read.table("input/cleaned_arabian_petersen.txt", sep = "\t")
+pdata <- read.table("input/OLDWORNG/cleaned_arabian_petersen.txt", sep = "\t")
 pdata <- pdata[rownames(genotypes), ]
 
 genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref], pdata)
@@ -374,6 +374,7 @@ plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
   return(breaks)
 }
 
+cnt <- 1
 for(analysis in paste0(loc, "/", results)){
   structuredata <- readLines(analysis, warn = FALSE)
   bt <- which(grepl("Estimated Ln Prob of Data", structuredata))                        # Start of info
@@ -388,13 +389,16 @@ for(analysis in paste0(loc, "/", results)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
+  postscript(paste0("STRUCTURE",cnt,".eps"), width = 16.0, height = 6.0, horizontal = FALSE, onefile = FALSE, paper = "special")
   plotStructure(stmatrix, TRUE, TRUE)
+  dev.off()
   cat("--All individuals--\n")
   counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   cat("--High purity (> 0.8)--\n")
   counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
   cat("----\n")
-  if(ncol(stmatrix) == 4) break                 # We did more but I want too see if Saria's hypothesis is correct
+  if(ncol(stmatrix) == 6) break                 # We did more but I want too see if Saria's hypothesis is correct
+  cnt <- cnt +1
 }
 
 # Analyse the different covariates for the different phenotypes

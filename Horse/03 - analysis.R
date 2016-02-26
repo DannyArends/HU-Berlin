@@ -39,9 +39,40 @@ dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
 plot(dendrogram.col, main = "")
 
+
+ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH", "Arabian", "Norwegian Fjord"))
+
+strains <- as.character(phenotypes[ii,"Strain"])
+names(strains) <- rownames(phenotypes)[ii]
+
+# Create colors
+cols <- c("red", "blue", "orange", "black", "brown", "purple")
+names(cols) <- c("K","H","S", "PrzH", "Arabian", "Norwegian Fjord")
+cnt <- 1
+labelCol <- function(x) {
+  if (is.leaf(x)) {
+    hclass <- strains[attr(x, "label")]             # Fetch the class label
+    hcol <- cols[hclass]                            # Determine color of the label
+    cat(attr(x, "label"), hclass, hcol, "\n")
+    attr(x, "nodePar") <- list(lab.col=hcol)
+    if(grepl("NORF", attr(x, "label"))){
+      attr(x, "label") <- paste0("NORF",cnt)
+      cnt <<- cnt + 1
+    }
+  }
+  return(x)
+}
+
+clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
+dendrogram <- as.dendrogram(clusters)
+dendrogram.col <- dendrapply(dendrogram, labelCol)
+postscript("dendrogramArabPrzNorf.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+plot(dendrogram.col, main = "", las=2, horiz = FALSE)
+dev.off()
+
 library(StAMPP)
 
-ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K", "H", "S", "PrzH", "Norwegian Fjord"))
+ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K", "H", "S", "PrzH", "Norwegian Fjord", "Arabian"))
 strains <- as.character(phenotypes[ii,"Strain"])
 stammpinput <- t(genotypes_AB[, rownames(phenotypes)[ii]])
 

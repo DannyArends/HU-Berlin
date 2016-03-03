@@ -29,7 +29,7 @@ incompatible <- function(marker1, marker2, homozygous = FALSE){
   chiSQ <- 0
   for(combi in combinations) {
     if(homozygous && grepl("H", combi)){
-
+      # Do nothing for heterozygous individuals
     }else{
       if(expected[combi] != 0){
         n <- (as.numeric(observed[combi] - expected[combi]) ^ 2) / expected[combi]

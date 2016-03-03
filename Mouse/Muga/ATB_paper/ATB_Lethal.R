@@ -158,6 +158,8 @@ colz <- rep("black", nrow(allRegions))
 colz[bfmipref] <- "orange"
 colz[b6npref] <- "gray"
 
+nTests <- (ncol(results) * ncol(results)) / 2
+
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
 threshold <- -log10(0.05 / nTests)
 
@@ -166,17 +168,17 @@ sum(LODscores > -log10(0.05 / nTests), na.rm=TRUE) / 2
 sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 
 tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
-  nTests <- (ncol(results) * ncol(results)) / 2
+
   op <- par(mar= c(6, 6, 4, 2) + 0.1)
-  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white", "gray", "yellow", "orange", "red"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
+  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
 
-  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="darkorange2")
+  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="black")
+  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="purple1")
 
-  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="orange")
-  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="gray")
-  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="black")
+  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="darkorange2")
+  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="black")
+  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="purple1")
 
   grid(ncol(results),ncol(results))
   sx <- 0
@@ -185,9 +187,10 @@ tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
     abline(h=l); abline(v=l)
     sx = sx + x
   }
-  legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "gray", "yellow", "orange", "red"),cex=0.7, bg="white")
+  legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"),cex=0.7, bg="white")
   box()
 dev.off()
+
 # Get all genes in each regions
 allgenes <- NULL
 allgenes <- read.table("Analysis/Mat_B6NgenesInfo.txt", sep="\t", header=TRUE)

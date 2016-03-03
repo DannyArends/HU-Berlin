@@ -14,3 +14,7 @@ fromVCFcode.AHB <- function(x){
 fromVCFcode.AHBp <- function(x){
   r <- rep(NA,length(x));  r[x == "0|0"] <- "A";  r[x == "0|1"] <- "H0"; r[x == "1|0"] <- "H1";  r[x == "1|1"] <- "B";  r[x == ".|."] <- NA;  return(r)
 }
+
+fromVCFcode.AHBn <- function(x){
+  r <- rep(NA,length(x));  r[x == "0|0"] <- NA;  r[x == "0|1"] <- "H0"; r[x == "1|0"] <- "H1";  r[x == "1|1"] <- NA;  r[x == ".|."] <- NA;  return(r)
+}

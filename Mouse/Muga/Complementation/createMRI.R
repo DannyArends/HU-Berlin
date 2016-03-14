@@ -10,7 +10,7 @@ createMRItable <- function(MRIdata, description){
   for(x in 1:nrow(MRIdata)){
     bDay <- as.character(description[as.character(MRIdata[x,"Label"]), "W-dat"])                                                          # Date of birth
     mDay <- as.character(MRIdata[x, "TimeDateDura"])                                                                                    # Date of measurement
-    daysDiff <- as.numeric(round(difftime(strptime(mDay, format = "%d/%m/%Y"), strptime(bDay, format = "%d.%m.%y"), units="days")))
+    daysDiff <- as.numeric(round(difftime(strptime(mDay, format = "%d/%m/%Y"), strptime(bDay, format = "%d.%m.%Y"), units="days")))
     if(length(daysDiff) == 0) daysDiff<- 666                                                                                            # If one of the dates is missing use 666
     cat(bDay, mDay, daysDiff, "\n")
     MRIdata[x, "Age"] <- daysDiff

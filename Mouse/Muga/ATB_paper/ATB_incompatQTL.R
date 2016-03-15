@@ -40,7 +40,7 @@ phenoN <- c("d21", "d28", "d35", "d42", "mri42d_fat", "mri42d_lean", "d49", "d56
 # Get the BFMI individuals
 ind <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
 bfmiG <- as.factor(unlist(phased.geno["UNC5048297", ind]))                                                                # BFMI phased genotype
-ind <- ind[which(bfmiG == "A")]
+ind <- ind[which(bfmiG == "H")]
 
 subfamily      <- as.factor(phenotypes[ind, "Vater"])                                                                     # Fixed effect: Subfamily structure  (factor)
 littersize     <- as.numeric(phenotypes[ind, "WG2"])                                                                      # Fixed effect: Size of the litter   (linear effect)
@@ -57,14 +57,14 @@ for(phe in phenoN) {
     for(y in (x+1):nrow(allregions)) {
       nm2 <- as.character(allregions[y,1])
       m2 <- as.factor(unlist(phased.geno[nm2,ind]))
-      mymodel <- lm(phenotypes[ind, phe] ~ subfamily + littersize + season + m1*m2)
+      mymodel <- lm(phenotypes[ind, phe] ~ subfamily + litternumber + m1*m2)
       myanova <- anova(mymodel)
       myAIC <- AIC(mymodel)
       #cat(nm1, nm2, phe, "LOD: ", round(unlist(-log10(myanova[[5]])), 2),"\n")
       #cat(nm1, nm2, phe, "VAR: ", round(100* (myanova[[2]] / sum(myanova[[2]])), 1), "\n")
       #cat(nm1, nm2, phe, "AIC: ", myAIC, "\n")
       resline <- c(nm1,nm2, round(unlist(-log10(myanova[[5]])), 2), myAIC)
-      if(length(resline) == 10) res1[[cnt]] <- rbind(res1[[cnt]], resline)
+      if(length(resline) == 9) res1[[cnt]] <- rbind(res1[[cnt]], resline)
     }
   }
   cat("Finished", phe, "\n")
@@ -101,14 +101,14 @@ for(phe in phenoN){
     for(y in (x+1):nrow(allregions)) {
       nm2 <- as.character(allregions[y,1])
       m2 <- as.factor(unlist(phased.geno[nm2,ind]))
-      mymodel <- lm(phenotypes[ind, phe] ~ subfamily + littersize + season + m1*m2)
+      mymodel <- lm(phenotypes[ind, phe] ~ subfamily + litternumber + m1*m2)
       myanova <- anova(mymodel)
       myAIC <- AIC(mymodel)
       #cat(nm1, nm2, phe, "LOD: ", round(unlist(-log10(myanova[[5]])), 2),"\n")
       #cat(nm1, nm2, phe, "VAR: ", round(100* (myanova[[2]] / sum(myanova[[2]])), 1), "\n")
       #cat(nm1, nm2, phe, "AIC: ", myAIC, "\n")
       resline <- c(nm1,nm2, round(unlist(-log10(myanova[[5]])), 2), myAIC)
-      if(length(resline) == 10) res2[[cnt]] <- rbind(res2[[cnt]], resline)
+      if(length(resline) == 9) res2[[cnt]] <- rbind(res2[[cnt]], resline)
     }
   }
   cat("Finished", phe, "\n")
@@ -125,7 +125,7 @@ sign1 <- lapply(res1, function(x){
 })
 
 sign2 <- lapply(res2, function(x){
-  threshold <- -log10(0.05/nrow(x))
+  threshold <- -log10(0.7/nrow(x))
   ii <- which(as.numeric(x[,8]) >= threshold)
   return(x[ii,])
 })
@@ -160,3 +160,113 @@ mymodel <- lm(phenotypes[ind, phe] ~ subfamily + littersize + season + m1*m2)
 myanova <- anova(mymodel)
 round(100* (myanova[[2]] / sum(myanova[[2]])), 1)
 myAIC <- AIC(mymodel)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mo <- lm(phenotypes[ind, phe] ~ subfamily)
+boxplot((mo$residuals + mo$coefficients["(Intercept)"]) ~ subfamily)
+
+
+m <- round(runif(length(ind)),0)
+
+mo <- lm(phenotypes[ind, phe] ~ m)
+boxplot(phenotypes[ind, phe] ~ m)
+boxplot((mo$residuals + mo$coefficients["(Intercept)"]) ~ m)
+
+
+
+gen28 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
+bfmiG <- as.character(unlist(phased.geno["UNC5048297", ind]))
+
+gen27f <- as.character(phenotypes[ind, "Vater"])
+bfmiGF <- as.character(unlist(phased.geno["UNC5048297", gen27f]))
+
+gen27m <- as.character(phenotypes[ind, "Mutter"])
+bfmiGM <- as.character(unlist(phased.geno["UNC5048297", gen27m]))
+
+subFam <- as.factor(paste0(bfmiGF, bfmiGM, bfmiG))
+
+subFam <- as.factor(paste0(bfmiGF, bfmiGM))
+
+
+mo <- lm(phenotypes[gen28, phe] ~ subFam + bfmiG + litternumber)
+myanova <- anova(mo)
+round(100* (myanova[[2]] / sum(myanova[[2]])), 1)
+AIC(mo)
+
+
+boxplot(phenotypes[gen28, phe] ~ subFam)
+boxplot((mo$residuals + mo$coefficients["(Intercept)"]) ~ subFam)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Get the non BFMI individuals
+ind <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
+bfmiG <- as.factor(unlist(phased.geno["UNC5048297", ind]))                                                       # Fixed effect: BFMI phased genotype (factor)
+
+subfamily      <- as.factor(phenotypes[ind, "Vater"])                                                                     # Fixed effect: Subfamily structure  (factor)
+littersize     <- as.numeric(phenotypes[ind, "WG2"])                                                                      # Fixed effect: Size of the litter   (linear effect)
+litternumber   <- as.factor(phenotypes[ind, "W.Label"])                                                                   # Fixed effect: Number of litter     (factor)
+season         <- as.factor(phenotypes[ind, "Season"])                                                                    # Fixed effect: Season when born     (factor)
+
+res3 <-  vector("list", length(phenoN))
+names(res3) <- phenoN
+cnt <- 1
+for(phe in phenoN){
+  for(x in 1:(nrow(allregions)-1)) {
+    nm1 <- as.character(allregions[x,1])
+    m1 <- as.factor(unlist(phased.geno[nm1,ind]))
+    for(y in (x+1):nrow(allregions)) {
+      nm2 <- as.character(allregions[y,1])
+      m2 <- as.factor(unlist(phased.geno[nm2,ind]))
+      mymodel <- lm(phenotypes[ind, phe] ~ subfamily + bfmiG + litternumber + m1*m2)
+      myanova <- anova(mymodel)
+      myAIC <- AIC(mymodel)
+      #cat(nm1, nm2, phe, "LOD: ", round(unlist(-log10(myanova[[5]])), 2),"\n")
+      #cat(nm1, nm2, phe, "VAR: ", round(100* (myanova[[2]] / sum(myanova[[2]])), 1), "\n")
+      #cat(nm1, nm2, phe, "AIC: ", myAIC, "\n")
+      resline <- c(nm1,nm2, round(unlist(-log10(myanova[[5]])), 2), myAIC)
+      if(length(resline) == 10) res3[[cnt]] <- rbind(res3[[cnt]], resline)
+    }
+  }
+  cat("Finished", phe, "\n")
+  cnt <- cnt + 1
+}
+
+
+
+
+

@@ -1,3 +1,12 @@
+####################################################################
+# Author    : Stefan Kärst & Danny Arends
+# Date      : 13-march-2016
+# File Name : plotDeletions.R
+# Purpose   : plot deletions in the different crosses
+# Used Files:
+#############################################
+#              read data                    #
+#############################################
 setwd("E:/Mouse/ClassicalPhenotypes/Complementation/RawData")
 
 df <- read.table("dfraw.txt", header =T, sep = "\t", colClasses="character")

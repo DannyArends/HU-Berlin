@@ -1,4 +1,12 @@
-
+####################################################################
+# Author    : Danny Arends
+# Date      : 13-march-2016
+# File Name : createMRI.R
+# Purpose   : create an MRI table from the format provided by our MRI reader
+# Used Files:
+#############################################
+#                Functions                  #
+#############################################
 createMRItable <- function(MRIdata, description){
   dates <- strsplit(unlist(lapply(strsplit(as.character(MRIdata[,"TimeDateDura"]),";"),"[",1))," ")                       # Get the malformed dates
 

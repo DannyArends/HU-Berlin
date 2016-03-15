@@ -48,6 +48,13 @@ rownames(TRPC_Descr) <-  gsub("TRPC", "TP", rownames(TRPC_Descr))
 TRPC_MRI <- read.table("input/TRPC_MRI.txt", sep='\t', header=TRUE, row.names=1)
 TRPC_MRI <- cbind(TRPC_MRI, Age = NA)
 
+# BBS7
+BBS7_Descr <- read.table("input/Bbs7_Descr.txt", sep='\t', header=TRUE, row.names=1, check.names=FALSE, na.strings=c("NA", "", "x", "-"))
+rownames(BBS7_Descr) <-  gsub("860BBS7-", "", rownames(BBS7_Descr))
+
+BBS7_MRI <- read.csv("input/Bbs7_MRI.txt", sep='\t', header=TRUE, row.names=1)
+BBS7_MRI <- cbind(BBS7_MRI, Age = NA)
+
 #############################################
 #             create MRI matrices           #
 #############################################
@@ -63,6 +70,9 @@ fatlean_TRPC <- createMRItable(TRPC_MRI, TRPC_Descr)
 write.table(fatlean_TRPC[[1]], "analysis/mri_fat_TRPC.txt", sep = "\t")
 write.table(fatlean_TRPC[[2]], "analysis/mri_lean_TRPC.txt", sep = "\t")
 
+fatlean_BBS7 <- createMRItable(BBS7_MRI, BBS7_Descr)
+write.table(fatlean_BBS7[[1]], "analysis/mri_fat_BBS7.txt", sep = "\t")
+write.table(fatlean_BBS7[[2]], "analysis/mri_lean_BBS7.txt", sep = "\t")
 
 #############################################
 #             filter individuals            #
@@ -70,6 +80,7 @@ write.table(fatlean_TRPC[[2]], "analysis/mri_lean_TRPC.txt", sep = "\t")
 NZO_geno <- NZO_Descr[which(!is.na(NZO_Descr[,"C3GAB5"])),]
 TRPC_geno <- TRPC_Descr[which(!is.na(TRPC_Descr[,"C3GAB5"])),]
 AKR_geno <- AKR_Descr[which(!is.na(AKR_Descr[,"C3GAB5"])),]
+BBS7_geno <- BBS7_Descr[which(!is.na(BBS7_Descr[,"C3GAB5"])),]
 
 #############################################
 #             add MRI day 70                #
@@ -86,6 +97,9 @@ TRPC_geno <- cbind(TRPC_geno, fat70 = NA)
 ii <- which(rownames(fatlean_TRPC[[1]]) %in% rownames(TRPC_geno))
 TRPC_geno[rownames(fatlean_TRPC[[1]])[ii],"fat70"] <- fatlean_TRPC[[1]][ii, "70"]
 
+BBS7_geno <- cbind(BBS7_geno, fat70 = NA)
+ii <- which(rownames(fatlean_BBS7[[1]]) %in% rownames(BBS7_geno))
+BBS7_geno[rownames(fatlean_BBS7[[1]])[ii],"fat70"] <- fatlean_BBS7[[1]][ii, "70"]
 
 #############################################
 #             recode genotypes              #
@@ -121,7 +135,7 @@ boxplot(adjust.phenotype(AKR_geno, "fat70") ~ AKR_geno[,"Gtype"], main="F1 - AKR
 boxplot(adjust.phenotype(NZO_geno, "fat70") ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Fat Day 70"))
 boxplot(adjust.phenotype(TRPC_geno, "fat70") ~ TRPC_geno[,"Gtype"], main="F1 - TRPC x (BFMI x B6N)", sub=paste0("Fat Day 70"))
 
-op <- par(mfrow=c(3,3))
+op <- par(mfrow=c(3,4))
 for(x in colnames(NZO_geno)[9:16]) {
   boxplot(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Day ",x))
   cat("NZO:", anova(lm(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"Gtype"]))[[5]][1], "\n")
@@ -129,6 +143,8 @@ for(x in colnames(NZO_geno)[9:16]) {
   cat("TRPC:", anova(lm(adjust.phenotype(TRPC_geno, x) ~ TRPC_geno[,"Gtype"]))[[5]][1], "\n")
   boxplot(adjust.phenotype(AKR_geno, x) ~ AKR_geno[,"Gtype"], main="F1 - AKR x (BFMI x B6N)", sub=paste0("Day ",x))
   cat("AKR:", anova(lm(adjust.phenotype(AKR_geno, x) ~ AKR_geno[,"Gtype"]))[[5]][1], "\n")
+  boxplot(adjust.phenotype(BBS7_geno, x) ~ BBS7_geno[,"C3GAB5"], main="F1 - Bbs7 x (BFMI x B6N)", sub=paste0("Day ",x), las=2)
+  cat("Bbs7:", anova(lm(adjust.phenotype(BBS7_geno, x) ~ BBS7_geno[,"C3GAB5"]))[[5]][1], "\n")
   cat("Done",x,"\n")
   #line <- readline()
 }
@@ -156,4 +172,11 @@ for(x in colnames(TRPC_geno)[9:16]) {
   iiB6N <- grepl("B6N", TRPC_geno[,"Gtype"])
   iiBFMI <- grepl("BFMI", TRPC_geno[,"Gtype"])
   cat("TRPC t.test:", t.test(phe.adj[iiB6N], phe.adj[iiBFMI], alternative = "less")$p.value, "\n")  
+}
+
+for(x in colnames(BBS7_geno)[9:16]) {
+  phe.adj <- adjust.phenotype(BBS7_geno, x)
+  iiB6N <- grepl("BBS7/+", BBS7_geno[,"C3GAB5"])
+  iiBFMI <- grepl("BBS7/BFMI", BBS7_geno[,"C3GAB5"])
+  cat("BBS7 t.test:", t.test(phe.adj[iiB6N], phe.adj[iiBFMI], alternative = "less")$p.value, "\n")  
 }

@@ -1,3 +1,13 @@
+####################################################################
+# Author    : Danny Arends
+# Date      : 13-march-2016
+# File Name : createMRI.R
+# Purpose   : create an MRI table from the format provided by our MRI reader
+# Used Files: dateToSeason.R
+#             vcfTools.R
+#############################################
+#       Load external Functions             #
+#############################################
 
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")

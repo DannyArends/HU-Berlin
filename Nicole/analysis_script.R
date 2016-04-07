@@ -200,6 +200,7 @@ qtldata <- QTLmappingTwo(genotypes, phenotypes, locs, cpheno = phe, cmark1 = 4, 
 
 
 
+
 ###---- OLD Code down here, beware !
 plot(c(80,154), c(0,10))
 points(as.numeric(as.character(unlist(map))), -log10(unlist(lapply(models, function(x){

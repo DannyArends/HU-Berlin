@@ -1,31 +1,32 @@
-setwd("D:/Collegues/Nicole")
+#
+# Analysis of Nicole's 'complicated QTL data' using multiple QTL mapping
+# copyright (c) 2016-2020 - Danny Arends and Nicole Hallahan
+# last modified Apr, 2016
+# first written Apr, 2016
+#
 
-mdata <- read.table("data.txt", sep="\t")
+##### Step 1: Data loading an processing into the correct format
 
-map <- mdata[2, c(36:87)] ; map <- map[-c(1:4)]  # load the map, (throw away the first 4 markers
+setwd("D:/Collegues/Nicole")                                                # Change this to the folder where data.txt is stored
+mdata <- read.table("data.txt", sep="\t")                                   # Loads all the data into R
 
-locs <- as.numeric(as.character(unlist(map)))    # locations on the map
+map <- mdata[2, c(36:87)] ; map <- map[-c(1:4)]                             # split out the map, (throw away the first 4 markers)
+locs <- as.numeric(as.character(unlist(map)))                               # locations on the map
 
-genotypes <- mdata[3:203, c(36:87)]
-genotypes <- genotypes[,-c(1:4)]
-genotypes[169,"V84"] <- "ND"                     # fix ?! a single genotype value
+genotypes <- mdata[3:203, c(36:87)] ; genotypes <- genotypes[,-c(1:4)]      # split out the genotypes, (throw away the first 4 markers)
+genotypes[169,"V84"] <- "ND"                                                # fix ?! a single genotype value
 
-numGeno <- apply(genotypes,2,function(x){as.numeric(as.factor(x))})
+numGeno <- apply(genotypes,2,function(x){as.numeric(as.factor(x))})         # genotypes as numbers (not factors)
 
+# Subset the phenotypes, so that we have the most interesting ones.
 phenotypes <- apply(mdata[3:203, c(11, 22, 25, 26, 29:34)], 2, function(x){as.numeric(x)})
 colnames(phenotypes) <- c("BW week 13", "BG week 13", "BG AUC wk 11", "Ins AUC wk 11", 
                           "Final plasma TG", "Glycerol", "FFA", "Final plasma CHOL", 
                           "Liver mg TG per mg prot", "Liver mg CHOL per mg prot")
 
 phenotypes <- phenotypes[,1:2]
-# Prefilter: individuals having only ND or DD are output
-#apply(numGeno, 2, function(x){table(x)})
 
-#uninformative <- which(unlist(lapply(, function(x){ length(x) == 2 })))
-#genotypes <- genotypes[-uninformative, ]
-#phenotypes <- phenotypes[-uninformative, ]
-
-# Definition of different functions
+##### Step 2: Definition of different functions, we use to do QTL mapping
 
 # Function that extracts the last LOD score from a multiple QTL model
 aslodscores <- function(qtldata) {
@@ -36,8 +37,7 @@ aslodscores <- function(qtldata) {
   })))
 }
 
-
-# Function that extracts the last LOD score from a multiple QTL model
+# Function that extracts the variance explained from a multiple QTL model
 asvarexplained <- function(qtldata) {
   lapply(qtldata[["models"]], function(model){
     # cat("model-length:", (length(x[[5]])-1), "\n"); 
@@ -46,7 +46,7 @@ asvarexplained <- function(qtldata) {
   })
 }
 
-# Marker 34 is near the distal QTL peek (121 mBP)
+# Function to map a QTL using the model: Y = Cmark + marker + err
 # Set cmark1 and scan for a second QTL using a multiple QTL model, drop the marker covariate when it is nearby
 QTLmappingOne <- function(genotypes, phenotypes, locs, cpheno =  2, cmark = 10) {
   nearby <- which(locs > (locs[cmark] - 10) & locs < (locs[cmark] + 10))
@@ -67,14 +67,16 @@ QTLmappingOne <- function(genotypes, phenotypes, locs, cpheno =  2, cmark = 10) 
   invisible(list(models = models, locs = locs, nearby = nearby, cmark = cmark, colorcodes = colz))
 }
 
-# Draw the LOD scores of the single QTL model
-plotBaseLine <- function(locs, baseline){
-  points(locs, baseline, t = 'l')
-  points(locs, baseline, t = 'p', pch=19, cex=0.5)
-  points(locs, rep(0, length(baseline)), pch="|")
+# Draw the LOD scores of the single QTL model, locs = map location of the markers, lodscores contains the LOD scores
+# Warning: This function does not setup a plot window, it assumes a window is already there
+plotBaseLine <- function(locs, lodscores){
+  points(locs, lodscores, t = 'l')
+  points(locs, lodscores, t = 'p', pch=19, cex=0.5)
+  points(locs, rep(0, length(lodscores)), pch="|")
 }
 
-# Draw the output of a multiple QTL model
+# Draw the output of a multiple QTL model (model: Y = Cmark + marker + err)
+# Warning: This function does not setup a plot window, it assumes a window is already there
 plotmodel1 <- function(qtldata) {
   lods <- aslodscores(qtldata)
   abline(v = qtldata[["locs"]][ min(qtldata[["nearby"]]) ]-1, col="gray", lty=2, lwd=0.4)
@@ -84,8 +86,10 @@ plotmodel1 <- function(qtldata) {
   legend("topright", c("Single QTL model", "Multiple QTL model", "nearby", "cofactor"), col=c("black", "orange", "blue", "green"), lwd=c(2, 2, NA, NA), pch=c(19,19,19,19), cex=0.8)
 }
 
-#for(phe in 1:ncol(phenotypes)){      # Use to make all th plots
-phe <- 2                              # Sue to make a specific plot
+##### Step 3: do the actual single QTL mapping and the  multiple QTL model (model: Y = Cmark + marker + err)
+
+#for(phe in 1:ncol(phenotypes)){      # Uncomment this to make all the plots for all the phenotypes
+phe <- 2                              # Set it here if you want to analyze a single phenotype to make a specific plot
 
   models <- apply(genotypes, 2, function(x){
     marker <- as.factor(as.character(x))
@@ -103,7 +107,8 @@ phe <- 2                              # Sue to make a specific plot
   op <- par(mfrow=c(1,1))
   plot(c(80, 160), c(0, 10), t = 'n', xlab="Location (mBp)", ylab = "LOD score -log10(pvalue)")
   plotBaseLine(locs, lods)
-
+  
+  # --> If you comment the next line there will be a plot in R, otherwise on the HDD, also comment the dev.off() call below
   png(paste0(colnames(phenotypes)[phe], ".png"), width=1280, height=800)
   op <- par(mfrow=c(2, 2))
   for(cmark in c(5, 25, 32, 48)) { # Update here to move the markers
@@ -116,24 +121,26 @@ phe <- 2                              # Sue to make a specific plot
       cat(colnames(phenotypes)[phe], locs[cmark], locs[y], "variance explained", vExplained[[y]], "\n")
     }
   }
-  dev.off()
+  # --> the next line shouldshould match the png line.
+  dev.off()                                                                   
   cat("Done", colnames(phenotypes)[phe], "\n")
 #}
 
-# Correlation of genotypes against eachother
-
+# Correlation plot of genotypes against eachother
 corM <- cor(numGeno, use="pair")
 
-# Plot the correlation matrix
-image(1:nrow(corM), 1:nrow(corM), corM, xaxt='n', yaxt='n', xlab="", ylab="")
-axis(1, at=1:nrow(corM), locs,las=2,cex=0.8)
-axis(2, at=1:nrow(corM), locs,las=2,cex=0.8)
+image(1:nrow(corM), 1:nrow(corM), corM, xaxt='n', yaxt='n', xlab="", ylab="")     # Plot the correlation matrix
+axis(1, at=1:nrow(corM), locs, las=2, cex=0.8)                                    # Add locations to the x-axis
+axis(2, at=1:nrow(corM), locs, las=2, cex=0.8)                                    # Add locations to the y-axis
 box()
+
+##### Step 4: function for the multiple QTL model (model: Y = Cmark1 + Cmark2 + marker + err)
 
 # Code, using 2 markers as covariates, and mapping the genetic map using a 3 QTL model
 QTLmappingTwo <- function(genotypes, phenotypes, locs, cpheno =  2, cmark1 = 5, cmark2 = 40) {
   nearby1 <- which(locs > (locs[cmark1] - 10) & locs < (locs[cmark1] + 7.3))    # UPDATE: To play with the area around marker1
   nearby2 <- which(locs > (locs[cmark2] - 13) & locs < (locs[cmark2] + 20))     # UPDATE: To play with the area around marker2
+  nearby3 <- which(locs > (locs[48] - 5) & locs < (locs[48] + 10))     # UPDATE: To play with the area around marker2
   mcnt <- 0
   models <- apply(genotypes, 2, function(x){
     marker <- as.factor(as.character(x))
@@ -156,7 +163,7 @@ QTLmappingTwo <- function(genotypes, phenotypes, locs, cpheno =  2, cmark1 = 5, 
   invisible(list(models = models, locs = locs, nearby1 = nearby1, nearby2 = nearby2, cmark1 = cmark1, cmark2 = cmark2, colorcodes = colz))
 }
 
-# Draw the output of a multiple QTL model
+# Draw the output of the multiple QTL model (model: Y = Cmark1 + Cmark2 + marker + err)
 plotmodel2 <- function(qtldata) {
   lods <- aslodscores(qtldata)
   abline(v = qtldata[["locs"]][ min(qtldata[["nearby1"]]) ]-1, col="gray", lty=2, lwd=0.4)
@@ -177,12 +184,14 @@ models <- apply(genotypes, 2, function(x){
 
 # Lod scores from the single marker model and QTL mapping using a 3 QTL model
 lods <- -log10(unlist(lapply(models, function(x){ x[[5]][1]; })))
-qtldata <- QTLmappingTwo(genotypes, phenotypes, locs, cpheno = phe, cmark1 = 5, cmark2 = 35)  # Update to put your covariates at a differetn marker
+qtldata <- QTLmappingTwo(genotypes, phenotypes, locs, cpheno = phe, cmark1 = 4, cmark2 = 37)  # Update to put your covariates at a differetn marker
 
 # Create the plot
-plot(c(80, 160), c(0, 10), t = 'n', xlab="Location (mBp)", ylab = "LOD score -log10(pvalue)")
-plotBaseLine(locs, lods)
-plotmodel2(qtldata)
+#png("multiple QTL model_BG.png", width=1280, height=800)  # If you need to write it out to disk
+  plot(c(80, 160), c(0, 10), t = 'n', xlab="Location (mBp)", ylab = "LOD score -log10(pvalue)")
+  plotBaseLine(locs, lods)
+  plotmodel2(qtldata)
+#dev.off()
 
 
 

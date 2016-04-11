@@ -21,6 +21,18 @@ toNumGeno <- function(genotypes){
   return(numgeno)
 }
 
+geno <- toNumGeno(genotypes)
+geno <- geno[which(physicalmap[rownames(geno), 3] == "Y"), -c(1:4)]
+pheno <- runif(ncol(genotypes))
+sex <- rep("m", ncol(genotypes))
+csvr <- rbind(c(NA,NA, pheno), c(NA,NA, sex), cbind(physicalmap[rownames(geno),c(1,2)], geno))
+rownames(csvr) <- c("pheno", "sex", rownames(geno))
+write.table(csvr[-8144,], file="newBXD.csvr",sep=",", quote=FALSE, col.names=FALSE, na="")
+
+#library(qtl)   # Load into R/qtl doesn't work because of memory issues
+#bxd <- read.cross(file="newBXD.csvr", format="csvr", genotypes=c(-1, 1), alleles=c(-1, 1), convertXdata=FALSE)
+#bxd
+
 cat("Starting with", nrow(genotypes), "of which", length(which(physicalmap[,3] == "Y")), "are selected by rob as markers\n")
 
 #ii <- which(is.na(numgeno))[which(!(which(is.na(numgeno)) %in% which(is.na(genotypes))))]
@@ -116,10 +128,7 @@ mean(stats2$recombinationload[strains.UTHSC],na.rm=TRUE)
 
 
 
-
-
-
-
+bxdrf <- est.rf(bxd)
 
 
 

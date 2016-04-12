@@ -30,8 +30,13 @@ recombinations <- function(x, locs = 1:length(x), chr = rep(1, length(x)), fancy
   return(recombs)
 }
 
-#justlocs <- 
-#unlist(lapply(lapply(lapply(recombinations(geno[,6], map[,2], map[,1]), strsplit, ":"), unlist),"[",2))
+get.locs <- function(x){
+  unlist(lapply(lapply(lapply(x, strsplit, ":"), unlist),"[",2))
+}
+
+get.chr <- function(x){
+  unlist(lapply(lapply(lapply(x, strsplit, ":"), unlist),"[",1))
+}
 
 recombinations(c("A","A","A","A","B"))
 recombinations(c("A","B","A","A","B"))
@@ -41,6 +46,3 @@ recombinations(c("A","B", NA,"A","B"), c(5, 20, 27, 45, 50) )
 recombinations(c("A","B", NA,"A","B"), c(5, 20, 27, 45, 50) , c(1,1,2,2,2))
 recombinations(c("A","B", NA,"A","B"), c(5, 20, 27, 45, 50) , c(1,1,2,2,2), TRUE)
 recombinations(c("A","B", NA,"A","B"), chr = c(1,1,2,2,2), fancy = FALSE)
-
-
-

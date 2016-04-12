@@ -22,16 +22,24 @@ toNumGeno <- function(genotypes){
 }
 
 geno <- toNumGeno(genotypes)
-geno <- geno[which(physicalmap[rownames(geno), 3] == "Y"), -c(1:4)]
+selectedMarkers <- rownames(physicalmap[which(physicalmap[rownames(geno), 3] == "Y"),])
+
+geno <- geno[selectedMarkers, -c(1:4)]
+physicalmap <- physicalmap[selectedMarkers, ]
+
+nameOnChr <- rownames(physicalmap[which(physicalmap[,"Chr"] == 1),])
+
 pheno <- runif(ncol(genotypes))
 sex <- rep("m", ncol(genotypes))
-csvr <- rbind(c(NA,NA, pheno), c(NA,NA, sex), cbind(physicalmap[rownames(geno),c(1,2)], geno))
-rownames(csvr) <- c("pheno", "sex", rownames(geno))
+csvr <- rbind(c(NA,NA, pheno), c(NA,NA, sex), cbind(physicalmap[nameOnChr,c(1,2)], geno[nameOnChr,]))
+rownames(csvr) <- c("pheno", "sex", nameOnChr)
 write.table(csvr[-8144,], file="newBXD.csvr",sep=",", quote=FALSE, col.names=FALSE, na="")
 
-#library(qtl)   # Load into R/qtl doesn't work because of memory issues
-#bxd <- read.cross(file="newBXD.csvr", format="csvr", genotypes=c(-1, 1), alleles=c(-1, 1), convertXdata=FALSE)
-#bxd
+library(qtl)   # Load into R/qtl doesn't work because of memory issues
+bxd <- read.cross(file="newBXD.csvr", format="csvr", genotypes=c(-1, 1), alleles=c(-1, 1), convertXdata=FALSE)
+bxd
+
+map <- est.map(bxd)
 
 cat("Starting with", nrow(genotypes), "of which", length(which(physicalmap[,3] == "Y")), "are selected by rob as markers\n")
 
@@ -75,21 +83,12 @@ clean <- function(genotypes, recombinations){
         cat(strain, startloc, ":", endloc, posdiff, length(affected), affectedExt)
         if(length(affected) == 3) {
           fill <- NA
-          gg <- which(table(affected) == 2)
-          if(length(gg) == 1) fill <- names(which(table(affected) == 2))
-          fixed <- affected
-          fixed[2] <- fill
-          newgenotypes[(endloc + startloc) /2, strain] <- fill
-          ll <- ll + 1
-          cat(" ->", fixed, "")
-        }
-        if(length(affected) > 3) {
-          fill <- NA
-          gg <- which(table(affectedExt) == ((2*surrounding) + 2))
-          if(length(gg) == 1) fill <- names(which(table(affectedExt) == ((2*surrounding) + 2)))
-          newgenotypes[(startloc+1):(endloc-1), strain] <- rep(fill, length((startloc+1):(endloc-1)))
-          ll <- ll + 1
-          cat(" ", ((2*surrounding) + 2), "->", newgenotypes[(startloc+1):(endloc-1), strain], "")
+          gg <- which(table(affectedExt) == 6)
+          if(length(gg) == 1){
+            fill <- names(which(table(affectedExt) == 6))
+            newgenotypes[(endloc + startloc) /2, strain] <- fill
+            ll <- ll + 1
+          }
         }
         cat("\n")
       }
@@ -101,6 +100,8 @@ clean <- function(genotypes, recombinations){
 
 stats <- calcRecombinations(toNumGeno(genotypes))
 genotypes1 <- clean(genotypes, stats$recombinations)
+
+write.table(cbind(physicalmap[rownames(genotypes1), ], genotypes1), file="BXDsmoothGeno.txt", sep="\t", quote=FALSE)
 
 stats1 <- calcRecombinations(toNumGeno(genotypes1))
 genotypes2 <- clean(genotypes1, stats1$recombinations)

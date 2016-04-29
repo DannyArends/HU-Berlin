@@ -13,13 +13,13 @@ posUncertain <- as.character(arrayinfo[which(duplicated(arrayinfo[,"loc_snp_id"]
 arrayinfo <- cbind(arrayinfo, reference = NA)
 
 for(chr in c(1:29, "X")){
-  dnasequence <- readLines(gzfile(paste0("chr",chr,".fna.gz")))
-  dnasequence <- paste0(dnasequence[-1], collapse="")
-  dnasequence <- strsplit(dnasequence, "")[[1]]
+  dnasequence <- readLines(gzfile(paste0("CHIR1.0/chr",chr,".fna.gz")))       # Read the per chromosome fasta file
+  dnasequence <- paste0(dnasequence[-1], collapse="")                         # Remove the first line, and collapse the rest of the data
+  dnasequence <- strsplit(dnasequence, "")[[1]]                               # Split the DNA string into individual letters
   arrayinfo[arrayinfo[,"chr"] == chr, "reference"] <- dnasequence[arrayinfo[arrayinfo[,"chr"] == chr,"chr_pos"]]
 }
 
-setwd("E:/Goat/DNA/Siham RawData")
+setwd("E:/Goat/DNA/SihamRawData")
 
 ILMNannot <- read.csv("goatiggc_cons_60k_11589869_A.csv", skip=7)
 

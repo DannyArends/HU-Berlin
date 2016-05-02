@@ -7,10 +7,27 @@
 setwd("E:/Goat/DNA/SihamAnalysis")
 
 snpdata <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE, colClasses="character")
-snpinfo <- read.table("snpinfo.txt", sep="\t")
+snpinfo <- read.table("snpinfo.txt", sep="\t", na.strings=c("", "NA", "N.D."))
 samples <- read.table("sampleinfo.txt", sep="\t")
 
 snpAlleles <- lapply(strsplit(as.character(snpinfo[,"allele"]), ""), "[", c(1,3))
+
+chir1 <- read.csv("FilteredLocationCHIR1.0.txt", sep="\t", row.names=1)
+chir1 <- cbind(chir1, Pos = (chir1[,"Start"] + chir1[,"Stop"])/2)
+chir2 <- read.csv("FilteredLocationCHIR2.0.txt", sep="\t", row.names=1)
+chir2 <- cbind(chir2, Pos = (chir2[,"Start"] + chir2[,"Stop"])/2)
+
+snpinfo <- cbind(snpinfo, Chr_C1 = NA)
+snpinfo <- cbind(snpinfo, Pos_C1 = NA)
+
+snpinfo <- cbind(snpinfo, Chr_C2 = NA)
+snpinfo <- cbind(snpinfo, Pos_C2 = NA)
+
+snpinfo[rownames(chir1), "Chr_C1"] <- chir1[,"chrN"]
+snpinfo[rownames(chir1), "Pos_C1"] <- chir1[,"Pos"]
+
+snpinfo[rownames(chir2), "Chr_C2"] <- chir2[,"chrN"]
+snpinfo[rownames(chir2), "Pos_C2"] <- chir2[,"Pos"]
 
 if(!file.exists("filtered_snps_numeric.txt")){
   numsnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))

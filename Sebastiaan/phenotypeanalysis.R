@@ -7,13 +7,31 @@
 
 setwd("D:/Collegues/Sebastiaan")
 phenotypes <- read.table("All_Measurements_20weeks.txt", sep = "\t", header = TRUE, na.strings = c(NA, ".", "/"))
+
+colnames(phenotypes)[which(colnames(phenotypes) == "FAT140")] <- "Fat 20"
+colnames(phenotypes)[which(colnames(phenotypes) == "FATpro140")] <- "Fat % 20"
+colnames(phenotypes)[which(colnames(phenotypes) == "LEAN140")] <- "Lean 20"
+colnames(phenotypes)[which(colnames(phenotypes) == "IntramuscFat_Q")] <- "IMF_MQ"
+colnames(phenotypes)[which(colnames(phenotypes) == "IntramuscFat_LD")] <- "IMF_ML"
+colnames(phenotypes)[which(colnames(phenotypes) == "Liver_TRIGS")] <- "Liver_TG"
+colnames(phenotypes)[which(colnames(phenotypes) == "Insulin")] <- "Serum_Insulin"
+colnames(phenotypes)[which(colnames(phenotypes) == "Leptin_pgml")] <- "Serum_Leptin"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_0")] <- "ITT_Gluc_0m"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_15")] <- "ITT_Gluc_15m"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_30")] <- "ITT_Gluc_30m"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_60")] <- "ITT_Gluc_60m"
+colnames(phenotypes)[which(colnames(phenotypes) == "AUC20")] <- "ITT_AUC"
+colnames(phenotypes)[which(colnames(phenotypes) == "C")] <- "ITT_%Gluc"
+colnames(phenotypes)[which(colnames(phenotypes) == "TG_mmoll")] <- "Serum_TG"
+colnames(phenotypes)[which(colnames(phenotypes) == "Chol_mmoll")] <- "Serum_Chol"
+
 phenames <- colnames(phenotypes)[c(6:ncol(phenotypes))]                                           # Take the ones we can plot, Malonyl_CoA can't be sued
 
 clusters <- hclust(dist(cor(phenotypes[,phenames], use = "pair", method = "spearman")))           # Cluster phenotypes based on correlation similarity
 #phenames <- phenames[clusters$order]                                                              # Order them in a 'logical' way
 
-phenames <- c("FAT140", "FATpro140","LEAN140", "IntramuscFat_Q", 
-              "IntramuscFat_LD", "Liver_TRIGS", "Insulin","ITT20_0", "ITT20_15","ITT20_30", "ITT20_60", "AUC20", "C", "Akt1", "Cbl", 
+phenames <- c("Serum_Chol", "Serum_TG", "Serum_Leptin",  "Serum_Insulin", "ITT_Gluc_0m", "ITT_Gluc_15m","ITT_Gluc_30m", "ITT_Gluc_60m", "ITT_AUC", "ITT_%Gluc",
+              "Liver_TG",  "Fat 20", "Fat % 20", "Lean 20", "IMF_ML", "IMF_MQ",  "Akt1", "Cbl", 
               "Foxa2" ,"Irs1", "Irs2", "Insr", "Igf1r","Lep", "Prkaa2", "Slc2a4")
 
 mline <- as.character(phenotypes[,"Line"])
@@ -42,7 +60,7 @@ for(y in 1:length(sublines)){
   points(coords, pch = 18, cex = 0.4)                                                             # Add the circle
   for(x in 1:length(rot)){
     points(c(0, coords[rot[x],1]), c(0,coords[rot[x],2]), t='l', lwd=0.5, lty=3)                  # The different phenotype axis
-    text(1.1 * coords[rot[x],1], 1.1 * coords[rot[x],2], names(rot)[x], cex=0.7)                  # The name on the outside of the circle
+    text(1.15 * coords[rot[x],1], 1.1 * coords[rot[x],2], names(rot)[x], cex=0.6)                  # The name on the outside of the circle
   }
   cnt <- 1
   for(subline in c(refs, sublines[y])){                                                           # 2 reference lines + the selected line

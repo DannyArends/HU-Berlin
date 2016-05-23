@@ -31,8 +31,12 @@ snpdata[1:10,1:10]
 
 snpinfo <- read.csv("Ziegen_HU-Berlin_SNP.txt", sep="\t", row.names=1)
 snpinfo[1:10,]
-snpinfo <- snpinfo[which(snpinfo[,"GenTrain.Score"] >= 0.6),]             # GenTrain > 0.6 is a good SNP
+
+dim(snpinfo)
+snpinfo <- snpinfo[which(snpinfo[,"GenTrain.Score"] >= 0.6),]             # GenTrain >= 0.6 is a good SNP
+dim(snpinfo)
 snpinfo <- snpinfo[which(snpinfo[,"Minor.Freq"] >= 0.05),]                # Minimum allele frequency of minor allele 5 %
+dim(snpinfo)
 snpinfo <- snpinfo[-which(rownames(snpinfo) %in% posUncertain),]          # No uncertain positions
 dim(snpinfo)
 

@@ -115,3 +115,5 @@ stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
 stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
 stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
 stammpinput.fst$Fsts
+
+write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")

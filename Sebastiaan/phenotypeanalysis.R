@@ -8,18 +8,18 @@
 setwd("D:/Collegues/Sebastiaan")
 phenotypes <- read.table("All_Measurements_20weeks.txt", sep = "\t", header = TRUE, na.strings = c(NA, ".", "/"))
 
-colnames(phenotypes)[which(colnames(phenotypes) == "FAT140")] <- "Fat 20"
-colnames(phenotypes)[which(colnames(phenotypes) == "FATpro140")] <- "Fat % 20"
-colnames(phenotypes)[which(colnames(phenotypes) == "LEAN140")] <- "Lean 20"
+colnames(phenotypes)[which(colnames(phenotypes) == "FAT140")] <- "FAT"
+colnames(phenotypes)[which(colnames(phenotypes) == "FATpro140")] <- "FAT %"
+colnames(phenotypes)[which(colnames(phenotypes) == "LEAN140")] <- "LEAN"
 colnames(phenotypes)[which(colnames(phenotypes) == "IntramuscFat_Q")] <- "IMF_MQ"
 colnames(phenotypes)[which(colnames(phenotypes) == "IntramuscFat_LD")] <- "IMF_ML"
 colnames(phenotypes)[which(colnames(phenotypes) == "Liver_TRIGS")] <- "Liver_TG"
 colnames(phenotypes)[which(colnames(phenotypes) == "Insulin")] <- "Serum_Insulin"
 colnames(phenotypes)[which(colnames(phenotypes) == "Leptin_pgml")] <- "Serum_Leptin"
 colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_0")] <- "ITT_Gluc_0m"
-colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_15")] <- "ITT_Gluc_15m"
-colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_30")] <- "ITT_Gluc_30m"
-colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_60")] <- "ITT_Gluc_60m"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_15")] <- "ITT_Gluc_15min"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_30")] <- "ITT_Gluc_30min"
+colnames(phenotypes)[which(colnames(phenotypes) == "ITT20_60")] <- "ITT_Gluc_60min"
 colnames(phenotypes)[which(colnames(phenotypes) == "AUC20")] <- "ITT_AUC"
 colnames(phenotypes)[which(colnames(phenotypes) == "C")] <- "ITT_%Gluc"
 colnames(phenotypes)[which(colnames(phenotypes) == "TG_mmoll")] <- "Serum_TG"
@@ -30,8 +30,8 @@ phenames <- colnames(phenotypes)[c(6:ncol(phenotypes))]                         
 clusters <- hclust(dist(cor(phenotypes[,phenames], use = "pair", method = "spearman")))           # Cluster phenotypes based on correlation similarity
 #phenames <- phenames[clusters$order]                                                              # Order them in a 'logical' way
 
-phenames <- c("Serum_Chol", "Serum_TG", "Serum_Leptin",  "Serum_Insulin", "ITT_Gluc_0m", "ITT_Gluc_15m","ITT_Gluc_30m", "ITT_Gluc_60m", "ITT_AUC", "ITT_%Gluc",
-              "Liver_TG",  "Fat 20", "Fat % 20", "Lean 20", "IMF_ML", "IMF_MQ",  "Akt1", "Cbl", 
+phenames <- c("Serum_Chol", "Serum_TG", "Serum_Leptin",  "Serum_Insulin", "ITT_Gluc_0m", "ITT_Gluc_15min","ITT_Gluc_30min", "ITT_Gluc_60min", "ITT_AUC", "ITT_%Gluc",
+              "Liver_TG",  "FAT", "FAT %", "LEAN", "IMF_ML", "IMF_MQ",  "Akt1", "Cbl", 
               "Foxa2" ,"Irs1", "Irs2", "Insr", "Igf1r","Lep", "Prkaa2", "Slc2a4")
 
 mline <- as.character(phenotypes[,"Line"])
@@ -56,11 +56,11 @@ tiff("Heise_Fig5.tif", width = 480 * 5, height = 480 * 6, res=300, compression =
 op <- par(mfrow=c(3, 2), mai = c(0.05, 0.1, 0.2, 0.1))                                            # 6 sublines ( so we use a 3x2 plot )
 
 for(y in 1:length(sublines)){
-  plot(c(-1.2, 1.2),c(-1.2, 1.2), t = 'n', ylab="", xlab="",xaxt='n',yaxt='n', main=paste0("BFMI",gsub("_", "-", sublines[y])))  # Create the plot window
+  plot(c(-1.3, 1.3),c(-1.3, 1.3), t = 'n', ylab="", xlab="",xaxt='n',yaxt='n', main=paste0("BFMI",gsub("_", "-", sublines[y])))  # Create the plot window
   points(coords, pch = 18, cex = 0.4)                                                             # Add the circle
   for(x in 1:length(rot)){
     points(c(0, coords[rot[x],1]), c(0,coords[rot[x],2]), t='l', lwd=0.5, lty=3)                  # The different phenotype axis
-    text(1.15 * coords[rot[x],1], 1.1 * coords[rot[x],2], names(rot)[x], cex=0.6)                  # The name on the outside of the circle
+    text(1.2 * coords[rot[x],1], 1.1 * coords[rot[x],2], names(rot)[x], cex=0.6)                  # The name on the outside of the circle
   }
   cnt <- 1
   for(subline in c(refs, sublines[y])){                                                           # 2 reference lines + the selected line

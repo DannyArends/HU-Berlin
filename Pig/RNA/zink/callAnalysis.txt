@@ -1,0 +1,44 @@
+
+# we need to convert the VCF from ensemble, stripping off the info field. Since it breaks standard VCF compliance
+gunzip -c Sus_scrofa.vcf.gz | grep "TSA=SNV" | bgzip -c > /home/share/genomes/Sscrofa10.2/Sus_scrofa.recode.vcf.gz
+
+./vcftools --gzvcf /home/share/genomes/Sscrofa10.2/Sus_scrofa.vcf.gz --remove-indels --recode --recode-INFO-all -c | bgzip -c > /home/share/genomes/Sscrofa10.2/Sus_scrofa.recode.vcf.gz
+
+# Annoyingly convert from bz2 to gz
+cd ~/NAS/Pig/Pig_Feeding_Experiments_SFB852/ZinkProject/mRNA/FASTQ
+bunzip2 -c 112_R1.fastq.bz2 > 112_R1.fastq
+gzip 112_R1.fastq
+bunzip2 -c 112_R2.fastq.bz2 > 112_R2.fastq
+gzip 112_R2.fastq
+
+bunzip2 -c 113_R1.fastq.bz2 > 113_R1.fastq
+gzip 113_R1.fastq
+bunzip2 -c 113_R2.fastq.bz2 > 113_R2.fastq
+gzip 113_R2.fastq
+
+bunzip2 -c 115_R1.fastq.bz2 > 115_R1.fastq
+gzip 115_R1.fastq
+bunzip2 -c 115_R2.fastq.bz2 > 115_R2.fastq
+gzip 115_R2.fastq
+
+bunzip2 -c 116_R1.fastq.bz2 > 116_R1.fastq
+gzip 116_R1.fastq
+bunzip2 -c 116_R2.fastq.bz2 > 116_R2.fastq
+gzip 116_R2.fastq
+
+bunzip2 -c 91_R1.fastq.bz2 > 91_R1.fastq
+gzip 91_R1.fastq
+bunzip2 -c 91_R2.fastq.bz2 > 91_R2.fastq
+gzip 91_R2.fastq
+
+bunzip2 -c 92_R1.fastq.bz2 > 92_R1.fastq
+gzip 92_R1.fastq
+bunzip2 -c 92_R2.fastq.bz2 > 92_R2.fastq
+gzip 92_R2.fastq
+
+# Run the pipeline script after updating all the variables
+
+cd ~/NAS/Pig/Pig_Feeding_Experiments_SFB852/ZinkProject/mRNA
+Rscript pipeline.R  /home/arends/NAS/Pig/Pig_Feeding_Experiments_SFB852/ZinkProject/mRNA/FASTQ/115
+
+

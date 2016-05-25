@@ -105,6 +105,29 @@ for(breed in breeds){
 
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
+## STRUCTURE
+if(!file.exists("cleaned_genotypes_structure.txt")){
+  # Write out the data for STRUCTURE
+  numsnpdata <- t(numsnpdata)
+  structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
+  for(x in 1:nrow(numsnpdata)){
+    gg <- rbind(rep(NA, ncol(numsnpdata)), rep(NA, ncol(numsnpdata)))
+    a1 <- which(numsnpdata[x,] == 1)
+    a2 <- which(numsnpdata[x,] == 2)
+    a3 <- which(numsnpdata[x,] == 3)
+    gg[1, a1] <- 0; gg[2, a1] <- 0  # Pretty inefficient, but it will do the trick
+    gg[1, a2] <- 0; gg[2, a2] <- 1
+    gg[1, a3] <- 1; gg[2, a3] <- 1
+    gg[is.na(gg)] <- 9
+    structGeno <- rbind(structGeno, gg)
+  }
+
+  rownames(structGeno) <- gsub(" ","", unlist(lapply(rownames(numsnpdata), rep, 2)))    # Spaces are not allowed in sample names
+  colnames(structGeno) <- colnames(numsnpdata)
+  write.table(structGeno, file="cleaned_genotypes_structure.txt", sep = "\t")           # Save the genotypes to disk
+}
+
+
 library(StAMPP)
 
 stammpinput <- t(absnpdata)

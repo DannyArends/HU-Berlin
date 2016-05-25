@@ -40,6 +40,7 @@ dim(snpinfo)
 snpinfo <- snpinfo[-which(rownames(snpinfo) %in% posUncertain),]          # No uncertain positions
 dim(snpinfo)
 
+# Create the annotation files, based on the current number of good SNPs
 arrayinfo <- arrayinfo[match(rownames(snpinfo), arrayinfo[,2]),]
 rownames(arrayinfo) <- arrayinfo[,2]
 dim(arrayinfo)
@@ -58,9 +59,13 @@ snpinfo <- cbind(snpinfo, SourceSeq = ILMNannot[rownames(snpinfo),"SourceSeq"])
 snpinfo <- snpinfo[order(snpinfo[,"Chr"], snpinfo[,"Position"]),]
 snpdata <- snpdata[rownames(snpinfo), ]
 
+# We still need to get rid of SNPs with > 5% missing data
+callrates <- (apply(apply(snpdata,1,is.na),2,sum) / ncol(snpdata))                # Call rates
+snpdata <- snpdata[-which(callrates > 0.05),]                                     # Require a maximum of 5 % missing data at a marker
+dim(snpdata)
 
-setwd("E:/Goat/DNA/Siham Analysis")
+setwd("E:/Goat/DNA/SihamAnalysis")
 write.table(snpdata, "filtered_snps.txt", sep="\t", quote=FALSE)
-write.table(snpinfo, "snpinfo.txt", sep="\t", quote=FALSE)
+write.table(snpinfo[rownames(snpdata),], "snpinfo.txt", sep="\t", quote=FALSE)
 write.table(samples, "sampleinfo.txt", sep="\t", quote=FALSE)
 

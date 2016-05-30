@@ -138,7 +138,12 @@ stammpinput <- as.data.frame(stammpinput)
 
 stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
 stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
+stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE) # Population D values
 stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
 stammpinput.fst$Fsts
+
+stamppAmova(stammp.D.ind, stammpinput.freq, 100)
+
+
 
 write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")

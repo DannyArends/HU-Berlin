@@ -106,7 +106,9 @@ for(breed in breeds){
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
 ## STRUCTURE
-if(!file.exists("cleaned_genotypes_structure.txt")){
+if(!file.exists("cleaned_genotypes_structure_NO.txt")){
+  numsnpdata <- numsnpdata[,-which(colnames(numsnpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE
+
   # Write out the data for STRUCTURE
   numsnpdata <- t(numsnpdata)
   structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
@@ -124,7 +126,7 @@ if(!file.exists("cleaned_genotypes_structure.txt")){
 
   rownames(structGeno) <- gsub(" ","", unlist(lapply(rownames(numsnpdata), rep, 2)))    # Spaces are not allowed in sample names
   colnames(structGeno) <- colnames(numsnpdata)
-  write.table(structGeno, file="cleaned_genotypes_structure.txt", sep = "\t")           # Save the genotypes to disk
+  write.table(structGeno, file="cleaned_genotypes_structure_NO_DN2.txt", sep = "\t")           # Save the genotypes to disk
 }
 
 

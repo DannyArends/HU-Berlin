@@ -6,14 +6,18 @@
 #
 
 setwd("E:/Mouse/BxD")
-alldata <- read.csv("genotypes.txt", sep = "\t", skip = 1, row.names=2, header=TRUE, na.strings=c("NA", "-3", ""))
+alldata <- read.csv("genotypes_26-05.txt", sep = "\t", skip = 1, row.names=2, header=TRUE, na.strings=c("NA", "-3", ""), colClasses = "character")
 
 map <- alldata[,c(3, 5, 7)]                                                     # extract the physical map
-genotypes <- alldata[,-c(1:11)][,1:203]                                                 # extract the genotypes
+map[,2] <- as.numeric(map[,2])
+genotypes <- alldata[,-c(1:11)][,1:203]                                         # extract the genotypes
 
-genotypes["rs33672596","BXD146"] <- NA
-genotypes["rs31572894","BXD93"]  <- NA
-genotypes["rs31153518","BXD93"]  <- NA
+wrongEncoding <- names(which(lapply(apply(genotypes, 2, table), length) > 3))
+wE <- apply(genotypes[,wrongEncoding],2, function(x){ rownames(genotypes)[which(!(x %in% c("-1","0","1")))] })
+
+for(x in 1:length(wE)){
+  genotypes[wE[[x]], names(wE)[x]] <- NA
+}
 
 toNumGeno <- function(genotypes){
   numgeno <- apply(genotypes, 2, function(x){ return(as.numeric(as.character(x))) })      # transform genotypes to numeric values

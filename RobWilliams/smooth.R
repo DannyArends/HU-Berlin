@@ -6,23 +6,21 @@
 #
 
 library("openxlsx")
-source("~/BxD/functions.R")
+source("D:/Github/HU-Berlin/RobWilliams/functions.R")
 
-setwd("~/BxD/")
-alldata <- read.csv("genotypes.txt", sep = "\t", colClasses="character", skip = 1, row.names=2, header=TRUE, na.strings=c("NA", ""))
+setwd("E:/Mouse/BxD")
+alldata <- read.csv("genotypes_26-05.txt", sep = "\t", skip = 1, row.names=2, header=TRUE, na.strings=c("NA", "-3", ""), colClasses = "character")
 
-map <- alldata[,c(3, 5, 7)]                                                       # Extract the physical map
-genotypes <- alldata[,-c(1:11)][,1:203]                                           # Extract the genotypes
+map <- alldata[,c(3, 5, 7)]                                                     # extract the physical map
+map[,2] <- as.numeric(map[,2])
+genotypes <- alldata[,-c(1:11)][,1:203]                                         # extract the genotypes
 
-genotypes[3238, "BXD53"]  <- NA
-genotypes[3239, "BXD53"]  <- NA
-genotypes[3240, "BXD53"]  <- NA
-genotypes[3241, "BXD53"]  <- NA
-genotypes[20364,"BXD146"] <- NA
-genotypes[16041,"BXD93"]  <- NA
-genotypes[16042,"BXD93"]  <- NA
+wrongEncoding <- names(which(lapply(apply(genotypes, 2, table), length) > 3))
+wE <- apply(genotypes[,wrongEncoding],2, function(x){ rownames(genotypes)[which(!(x %in% c("-1","0","1")))] })
 
-#table(unlist(genotypes))
+for(x in 1:length(wE)){
+  genotypes[wE[[x]], names(wE)[x]] <- NA
+}
 
 toNumGeno <- function(genotypes){
   numgeno <- apply(genotypes, 2, function(x){ return(as.numeric(as.character(x))) })      # transform genotypes to numeric values
@@ -32,10 +30,12 @@ toNumGeno <- function(genotypes){
 
 geno <- toNumGeno(genotypes)
 
-geno <- geno[-which(rownames(geno) == "Affy_10542764_Arntl2"),]             # Marker without a locations
-map <- map[-which(rownames(map) == "Affy_10542764_Arntl2"),]                # Marker without a locations
+table(unlist(geno))
+geno[geno == 0] <- NA          # Replace the 0s by missing values (since we don't know the genotype there)
+noLoc <- rownames(map)[which(is.na(map[,2]))]
 
-#table(unlist(geno))
+geno <- geno[-which(rownames(geno) %in% noLoc), -c(1:4)]  # remove the no location marker, and the first 4 individuals (founders / F1 individuals)
+map <- map[rownames(geno), ]
 
 recomb.index <- apply(geno, 2, function(x){recombinations(x, chr = map[,1]) })
 recomb.loc <- apply(geno, 2, function(x){recombinations(x, loc = as.numeric(map[,2]), chr = map[,1], TRUE) })
@@ -45,7 +45,7 @@ ngeno <- geno
 for(i in 1:ncol(geno)){
   diffs <- diff(as.numeric(get.locs(recomb.loc[[i]])))
   chrs  <- diff(as.numeric(as.factor(get.chr(recomb.loc[[i]]))))
-  doubleR <- which(diffs > 0 & diffs < 1 & chrs == 0)
+  doubleR <- which(diffs > 0 & diffs < 1.5 & chrs == 0)
   for(x in doubleR){
     markerD <- recomb.index[[i]][x + 1] - recomb.index[[i]][x]  
     s <- floor(recomb.index[[i]][x])
@@ -60,21 +60,68 @@ for(i in 1:ncol(geno)){
     while(!is.na(geno[eb+1,i]) && eb < nrow(geno) && map[e, "Chr"] == map[eb+1, "Chr"] && geno[e,i] == geno[eb+1,i]){
       eb <- eb+1
     }
+    naM <- length(which(is.na(ngeno[(s+1):(e-1), i])))  # Number of NA markers in the interval
     if(geno[s,i] == geno[e,i]){  # Double recombination between similar XXXXX YYY XXXXX
-      if((s-sb) >= 10 && (eb-e) >= 10){
+      #if((s-sb) >= 5 && (eb-e) >= 5){ # Demand at least 10 before and 10 after that are the same
+        
         ngeno[(s+1):(e-1), i] <- rep(geno[s,i], length((s+1):(e-1)))
         recomb.changed <- rbind(recomb.changed, c(i, (s+1), (e-1)))
-      }
+      #}
     }
     if(geno[s,i] != geno[e,i]){  # Double recombination between dissimilar XXXXX YYY ZZZZZ
-      if((s-sb) >= 10 && (eb-e) >= 10 && e-s < 10){
+      cat("XXXXX YYY ZZZZZ\n")
+      if((s-sb) >= 5 && (eb-e) >= 5 && e-s < 10){
         ngeno[(s+1):(e-1), i] <- NA
         recomb.changed <- rbind(recomb.changed, c(i, (s+1), (e-1)))
       }
     }
-    cat("Double recombination of length", markerD, s, s-sb, e, eb-e,"|", unlist(geno[s:e,i]),"->",unlist(ngeno[s:e,i]), "\n")
+    cat("[",i,"]Double recombination of length", markerD, naM, s, s-sb, e, eb-e,"|", unlist(geno[s:e,i]),"->",unlist(ngeno[s:e,i]), "\n")
   }
 }
+
+recomb.index.n <- apply(ngeno, 2, function(x){recombinations(x, chr = map[,1]) })
+
+plot(unlist(lapply(recomb.loc, length)), pch="+", xaxt = 'n')
+points(unlist(lapply(recomb.loc.n, length)), col='green',pch="-",cex=2)
+axis(1, 1:ncol(geno), colnames(geno),las=2, cex=0.3)
+
+
+hist(unlist(lapply(recomb.loc.n, length)), col=rgb(0,1,0,0.6), breaks=seq(0, 200, 10))
+hist(unlist(lapply(recomb.loc, length)), col=rgb(0,0,0,0.6), breaks=seq(0, 200, 10), add=TRUE)
+hist(unlist(lapply(recomb.loc.n, length)), col=rgb(0,1,0,0.6), breaks=seq(0, 200, 10), add=TRUE)
+
+missingdata <- which(apply(ngeno,1,function(x){length(which(is.na(x)))})/ncol(geno) > 0.1)
+
+ngeno <- ngeno[-missingdata,]
+map <- map[-missingdata,]
+recomb.index.nf <- apply(ngeno, 2, function(x){recombinations(x, chr = map[,1]) })
+recomb.loc.nf <- apply(ngeno, 2, function(x){recombinations(x, loc = as.numeric(map[,2]), chr = map[,1], TRUE) })
+
+plot(c(0,200), c(0,200), t = 'n', xaxt = 'n', xlim=c(0,200),xaxs="i", main="BxD recombinations (0 = Missing)", ylab="nRecombinations", xlab="")
+points(unlist(lapply(recomb.loc, length)), pch="+")
+points(unlist(lapply(recomb.loc.n, length)), col='red',pch="-",cex=2)
+points(unlist(lapply(recomb.loc.nf, length)), col='blue',pch="-",cex=2)
+
+axis(1, 1:ncol(geno), colnames(geno),las=2, cex.axis=0.7)
+legend("topright", c("Before ", "After smoothing (1.5 mb window)", "After removal of 'poor quality' markers"), pch=c("+", "-", "-"), lwd=c(1,2,2), col=c("black", "red", "blue"))
+
+mean(unlist(lapply(recomb.loc, length)))      # 64.77387
+sd(unlist(lapply(recomb.loc, length)))        # 33.41058
+
+sd(unlist(lapply(recomb.loc.n, length)))      # 27.76904
+mean(unlist(lapply(recomb.loc.n, length)))    # 59.35678
+
+mean(unlist(lapply(recomb.loc.nf, length)))   # 54.01508
+sd(unlist(lapply(recomb.loc.nf, length)))     # 23.13388
+
+write.table(cbind(alldata[rownames(ngeno), 1:15], ngeno), file="genotypes_27-05_NAs.txt", sep="\t", quote=FALSE, na ="")
+
+ngenoO <- ngeno
+ngenoO[is.na(ngenoO)] <- 0
+
+write.table(cbind(alldata[rownames(ngeno), 1:15], ngenoO), file="genotypes_27-05_0s.txt", sep="\t", quote=FALSE, na ="")
+
+
 
 geno <- ngeno
 

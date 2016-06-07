@@ -48,6 +48,22 @@ toAB <- function(genotypes){
   return(t(numericG))
 }
 
+toGenPop <- function(genotypes){
+  numericG <- apply(genotypes, 1, function(x){
+    geno <- table(unlist(strsplit(as.character(x),"")))
+    a1 <- paste0(names(geno)[1],names(geno)[1])
+    a2 <- paste0(sort(c(names(geno)[1],names(geno)[2])),collapse="")
+    a3 <- paste0(names(geno)[2],names(geno)[2])
+    ngeno <- rep(NA,length(x))
+    ngeno[x == a1] <- "0101"
+    ngeno[x == a2] <- "0102"
+    ngeno[x == a3] <- "0202"
+    return(ngeno)
+  })
+  rownames(numericG) <- colnames(genotypes)
+  return(t(numericG))
+}
+
 setwd("E:/Horse/DNA/Kabadiner/")
 # Read reference 'kabadiner' map and data
 kabadinermap            <- read.table(file="input/cleaned_map.txt", sep = "\t")

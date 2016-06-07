@@ -2,6 +2,23 @@
 # Analyze all horse data
 #
 
+toGenPop <- function(genotypes){
+  numericG <- apply(genotypes, 1, function(x){
+    geno <- table(unlist(strsplit(as.character(x),"")))
+    #cat(names(geno),"\n")
+    a1 <- paste0(names(geno)[1],names(geno)[1])
+    a2 <- paste0(sort(c(names(geno)[1],names(geno)[2])),collapse="")
+    a3 <- paste0(names(geno)[2],names(geno)[2])
+    ngeno <- rep(NA,length(x))
+    ngeno[x == a1] <- "0101"
+    ngeno[x == a2] <- "0102"
+    ngeno[x == a3] <- "0202"
+    return(ngeno)
+  })
+  rownames(numericG) <- colnames(genotypes)
+  return(t(numericG))
+}
+
 setwd("E:/Horse/DNA/")
 
 genotypes_snp  <- read.csv("combined/input/genotypes_snp.txt", sep="\t")
@@ -10,15 +27,41 @@ genotypes_num  <- read.csv("combined/input/genotypes_num.txt", sep = "\t")
 genotypes_AB   <- read.csv("combined/input/genotypes_AB.txt", sep = "\t")
 phenotypes     <- read.csv("combined/input/phenotypes.txt", sep="\t")
 
+genotypes_genpop <- t(toGenPop(genotypes_AB))
+set.seed(0)
+#rsample <- sample(ncol(genotypes_genpop), ncol(genotypes_genpop) / 20)
+#genotypes_genpop <- genotypes_genpop[, rsample]
+
 # How many markers on each chromosome
-for(x in unique(markerinfo[,"Chr"])){
-  cat(x, length(which(markerinfo[,"Chr"] == x)),"\n")
-}
+#for(x in unique(markerinfo[,"Chr"])){
+#  cat(x, length(which(markerinfo[,"Chr"] == x)),"\n")
+#}
 
 ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH", "Arab", "Arabian", "Norwegian Fjord"))
 
 strains <- as.character(phenotypes[ii,"Strain"])
 names(strains) <- rownames(phenotypes)[ii]
+
+## Write the genepop stucture to disk
+
+genotypes_genpop <- genotypes_genpop[which(rownames(genotypes_genpop) %in% names(strains)),]
+rownames(genotypes_genpop) <- gsub(" ","", paste0(strains[rownames(genotypes_genpop)],","))
+
+cat("BLANK\n", file="combined/input/genotypes_genpop.txt")
+for(x in colnames(genotypes_genpop)){
+  cat(paste0(x, "\n"), file="combined/input/genotypes_genpop.txt", append=TRUE)
+}
+for(pop in unique(rownames(genotypes_genpop))) {
+  cat("POP\n", file="combined/input/genotypes_genpop.txt", append=TRUE)
+  ii <- which(rownames(genotypes_genpop) == pop)
+  write.table(genotypes_genpop[ii,], sep = " ", quote=FALSE, na = "0000", file="combined/input/genotypes_genpop.txt", append=TRUE, col.names=FALSE)
+}
+cat("POP\n", file="combined/input/genotypes_genpop.txt", append=TRUE)
+ii <- which(rownames(genotypes_genpop) %in% c("S,", "K,", "H,"))
+genotypes_copy <- genotypes_genpop[ii,]
+rownames(genotypes_copy) <- rep("CombinedSHK", nrow(genotypes_copy))
+write.table(genotypes_copy[,], sep = " ", quote=FALSE, na = "0000", file="combined/input/genotypes_genpop.txt", append=TRUE, col.names=FALSE)
+
 
 # Create colors
 cols <- c("red", "blue", "orange", "black", "brown", "brown", "purple")
@@ -70,6 +113,7 @@ postscript("dendrogramArabPrzNorf.eps", width = 16.0, height = 4.0, horizontal =
 plot(dendrogram.col, main = "", las=2, horiz = FALSE)
 dev.off()
 
+### stampp ANALYSIS
 library(StAMPP)
 
 ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K", "H", "S", "PrzH", "Norwegian Fjord", "Arabian"))
@@ -81,9 +125,46 @@ colnames(stammpinput)[1:4] <- c("Sample", "Pop", "Ploidy", "Format")
 
 stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
 stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
+stammp.D.pop1 <- stamppNeisD(stammpinput.freq, FALSE) # Population D values
+
+stammpamova1 <- stamppAmova(stammp.D.pop1, stammpinput.freq)
 
 stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
 
+### diveRsity ANALYSIS
+
+install.packages("diveRsity")
+
+setwd("E:/Horse/DNA/")
+library(diveRsity)
+starttime <-  proc.time()
+
+basicStats <- divBasic(infile = "combined/input/genotypes_genpop.txt", outfile="fstOnlyOut.txt", gp=2, bootstraps = 100)
+names(basicStats$fis) <- colnames(basicStats$Ho)
+
+endtime <-  proc.time()
+
+basicStats$Ho["overall",] # Observed
+basicStats$He["overall",] # Expected
+basicStats$fis[["S,"]]["overall",]              # Fis
+basicStats$fis[["H,"]]["overall",]              # Fis
+basicStats$fis[["K,"]]["overall",]              # Fis
+basicStats$fis[["CombinedSHK"]]["overall",]     # Fis
+
+advancedStats <- diffCalc(infile = "combined/input/genotypes_genpop.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
+# Pairwise Fst per populations
+advancedStats$pairwise$Fst
+
+
+saklawi <- names(which(strains == "S"))
+aaa <- apply(genotypes_AB[,saklawi], 1, function(x){sum(x == "AB",na.rm=TRUE) / sum(!is.na(x))})
+inBS <- names(basicStats$Ho[,"S,"])
+plot(aaa[inBS], basicStats$Ho[,"S,"])
+
+
+genotypes_AB["BIEC2_506494", saklawi]
+aaa["BIEC2_506494"]
+basicStats$Ho["BIEC2_506494","S,"]
 ## GWAS
 
 ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S"))

@@ -140,15 +140,23 @@ counts27 <- getSignificant(phased.AHBp, phenotypes, generation = 27)
 counts28 <- getSignificant(phased.AHBp, phenotypes, generation = 28)
 
 sPat27 <- counts27[which(-log10(counts27[,"pPat"]) > -log10(0.05/(70000*4))),]
-write.table(sPat27, file=paste0("Analysis/TransmissionBias_Pat_0.05_27.txt"), sep="\t")
+if(!file.exists("Analysis/TransmissionBias_Pat_0.05_27.txt")) {
+  write.table(sPat27, file="Analysis/TransmissionBias_Pat_0.05_27.txt", sep="\t")
+}
 sPat28 <- counts28[which(-log10(counts28[,"pPat"]) > -log10(0.01/(70000*4))),]
-write.table(sPat28, file=paste0("Analysis/TransmissionBias_Pat_0.01_28.txt"), sep="\t")
+if(!file.exists("Analysis/TransmissionBias_Pat_0.01_28.txt")) {
+  write.table(sPat28, file="Analysis/TransmissionBias_Pat_0.01_28.txt", sep="\t")
+}
 all(rownames(sPat27) %in% rownames(sPat28))
 
 sMat27 <- counts27[which(-log10(counts27[,"pMat"]) > -log10(0.05/(70000*4))),]
-write.table(sMat27, file=paste0("Analysis/TransmissionBias_Mat_0.05_27.txt"), sep="\t")
+if(!file.exists("Analysis/TransmissionBias_Mat_0.05_27.txt")) {
+  write.table(sMat27, file="Analysis/TransmissionBias_Mat_0.05_27.txt", sep="\t")
+}
 sMat28 <- counts28[which(-log10(counts28[,"pMat"]) > -log10(0.01/(70000*4))),]
-write.table(sMat28, file=paste0("Analysis/TransmissionBias_Mat_0.01_28.txt"), sep="\t")
+if(!file.exists("Analysis/TransmissionBias_Mat_0.01_28.txt")) {
+  write.table(sMat28, file="Analysis/TransmissionBias_Mat_0.01_28.txt", sep="\t")
+}
 all(rownames(sMat27) %in% rownames(sMat28))
 
 create.plot <- function(counts, HWEdata = NULL){
@@ -205,6 +213,9 @@ create.plot <- function(counts, HWEdata = NULL){
 
 HWEdata <- read.table("Analysis/HWEdata28.txt", sep = "\t")
 
+HWEf2 <- HWEdata[,"HWPbh"] # ??
+names(HWEf2) <- rownames(HWEdata)
+
 create.plot(counts27)
 create.plot(counts28, HWEdata)
 
@@ -212,7 +223,10 @@ map <- marker.annot[rownames(counts28), ]
 map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 
 ## Create the chromosome plot showing ATB and HWE
+
+postscript("Figure_2.eps", horizontal = FALSE, paper = "special", width=12, height=8)
 op <- par(mfrow=c(1,1))
+
 ymax <- max(as.numeric(map.autosomes[,"Pos"]))
 
 plot(c(1,19), c(0, ymax), t = 'n', xlab="Chromosome", ylab="Position (Mbp)", xaxt='n', yaxt='n', main="Transmission bias from heterozygous parents")
@@ -240,6 +254,9 @@ for(x in 1:19){
   mcolz[which(p.adjust(HWEf2[onChr]) < 0.01)] <- 2  
   points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"red")[mcolz],cex=1.5)
 }
+dev.off()
+
+
 
 ## Create the chromosome plot for generation 28 and generation 27
 map <- marker.annot[unique(rownames(counts27), rownames(counts28)), ]
@@ -262,6 +279,6 @@ for(x in 1:19){
   colz <- colz + as.numeric(-log10(counts28[onChr, "pMat"]) >  -log10(0.01/(70000*4)))
   points(rep(x + 0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colz, cex=1.8)
   
-  points(rep(x+,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col="gray", cex=1.8)
+  points(rep(x+length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col="gray", cex=1.8)
 }
 

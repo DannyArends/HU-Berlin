@@ -6,6 +6,7 @@
 
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
+source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/incompatible.R")
 
 setwd("E:/Mouse/DNA/MegaMuga/")
 
@@ -147,38 +148,42 @@ colnames(results) <- regionnames
 write.table(results, "ChiSqScores_Incompatible.txt", sep="\t")
 
 # Generate an overview plot
+nTests <- (ncol(results) * ncol(results)) / 2
+LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
+threshold <- -log10(0.05 / nTests)
+
+significant <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > threshold))
+
+allRegions <- allRegions[significant, ]
+regionnames <- rownames(allRegions)
+results <- results[significant,significant]
 
 bfmipref <- which(allRegions[,"Prefered.Allele"] == "BFMI")
 b6npref <- which(allRegions[,"Prefered.Allele"] == "B6N")
 nopref <- which(allRegions[,"Prefered.Allele"] == "?")
 
-locations <- seq(0, 1, length.out=ncol(results))
-
 colz <- rep("black", nrow(allRegions))
 colz[bfmipref] <- "orange"
 colz[b6npref] <- "gray"
 
-nTests <- (ncol(results) * ncol(results)) / 2
-
-LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
-threshold <- -log10(0.05 / nTests)
+locations <- seq(0, 1, length.out=ncol(results))
 
 sum(LODscores > -log10(0.1 / nTests), na.rm=TRUE) / 2
 sum(LODscores > -log10(0.05 / nTests), na.rm=TRUE) / 2
 sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 
-tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
-
-  op <- par(mar= c(6, 6, 4, 2) + 0.1)
+#tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
+postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, height=14, pointsize = 18)
+  op <- par(mar= c(7, 7, 4, 10) + 0.1, xpd=FALSE)
   image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
 
-  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="darkorange2")
-  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="black")
-  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="purple1")
+  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
+  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
+  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
 
-  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=0.7, col.axis="darkorange2")
-  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=0.7, col.axis="black")
-  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=0.7, col.axis="purple1")
+  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
+  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
+  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
 
   grid(ncol(results),ncol(results))
   sx <- 0
@@ -187,7 +192,10 @@ tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
     abline(h=l); abline(v=l)
     sx = sx + x
   }
-  legend("topleft", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"),cex=0.7, bg="white")
+  op <- par(xpd=TRUE)
+  legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
+         fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
+         cex=1, inset=c(-0.25,0))
   box()
 dev.off()
 

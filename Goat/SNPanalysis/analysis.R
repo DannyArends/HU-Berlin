@@ -14,6 +14,9 @@ locations  <- read.table("Sample_SNP_location_fixed.txt", sep="\t", header=TRUE,
 samples    <- cbind(samples, locations[rownames(samples),])
 samples    <- cbind(samples, locationShort = as.character(unlist(lapply(strsplit(as.character(samples[,"Location"]), "_"), "[",1))))
 
+snpdata <- snpdata[,-which(colnames(snpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE
+samples <- samples[-which(rownames(samples) == "DN 2"),] # Throw away the duplicate individual because it confuses STRUCTURE
+
 snpAlleles <- lapply(strsplit(as.character(snpinfo[,"allele"]), ""), "[", c(1,3))
 
 chir1 <- read.csv("FilteredLocationCHIR1.0.txt", sep="\t", row.names=1)
@@ -27,13 +30,13 @@ snpinfo <- cbind(snpinfo, Pos_C1 = NA)
 snpinfo <- cbind(snpinfo, Chr_C2 = NA)
 snpinfo <- cbind(snpinfo, Pos_C2 = NA)
 
-snpinfo[rownames(chir1), "Chr_C1"] <- chir1[,"chrN"]
-snpinfo[rownames(chir1), "Pos_C1"] <- chir1[,"Pos"]
+snpinfo[rownames(snpinfo), "Chr_C1"] <- chir1[rownames(snpinfo),"chrN"]
+snpinfo[rownames(snpinfo), "Pos_C1"] <- chir1[rownames(snpinfo),"Pos"]
 
-snpinfo[rownames(chir2), "Chr_C2"] <- chir2[,"chrN"]
-snpinfo[rownames(chir2), "Pos_C2"] <- chir2[,"Pos"]
+snpinfo[rownames(snpinfo), "Chr_C2"] <- chir2[rownames(snpinfo),"chrN"]
+snpinfo[rownames(snpinfo), "Pos_C2"] <- chir2[rownames(snpinfo),"Pos"]
 
-if(!file.exists("filtered_snps_numeric.txt")){
+if(!file.exists("filtered_snps_numeric_NO_DN2.txt")){
   numsnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
   for(x in 1:length(snpAlleles)) {
     if(!is.na(snpinfo[x, "reference"]) && snpAlleles[[x]][1] !=  snpinfo[x, "reference"]){  # C/T while reference is T, so flip it around
@@ -51,12 +54,12 @@ if(!file.exists("filtered_snps_numeric.txt")){
     numsnpdata[x, which(snpdata[x, ] == g3)] <- 3
   }
 
-  write.table(numsnpdata, "filtered_snps_numeric.txt", sep="\t", quote=FALSE)
+  write.table(numsnpdata, "filtered_snps_numeric_NO_DN2.txt", sep="\t", quote=FALSE)
 }else{
-  numsnpdata <- read.csv("filtered_snps_numeric.txt", sep="\t", check.names=FALSE)
+  numsnpdata <- read.csv("filtered_snps_numeric_NO_DN2.txt", sep="\t", check.names=FALSE)
 }
 
-if(!file.exists("filtered_snps_AB.txt")){
+if(!file.exists("filtered_snps_AB_NO_DN2.txt")){
   absnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
   for(x in 1:length(snpAlleles)) {
     if(!is.na(snpinfo[x, "reference"]) && snpAlleles[[x]][1] !=  snpinfo[x, "reference"]){  # C/T while reference is T, so flip it around
@@ -74,9 +77,9 @@ if(!file.exists("filtered_snps_AB.txt")){
     absnpdata[x, which(snpdata[x, ] == g3)]  <- "BB"
   }
 
-  write.table(absnpdata, "filtered_snps_AB.txt", sep="\t", quote=FALSE)
+  write.table(absnpdata, "filtered_snps_AB_NO_DN2.txt", sep="\t", quote=FALSE)
 }else{
-  absnpdata <- read.csv("filtered_snps_AB.txt", sep="\t", check.names=FALSE)
+  absnpdata <- read.csv("filtered_snps_AB_NO_DN2.txt", sep="\t", check.names=FALSE)
 }
 
 #colnames(numsnpdata) <- paste0(samples[colnames(numsnpdata), "locationShort"], "_", samples[colnames(numsnpdata), "Breed"])
@@ -106,9 +109,7 @@ for(breed in breeds){
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
 ## STRUCTURE
-if(!file.exists("cleaned_genotypes_structure_NO.txt")){
-  numsnpdata <- numsnpdata[,-which(colnames(numsnpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE
-
+if(!file.exists("cleaned_genotypes_structure_NO_DN2.txt")){
   # Write out the data for STRUCTURE
   numsnpdata <- t(numsnpdata)
   structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
@@ -129,7 +130,6 @@ if(!file.exists("cleaned_genotypes_structure_NO.txt")){
   write.table(structGeno, file="cleaned_genotypes_structure_NO_DN2.txt", sep = "\t")           # Save the genotypes to disk
 }
 
-
 library(StAMPP)
 
 stammpinput <- t(absnpdata)
@@ -144,7 +144,18 @@ stammpinput.fst$Fsts
 write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")
 
 stammpinput.amova <- stamppAmova(stammp.D.ind, stammpinput.freq, 100)
-write.table(stammpinput.amova, file = "amova.txt", sep = "\t")
+write.table(stammpinput.amova[[1]], file = "amovaSSD.txt", sep = "\t")
+write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
 
+numsnpdata <- t(numsnpdata) # Change it back from the STRUCTURE 
+
+tagg <- rownames(samples)[which(samples[,"Breed"] == "Tagg")]
+dese <- rownames(samples)[which(samples[,"Breed"] == "Dese")]
+ni <- rownames(samples)[which(samples[,"Breed"] == "Ni")]
+nu <- rownames(samples)[which(samples[,"Breed"] == "Nu")]
+
+taggtbl <- apply(numsnpdata[,tagg], 1,table)
+taggval <- unlist(lapply(taggtbl, function(x){ return(max(x) / sum(x)) }))
+plot(taggval)
 
 

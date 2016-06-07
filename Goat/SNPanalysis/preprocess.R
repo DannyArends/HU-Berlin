@@ -37,7 +37,7 @@ snpinfo <- snpinfo[which(snpinfo[,"GenTrain.Score"] >= 0.6),]             # GenT
 dim(snpinfo)
 snpinfo <- snpinfo[which(snpinfo[,"Minor.Freq"] >= 0.05),]                # Minimum allele frequency of minor allele 5 %
 dim(snpinfo)
-snpinfo <- snpinfo[-which(rownames(snpinfo) %in% posUncertain),]          # No uncertain positions
+snpinfo <- snpinfo[-which(rownames(snpinfo) %in% posUncertain),]          # No multi mapping positions
 dim(snpinfo)
 
 # Create the annotation files, based on the current number of good SNPs
@@ -62,10 +62,17 @@ snpdata <- snpdata[rownames(snpinfo), ]
 # We still need to get rid of SNPs with > 5% missing data
 callrates <- (apply(apply(snpdata,1,is.na),2,sum) / ncol(snpdata))                # Call rates
 snpdata <- snpdata[-which(callrates > 0.05),]                                     # Require a maximum of 5 % missing data at a marker
+snpinfo <- snpinfo[rownames(snpdata),]
 dim(snpdata)
+
+noPos <- which(is.na(snpinfo[,"Position"]))                                       # unknown posiiton (remove them as well)
+snpinfo <- snpinfo[-noPos,]
+snpdata <- snpdata[rownames(snpinfo), ]
+dim(snpdata)
+
 
 setwd("E:/Goat/DNA/SihamAnalysis")
 write.table(snpdata, "filtered_snps.txt", sep="\t", quote=FALSE)
-write.table(snpinfo[rownames(snpdata),], "snpinfo.txt", sep="\t", quote=FALSE)
+write.table(snpinfo, "snpinfo.txt", sep="\t", quote=FALSE)
 write.table(samples, "sampleinfo.txt", sep="\t", quote=FALSE)
 

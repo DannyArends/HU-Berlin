@@ -82,15 +82,6 @@ if(!file.exists("filtered_snps_AB_NO_DN2.txt")){
   absnpdata <- read.csv("filtered_snps_AB_NO_DN2.txt", sep="\t", check.names=FALSE)
 }
 
-#colnames(numsnpdata) <- paste0(samples[colnames(numsnpdata), "locationShort"], "_", samples[colnames(numsnpdata), "Breed"])
-
-# Add the reference animal to the dataset, since reference is always coded as 1
-#numsnpdata <- cbind(numsnpdata, Reference = 1)
-clustering <- hclust(dist(t(numsnpdata), method = "manhattan"))
-
-plot(as.phylo(clustering), type="r")  # Or a rooted dendrogram plot: plot(root(as.phylo(clustering),"Reference"), type="r")
-plot(clustering, hang = -1)
-
 breeds <- as.character(unique(samples[,"Breed"]))
 # Minor Allele Frequencies for different breeds
 MAFs <- matrix(NA, nrow(numsnpdata),length(breeds), dimnames=list(rownames(numsnpdata), breeds))
@@ -98,13 +89,17 @@ for(breed in breeds){
   individuals <-  rownames(samples)[which(samples[,"Breed"] == breed)]
   MAFs[, breed] <- apply(numsnpdata[, individuals], 1, function(x){
     tabulated <- table(unlist(x))
-    ref <- tabulated["1"] * 2 + tabulated["2"]
-    alt <- tabulated["3"] * 2 + tabulated["2"]
+    ref <- sum(tabulated["1"] * 2, tabulated["2"],na.rm=TRUE)
+    alt <- sum(tabulated["3"] * 2, tabulated["2"],na.rm=TRUE)
     if(is.na(ref) || is.na(alt)) return(0)
     if(ref < alt) return(ref / (ref+alt))
     if(ref >= alt) return(alt / (ref+alt))
   })
 }
+
+### (Non-)Polymorphic loci per group
+apply(MAFs,2, function(x){return(length(which(x < 0.05)))})
+apply(MAFs,2, function(x){return(length(which(x >= 0.05)))})
 
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
@@ -157,5 +152,180 @@ nu <- rownames(samples)[which(samples[,"Breed"] == "Nu")]
 taggtbl <- apply(numsnpdata[,tagg], 1,table)
 taggval <- unlist(lapply(taggtbl, function(x){ return(max(x) / sum(x)) }))
 plot(taggval)
+
+
+### Clustering of data
+
+numsnpclustering <- numsnpdata
+colnames(numsnpclustering) <- samples[colnames(numsnpdata), "Breed"]
+
+rownames(stammp.D.ind) <- samples[rownames(stammp.D.ind), "Breed"]
+colnames(stammp.D.ind) <- samples[colnames(stammp.D.ind), "Breed"]
+
+# Add the reference animal to the dataset, since reference is always coded as 1
+#numsnpdata <- cbind(numsnpdata, Reference = 1)
+differences <- dist(t(numsnpclustering), method = "manhattan")
+stmpD <- as.dist(stammp.D.ind)
+
+clustering1 <- hclust(differences)
+clustering2 <- hclust(stmpD)
+#plot(as.phylo(clustering), type="r")  # Or a rooted dendrogram plot: plot(root(as.phylo(clustering),"Reference"), type="r")
+
+breeds <- samples[,"Breed"]
+names(breeds) <- rownames(samples)
+
+# Create colors
+cols <- c("red", "blue", "orange", "black")
+names(cols) <- c("Tagg", "Dese", "Ni", "Nu")
+
+labelCol <- function(x) {
+  if (is.leaf(x)) {
+    hclass <- as.character(attr(x, "label"))             # Fetch the class label
+    hcol <- cols[hclass]                            # Determine color of the label
+    cat(attr(x, "label"), hclass, hcol, "\n")
+    attr(x, "nodePar") <- list(lab.col=hcol, cex=0.1)
+  }
+  return(x)
+}
+dendrogram1 <- as.dendrogram(clustering1)
+dendrogram2 <- as.dendrogram(clustering2)
+dendrogram1.col <- dendrapply(dendrogram1, labelCol)
+dendrogram2.col <- dendrapply(dendrogram2, labelCol)
+
+op <- par(mfrow=c(1,2), cex=0.5)
+plot(dendrogram1.col, main = "Manhattan distance",cex.axis=1.4, cex.main=1.4)
+plot(dendrogram2.col, main = "Nei's genetic distance",cex.axis=1.4, cex.main=1.4)
+
+### diversity analysis
+toGenPop <- function(genotypes){
+  numericG <- apply(genotypes, 1, function(x){
+    geno <- table(unlist(strsplit(as.character(x),"")))
+    #cat(names(geno),"\n")
+    a1 <- paste0(names(geno)[1],names(geno)[1])
+    a2 <- paste0(sort(c(names(geno)[1],names(geno)[2])),collapse="")
+    a3 <- paste0(names(geno)[2],names(geno)[2])
+    ngeno <- rep(NA,length(x))
+    ngeno[x == a1] <- "0101"
+    ngeno[x == a2] <- "0102"
+    ngeno[x == a3] <- "0202"
+    return(ngeno)
+  })
+  rownames(numericG) <- colnames(genotypes)
+  return(t(numericG))
+}
+
+genotypes_genpop <- t(toGenPop(absnpdata))
+set.seed(0)
+rsample <- sample(ncol(genotypes_genpop), ncol(genotypes_genpop) / 20)
+genotypes_genpop <- genotypes_genpop[, rsample]
+
+rownames(genotypes_genpop) <- gsub(" ","", paste0(breeds[rownames(genotypes_genpop)],","))
+
+
+### Write out genotypes in genpop format for usage in diveRsity
+
+cat("BLANK\n", file="genotypes_genpop.txt")
+for(x in colnames(genotypes_genpop)){
+  cat(paste0(x, "\n"), file="genotypes_genpop.txt", append=TRUE)
+}
+for(pop in unique(rownames(genotypes_genpop))) {
+  cat("POP\n", file="genotypes_genpop.txt", append=TRUE)
+  ii <- which(rownames(genotypes_genpop) == pop)
+  write.table(genotypes_genpop[ii,], sep = " ", quote=FALSE, na = "0000", file="genotypes_genpop.txt", append=TRUE, col.names=FALSE)
+}
+cat("POP\n", file="genotypes_genpop.txt", append=TRUE)
+genotypes_copy <- genotypes_genpop
+rownames(genotypes_copy) <- rep("Combined", nrow(genotypes_copy))
+write.table(genotypes_copy[,], sep = " ", quote=FALSE, na = "0000", file="genotypes_genpop.txt", append=TRUE, col.names=FALSE)
+
+### Diversity analysis
+
+library(diveRsity)
+starttime <-  proc.time()
+
+basicStats <- divBasic(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", gp=2, bootstraps = 100)
+names(basicStats$fis) <- colnames(basicStats$Ho)
+
+endtime <-  proc.time()
+
+basicStats$Ho["overall",] # Observed
+basicStats$He["overall",] # Expected
+basicStats$fis[["Tagg,"]]["overall",]              # Fis
+basicStats$fis[["Ni,"]]["overall",]              # Fis
+basicStats$fis[["Nu,"]]["overall",]              # Fis
+basicStats$fis[["Dese,"]]["overall",]              # Fis
+basicStats$fis[["Combined"]]["overall",]     # Fis
+
+advancedStats <- diffCalc(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
+# Pairwise Fst per populations
+advancedStats$pairwise$Fst
+
+
+### Principal component analysis
+misdata <- which(apply(numsnpdata, 1, function(x){any(is.na(x))}))
+numsnppca <- numsnpdata[-misdata,]
+
+pcares <- prcomp(t(numsnppca), scale=TRUE)
+groups <- samples[colnames(numsnppca), "Breed"]
+
+sumpca <- summary(pcares)
+
+pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " var explained)")
+pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " var explained)")
+
+plot(c(-50,100), c(-100,150), col = cols[as.character(groups)],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), t = 'n',xaxt='n',yaxt='n', main="PCA analysis")
+axis(1, at = seq(-50, 100, 5))
+#abline(v = seq(-50, 100, 15), col="gray", lty=2)
+axis(2, at = seq(-100, 150, 20),las=2)
+#abline(h = seq(-100, 150, 50), col="gray", lty=2)
+points(pcares$x[,1], pcares$x[,2], col = cols[as.character(groups)], pch = 20, cex=1.4)
+legend("topright", names(cols), col=cols, pch=20,bg="white")
+
+
+ # Correlation between variables and principal components
+var_cor_func <- function(var.loadings, comp.sdev){
+  var.loadings*comp.sdev
+}
+
+# Variable correlation/coordinates
+var.coord <- t(apply(pcares$rotation, 1, var_cor_func, pcares$sdev))
+head(var.coord[, 1:4])
+var.cos2 <- var.coord^2
+comp.cos2 <- apply(var.cos2, 2, sum)
+contrib <- function(var.cos2, comp.cos2){var.cos2*100/comp.cos2}
+var.contrib <- t(apply(var.cos2,1, contrib, comp.cos2))
+
+library(devtools)
+library(ggbiplot)
+g <- ggbiplot(pcares, choices = c(1, 2), obs.scale = 1, var.scale = 1, groups = groups, ellipse = TRUE, circle = TRUE, var.axes = FALSE)
+g <- g + scale_color_discrete(name = '')
+g <- g + theme(legend.direction = 'horizontal', legend.position = 'top')
+print(g)
+
+### Look into the rotations
+importantSNPs <-  names(which(var.contrib[,1] > 0.02))
+
+#snpinfo <- snpinfo[-which(!rownames(snpinfo) %in% rownames(pcares$rotation)), ]
+
+SNPsPCA1 <- snpinfo[importantSNPs, c("Chr", "Position")]
+
+chromosomes <- c(as.character(1:29),"X")
+ymax <- max(snpinfo[,"Position"])
+
+plot(x=c(0,length(chromosomes)), y = c(0, ymax), t='n', xaxt='n', yaxt='n', ylab="", xlab="Chromosome")
+chrid <- 1
+for(chr in chromosomes){
+  allG <- snpinfo[snpinfo[,"Chr"] == chr, "Position"]
+  chrM <- max(snpinfo[snpinfo[,"Chr"] == chr, "Position"])
+  intG <- SNPsPCA1[which(SNPsPCA1[,"Chr"] == chr),"Position"]
+  lines(x=c(chrid,chrid), y = c(0, chrM))
+ 
+  points(x = rep(chrid, length(intG)), intG, pch="-", col="black", cex=2)
+  chrid <- chrid + 1
+}
+axis(1, at = 1:length(chromosomes), chromosomes)
+axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "mb"),las=2)
+
+### Polymorphic loci per group
 
 

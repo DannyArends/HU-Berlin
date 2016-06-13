@@ -303,11 +303,13 @@ g <- g + theme(legend.direction = 'horizontal', legend.position = 'top')
 print(g)
 
 ### Look into the rotations
-importantSNPs <-  names(which(var.contrib[,1] > 0.02))
+importantSNPs <-  names(which(var.contrib[,1] >= 0.02))
+lessimpSNPs <-  names(which(var.contrib[,1] >= 0.02))
 
 #snpinfo <- snpinfo[-which(!rownames(snpinfo) %in% rownames(pcares$rotation)), ]
 
 SNPsPCA1 <- snpinfo[importantSNPs, c("Chr", "Position")]
+SNPlPCA1 <- snpinfo[lessimpSNPs, c("Chr", "Position")]
 
 chromosomes <- c(as.character(1:29),"X")
 ymax <- max(snpinfo[,"Position"])
@@ -318,13 +320,34 @@ for(chr in chromosomes){
   allG <- snpinfo[snpinfo[,"Chr"] == chr, "Position"]
   chrM <- max(snpinfo[snpinfo[,"Chr"] == chr, "Position"])
   intG <- SNPsPCA1[which(SNPsPCA1[,"Chr"] == chr),"Position"]
+  intP <- SNPlPCA1[which(SNPlPCA1[,"Chr"] == chr),"Position"]
   lines(x=c(chrid,chrid), y = c(0, chrM))
- 
+  points(x = rep(chrid, length(allG)), allG, pch="-", col=rgb(0.9, 0.9, 0.9), cex=2)
+  points(x = rep(chrid, length(intP)), intP, pch="-", col=rgb(0.5, 0.5, 0.5), cex=2)
   points(x = rep(chrid, length(intG)), intG, pch="-", col="black", cex=2)
   chrid <- chrid + 1
 }
-axis(1, at = 1:length(chromosomes), chromosomes)
+axis(1, at = 1:length(chromosomes), chromosomes,cex.axis=0.8)
 axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "mb"),las=2)
+
+SNPsPCA1 <- cbind(SNPsPCA1, var.contrib = var.contrib[row.names(SNPsPCA1),1])
+
+res <- NULL
+for(x in chromosomes){
+  res <- rbind(res, SNPsPCA1[which(SNPsPCA1[,"Chr"] == x),])
+}
+
+proteins <- read.csv("../annotation/ProteinTable10731_39633_ensembl.txt",sep="\t")
+
+genes <- NULL
+for(x in 1:nrow(res)){
+  inregion <- proteins[which(as.character(proteins[,1]) == res[x,"Chr"] & 
+                             proteins[,3] > as.numeric(res[x,"Position"]) - 250000 & 
+                             proteins[,3] < as.numeric(res[x,"Position"]) + 250000),]
+  genes <- rbind(genes, inregion)
+}
+genes <- genes[-which(duplicated(genes[,"GeneID"])),]
+write.table(genes[,-c(2,7)], file="genesNearbyPCA1snps.txt", sep="\t", row.names=FALSE, quote=FALSE)
 
 ### Polymorphic loci per group
 

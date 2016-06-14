@@ -17,6 +17,8 @@ samples    <- cbind(samples, locationShort = as.character(unlist(lapply(strsplit
 snpdata <- snpdata[,-which(colnames(snpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE
 samples <- samples[-which(rownames(samples) == "DN 2"),] # Throw away the duplicate individual because it confuses STRUCTURE
 
+write.table(samples, "merged_samples_NO_DN2.txt",sep="\t")
+
 snpAlleles <- lapply(strsplit(as.character(snpinfo[,"allele"]), ""), "[", c(1,3))
 
 chir1 <- read.csv("FilteredLocationCHIR1.0.txt", sep="\t", row.names=1)
@@ -35,6 +37,8 @@ snpinfo[rownames(snpinfo), "Pos_C1"] <- chir1[rownames(snpinfo),"Pos"]
 
 snpinfo[rownames(snpinfo), "Chr_C2"] <- chir2[rownames(snpinfo),"chrN"]
 snpinfo[rownames(snpinfo), "Pos_C2"] <- chir2[rownames(snpinfo),"Pos"]
+
+write.table(snpinfo, "merged_snp_info.txt",sep="\t")
 
 if(!file.exists("filtered_snps_numeric_NO_DN2.txt")){
   numsnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
@@ -348,7 +352,3 @@ for(x in 1:nrow(res)){
 }
 genes <- genes[-which(duplicated(genes[,"GeneID"])),]
 write.table(genes[,-c(2,7)], file="genesNearbyPCA1snps.txt", sep="\t", row.names=FALSE, quote=FALSE)
-
-### Polymorphic loci per group
-
-

@@ -2,7 +2,7 @@
 # New QTL mapping of BFMI, using a slightly different population structure correction
 #
 
-source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
+source("D:/Github/HU-Berlin/Mouse/Muga/ATB_paper/dateToSeason.R")
 setwd("E:/Mouse/DNA/MegaMuga/")                                                                                           # Read in the data from the Mega Muga
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
@@ -30,6 +30,10 @@ genotypesF1   <- genotypes[-onegenotypeF1, F1]                                  
 cat("Left with", nrow(genotypesF1), " F1 markers\n")                                                                      # == Left with 21260 markers    // Left with 11581 markers
 genotypesP    <- genotypes[-onegenotypeP, P]                                                                              # Only the unique markers in the P
 cat("Left with", nrow(genotypesP), " P markers\n")                                                                        # == Left with 21260 markers    // Left with 11581 markers
+
+write.table(genotypesF2, "extra/genotypesF2.txt", sep = "\t")
+write.table(genotypesF1, "extra/genotypesF1.txt", sep = "\t")
+write.table(phenotypes, "extra/phenotypes.txt", sep = "\t")
 
 # Fixed effects
 vater <- as.factor(phenotypes[F2, c("Vater")]) ; mutter <- as.factor(phenotypes[F2, c("Mutter")]) ; wsize <- as.numeric(phenotypes[F2, c("WG2")]) ; 
@@ -59,7 +63,7 @@ nH <- unlist(lapply(lapply(strsplit(as.character(famGeno),""), "==", "H"), sum))
 nB <- unlist(lapply(lapply(strsplit(as.character(famGeno),""), "==", "B"), sum))
 
 plot(c(1, length(totalOffspring)),c(20, 65), t = 'n',xaxt='n', xlab="",ylab="Bodyweight (Grams)", main="Population structure", sub="Day 63")
-boxplot(families[ names(F2toFam) ], col = rgb(1-(nB / 2), 1-(nA / 5), (nH / 2)), add=TRUE, las=2,cex.axis=0.2)
+boxplot(families[ names(F2toFam) ], col = rgb(1-(nB / 2), 1-(nA / 5), (nH / 2)), add=TRUE, las=2,cex.axis=0.5)
 text(1:length(totalOffspring), rep(63,length(totalOffspring)), as.character(totalOffspring))
 text(1:length(totalOffspring), 20, as.character(famGeno))
 

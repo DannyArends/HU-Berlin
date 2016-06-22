@@ -76,3 +76,10 @@ write.table(snpdata, "filtered_snps.txt", sep="\t", quote=FALSE)
 write.table(snpinfo, "snpinfo.txt", sep="\t", quote=FALSE)
 write.table(samples, "sampleinfo.txt", sep="\t", quote=FALSE)
 
+
+
+
+setwd("E:/Goat/DNA/SihamAnalysis")
+snpdata <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE)
+snpdata <- snpdata[, -which(colnames(snpdata) == "DN 2")]
+write.table(snpdata, "filtered_snps_NO_DN2.txt", sep="\t", quote=FALSE)

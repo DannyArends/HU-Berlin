@@ -113,7 +113,6 @@ box()
 
 ### QTL analysis
 
-
 ## Breed in the model
 for(p in 1:ncol(phenotypes)){
   pvalues <- NULL
@@ -149,12 +148,12 @@ for(p in 1:ncol(phenotypes)){
   phenotypesN[as.numeric(names(res$residuals)), p] <- res$residuals
 }
 
-## Breed in the model
+## Breed corrected phenotypes mapped to the SNP data
 for(p in 1:ncol(phenotypesN)){
   pvalues <- NULL
   for(x in 1:nrow(numsnpdata)){
-    pvals <- anova(lm(phenotypesN[,p] ~ breed + as.numeric(numsnpdata[x,])))[[5]]
-    if(length(pvals) == 3) {
+    pvals <- anova(lm(phenotypesN[,p] ~ as.numeric(numsnpdata[x,])))[[5]]
+    if(length(pvals) == 2) {
       pvalues <- rbind(pvalues, c(rownames(numsnpdata)[x], pvals))
     }else{
       cat("Unable to fit model at marker ",x," :", rownames(numsnpdata)[x], "\n")

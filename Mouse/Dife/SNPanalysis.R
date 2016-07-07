@@ -31,4 +31,3 @@ while(length((line = readLines(Tfile, n = 1))) > 0) {
   if(line.n %% 10000 == 0) cat("at ", line.n, "\n")
 }
 close(Tfile)
-

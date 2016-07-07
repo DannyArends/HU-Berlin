@@ -10,6 +10,7 @@ setwd("E:/Mouse/DNA/DiversityArray/")
 
 snpOUT  <- read.table("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
 snps861S1  <- read.table("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
+snpsS1S2  <- read.table("Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
 
 findRegions <- function(snps, snpInRegion = 35, maxDistance = 4000000){
   chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
@@ -54,6 +55,10 @@ regions <- findRegions(snpOUT)
 write.table(regions, "Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_Regions.txt", sep="\t", row.names=FALSE)
 regions861S1 <- findRegions(snps861S1)
 write.table(regions861S1, "Analysis/Diabetes/BFMI861-S1vsALL_Regions.txt", sep="\t", row.names=FALSE)
+
+regionsS1S2 <- findRegions(snpsS1S2)
+write.table(regionsS1S2, "Analysis/Diabetes/BFMI861-S1vsBFMI861-S2_Regions.txt", sep="\t", row.names=FALSE)
+
 
 # Which markers that we have in the LAB are in the regions we defined
 findMarkersInRegions <- function(regions){

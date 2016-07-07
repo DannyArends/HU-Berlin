@@ -105,6 +105,10 @@ for(breed in breeds){
 apply(MAFs,2, function(x){return(length(which(x < 0.05)))})
 apply(MAFs,2, function(x){return(length(which(x >= 0.05)))})
 
+pca1snps <- c("snp2701-scaffold1077-1514725","snp2691-scaffold1077-1023522","snp48468-scaffold689-383640","snp400-scaffold1009-1403183","snp2006-scaffold1059-729589","snp43997-scaffold595-4316589","snp41747-scaffold543-1573152","snp36346-scaffold4353-5630","snp27679-scaffold295-5582835","snp38490-scaffold486-5129195","snp38395-scaffold486-988403","snp37635-scaffold463-291493","snp37637-scaffold463-397179","snp37638-scaffold463-429470","snp28834-scaffold310-5477386","snp2436-scaffold107-6510838","snp52952-scaffold795-1679100","snp8743-scaffold1313-101968","snp16120-scaffold1698-458655","snp30648-scaffold339-3726687","snp21502-scaffold210-164871","snp53431-scaffold81-41828","snp34590-scaffold409-716359","snp993-scaffold1026-156620","snp460-scaffold1011-1174771","snp25100-scaffold259-961460","snp44967-scaffold613-176620","snp3603-scaffold1111-994064","snp13651-scaffold1526-2180511","snp31349-scaffold347-1097831","snp21396-scaffold2086-864910","snp5239-scaffold1180-1005667","snp51597-scaffold758-148867","snp14007-scaffold1553-622617","snp52418-scaffold781-335186","snp41694-scaffold542-2305634","snp30544-scaffold338-37210","snp16425-scaffold173-1231017","snp9606-scaffold1344-995267","snp37190-scaffold452-1541058","snp28467-scaffold303-4653894","snp14762-scaffold1594-1623317","snp41337-scaffold537-2811930","snp28351-scaffold3022-406511","snp49822-scaffold711-1921732","snp47577-scaffold67-3351554","snp3376-scaffold1102-1312359","snp25901-scaffold2678-264870","snp13705-scaffold153-920524")
+
+MAFs[pca1snps,]
+
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
 ## STRUCTURE

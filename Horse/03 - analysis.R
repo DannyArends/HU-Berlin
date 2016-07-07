@@ -63,6 +63,8 @@ rownames(genotypes_copy) <- rep("CombinedSHK", nrow(genotypes_copy))
 write.table(genotypes_copy[,], sep = " ", quote=FALSE, na = "0000", file="combined/input/genotypes_genpop.txt", append=TRUE, col.names=FALSE)
 
 
+ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH"))
+
 # Create colors
 cols <- c("red", "blue", "orange", "black", "brown", "brown", "purple")
 names(cols) <- c("K","H","S", "PrzH", "Arab", "Arabian", "Norwegian Fjord")
@@ -80,10 +82,10 @@ labelCol <- function(x) {
 clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-plot(dendrogram.col, main = "")
+plot(dendrogram.col, main = "Distance (manhattan)")
 
 
-ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH", "Arabian", "Norwegian Fjord"))
+ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH", "Arabian"))
 
 strains <- as.character(phenotypes[ii,"Strain"])
 names(strains) <- rownames(phenotypes)[ii]
@@ -109,7 +111,7 @@ labelCol <- function(x) {
 clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-postscript("dendrogramArabPrzNorf.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+postscript("dendrogramArabPrzNorf_7_7.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
 plot(dendrogram.col, main = "", las=2, horiz = FALSE)
 dev.off()
 

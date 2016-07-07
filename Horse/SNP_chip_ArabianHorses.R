@@ -63,9 +63,11 @@ toGenPop <- function(genotypes){
   rownames(numericG) <- colnames(genotypes)
   return(t(numericG))
 }
+setwd("E:/Horse/DNA/60Karray/")
+markerdata <- read.csv("GGP_Equine.csv", skip=7, header=TRUE)
 
-setwd("E:/Horse/DNA/Kabadiner/")
 # Read reference 'kabadiner' map and data
+setwd("E:/Horse/DNA/Kabadiner/")
 kabadinermap            <- read.table(file="input/cleaned_map.txt", sep = "\t")
 kabadinergenotypes      <- read.table(file="input/cleaned_genotypes.txt", sep = "\t")
 
@@ -171,6 +173,8 @@ pdata <- pdata[rownames(genotypes), ]
 
 genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref], pdata)
 write.table(genotypesnref, "input/allgenotypes.txt",sep="\t",quote=FALSE)
+
+setwd("E:/Horse/DNA/Equine60k/")
 genotypesnref <- read.table("input/allgenotypes.txt",sep="\t", colClasses="character")
 
 cat("Shared:", nrow(genotypesnref), "markers\n")
@@ -350,7 +354,7 @@ plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
       breaks <- c(breaks, breaks[length(breaks)] + length(samples))
       cat(breaks, samples,"\n")
     }
-    #breaks <- c(breaks, nrow(stmatrix))
+    breaks <- c(breaks, nrow(stmatrix))
     ordering <- c(ordering, rownames(stmatrix.copy))
     stmatrix <- stmatrix[ordering,]
   }
@@ -383,7 +387,12 @@ plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
   text(x = 1:nrow(stmatrix), y = rep(-0.05, nrow(stmatrix)), sahriastrain)
   mids <- diff(breaks) / 2 + 0.5
   for(x in 1:length(mids)) mids[x] <- mids[x] + breaks[x]
-  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Group ", 1:length(mids-1)), cex=0.8) 
+  
+  last <- mids[length(mids)]
+  mids <- mids[-length(mids)]
+  
+  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Cluster ", 1:length(mids-1)), cex=0.8) 
+  #text(x = last, y = -0.1, paste0("Unassigned"), cex=0.8) 
   axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
   axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
   abline(v = breaks + 0.5,lwd=0.5, lty=2)
@@ -406,14 +415,14 @@ for(analysis in paste0(loc, "/", results)){
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
   postscript(paste0("STRUCTURE",cnt,".eps"), width = 16.0, height = 6.0, horizontal = FALSE, onefile = FALSE, paper = "special")
-  plotStructure(stmatrix, TRUE, TRUE)
+  plotStructure(stmatrix, TRUE, FALSE)
   dev.off()
   cat("--All individuals--\n")
   counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   cat("--High purity (> 0.8)--\n")
   counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
   cat("----\n")
-  if(ncol(stmatrix) == 6) break                 # We did more but I want too see if Saria's hypothesis is correct
+  if(ncol(stmatrix) == 2) break                 # We did more but I want too see if Saria's hypothesis is correct
   cnt <- cnt +1
 }
 

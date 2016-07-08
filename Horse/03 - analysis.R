@@ -101,9 +101,10 @@ labelCol <- function(x) {
     cat(attr(x, "label"), hclass, hcol, "\n")
     attr(x, "nodePar") <- list(lab.col=hcol)
     if(grepl("NORF", attr(x, "label"))){
-      attr(x, "label") <- paste0("NORF",cnt)
+      #attr(x, "label") <- paste0("NORF",cnt)
       cnt <<- cnt + 1
     }
+    attr(x, "label") <- strsplit(hclass, "")[[1]][1]
   }
   return(x)
 }
@@ -111,7 +112,7 @@ labelCol <- function(x) {
 clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-postscript("dendrogramArabPrzNorf_7_7.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+postscript("dendrogramArabPrzNorf_8_7.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
 plot(dendrogram.col, main = "", las=2, horiz = FALSE)
 dev.off()
 

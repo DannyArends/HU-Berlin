@@ -179,12 +179,16 @@ genotypesnref <- read.table("input/allgenotypes.txt",sep="\t", colClasses="chara
 
 cat("Shared:", nrow(genotypesnref), "markers\n")
 
+notinS <- c(which(colnames(genotypesnref) %in% thoroughbred_ref), which(colnames(genotypesnref) %in% kabardian_ref))
+genotypesnref <- genotypesnref[,-notinS]
 # How many markers on each chromosome
-for(x in unique(map[,"Chromosome"])){
-  cat(x, length(which(map[,"Chromosome"] == x)),"\n")
-}
+#for(x in unique(map[,"Chromosome"])){
+#  cat(x, length(which(map[,"Chromosome"] == x)),"\n")
+#}
 
-numGeno <- t(toNumeric(genotypesnref))
+genotypes_num  <- read.csv("combined/input/genotypes_num.txt", sep = "\t")
+numGeno <- t(genotypes_num)
+numGeno <- numGeno[which(rownames(numGeno) %in% colnames(genotypesnref)),]
 
 if(!file.exists("input/cleaned_genotypes_structure.txt")){
   # Write out the data for STRUCTURE
@@ -203,7 +207,11 @@ if(!file.exists("input/cleaned_genotypes_structure.txt")){
 
   rownames(structGeno) <- unlist(lapply(rownames(numGeno), rep, 2))
   colnames(structGeno) <- colnames(numGeno)
-  write.table(structGeno, file="input/cleaned_genotypes_structure.txt", sep = "\t")    # Save the clean genotypes to disk
+  
+
+  
+  
+  write.table(structGeno, file="input/cleaned_genotypes_structureN.txt", sep = "\t")    # Save the clean genotypes to disk
 }
 
 ## Some basic plots of all the individuals relatedness

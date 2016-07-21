@@ -102,11 +102,27 @@ for(mf in intfiles){
 
 ## Load in the higest lod scores, and do some more filtering
 setwd("E:/Mouse/DNA/MegaMuga")
-highlods <- read.csv(outfile, sep="\t", header=TRUE, row.names=1)
+map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+highlods <- read.csv("extra/LODinteractions.txt", sep="\t", header=TRUE, row.names=1, check.names=FALSE)
 nNA <- apply(highlods, 2, function(x){sum(is.na(x))})
 highlods <- highlods[,-which(nNA == nrow(highlods))]
 
 above7r <- apply(highlods, 1, function(x){ any(x >= 7,na.rm=TRUE); })
 above7c <- apply(highlods, 2, function(x){ any(x >= 7,na.rm=TRUE); })
 
-highlods[above7r, above7c]
+signsubset <- apply(highlods[above7r, above7c], 2, as.numeric)
+rownames(signsubset) <- rownames(highlods[above7r, above7c])
+
+rO <- sort(unlist(lapply(rownames(signsubset), function(x){which(rownames(map) == x)})),i=TRUE)$ix
+cO <- sort(unlist(lapply(colnames(signsubset), function(x){which(rownames(map) == x)})),i=TRUE)$ix
+
+chrsR <- (which(diff(as.numeric(map[rownames(signsubset[rO,cO]),c(1)])) > 0)-0.5) / (length(rO)-1)
+chrsC <- (which(diff(as.numeric(map[colnames(signsubset[rO,cO]),c(1)])) > 0)-0.5) / (length(cO)-1)
+
+image(signsubset[rO,cO], breaks = c(0, 3, 6, 9, 12, 15), col=c("white", "gray", "yellow", "orange", "red"), xaxt='n', yaxt='n')
+axis(1, seq(0,1,1 / (length(rO)-1)), paste0(map[rownames(signsubset[rO,cO]),c(1)], "-", round(as.numeric(map[rownames(signsubset[rO,cO]),c(2)]) / 1000000,1)), las=2,cex.axis = 0.9)
+axis(2, seq(0,1,1 / (length(cO)-1)), paste0(map[colnames(signsubset[rO,cO]),c(1)], "-", round(as.numeric(map[colnames(signsubset[rO,cO]),c(2)]) / 1000000,1)), las=2,cex.axis = 0.7)
+abline(v=chrsR)
+abline(h=chrsC)
+box()
+

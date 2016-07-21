@@ -70,5 +70,45 @@ for(mf in intfiles){
     line.n <- line.n + 1
   }
 }
- 
- 
+
+## Load the created pvalue files, transform to LOD and filter
+setwd("E:/Mouse/DNA/MegaMuga")
+intfiles <- dir("extra")[grep("ALL", dir("extra"))]
+outfile <- "extra/LODinteractions.txt"
+cat("", file = outfile)
+noHeader <- TRUE
+for(mf in intfiles){
+  cat(mf,"\n")
+  #2) Reading a text file line by line
+  line.n  <- 1
+  Tfile <- file(paste0("extra/",mf), "r")
+  while(length((line = readLines(Tfile, n = 1) )) > 0){                                                   # Read a line, if available
+    if(line.n > 1){
+      splitted <- strsplit(line,"\t")[[1]]
+      #cat("line:", line.n, "length:", length(splitted), "\n")                                # Number of words per line
+      values <- -log10(as.numeric(splitted[-1]))
+      mlod <- max(values,na.rm=TRUE)
+      if(mlod >= 5) {
+        cat(splitted[1],"\t", paste0(round(values,1), collapse="\t"), "\n",sep="", file = outfile, append=TRUE)
+      }
+    }else{
+      if(noHeader) {
+        cat(line, "\n", file = outfile, append=TRUE)
+        header <- 
+        noHeader <- FALSE
+      }
+    }
+    line.n <- line.n + 1
+  }
+}
+
+## Load in the higest lod scores, and do some more filtering
+setwd("E:/Mouse/DNA/MegaMuga")
+highlods <- read.csv(outfile, sep="\t", header=TRUE, row.names=1)
+nNA <- apply(highlods, 2, function(x){sum(is.na(x))})
+highlods <- highlods[,-which(nNA == nrow(highlods))]
+
+above7r <- apply(highlods, 1, function(x){ any(x >= 7,na.rm=TRUE); })
+above7c <- apply(highlods, 2, function(x){ any(x >= 7,na.rm=TRUE); })
+
+highlods[above7r, above7c]

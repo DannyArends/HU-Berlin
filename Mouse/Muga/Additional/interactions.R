@@ -18,6 +18,7 @@ todo <- which(!(rownames(genoF2) %in% done))
 todo <- todo[-length(todo)]
 from = 20000; to = 21259; fname = "extra/ALL_MxM_interactionsTODO3.txt"
 
+## Scan interactions between m1 and the end, taken from a todo list
 cat(paste0(rownames(genoF2),collapse="\t"), "\n", file=fname, sep="")
 for(m1i in todo) {
   m2i <- m1i + 1
@@ -38,13 +39,10 @@ for(m1i in todo) {
   m1i <<- m1i + 1
 }
 
-
-
+## See what finished, by scannig the rownames of the files... used to split up work
 setwd("E:/Mouse/DNA/MegaMuga")
-
 intfiles <- dir("extra")[grep("ALL", dir("extra"))]
 done <- c()
-
 for(mf in intfiles){
   cat(mf,"\n")
   #2) Reading a text file line by line

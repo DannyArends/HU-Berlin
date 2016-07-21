@@ -145,6 +145,8 @@ write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t")          
 write.table(toNumeric(genotypes), file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
 write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")                        # Save the clean phenotypes to disk
 
+setwd("E:/Horse/DNA/Equine60k/")
+
 # We now clean up the phenotypes manually after this step (fix stuff like "20 " -> "20") and only keep a single date for racing
 phenotypes     <- read.table(file="input/OLDWORNG/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
 
@@ -323,9 +325,9 @@ stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE)    # Distance between indiv
 stamppAmova(stammp.D.ind, stammpinput.freq, 100)        # Calculate AMOVA
 
 ## Structure results (run Structure)
-structuredir <- "E:/Horse/DNA/Equine60k/STRUCTURE"
-projectname <- "ArabianHorses"
-paramsetname <- "5000-1000"
+structuredir <- "E:/Horse/DNA/Equine60k/STRUCTURE/HorseNew"
+projectname <- "HorsesNew"
+paramsetname <- "5000n1000"
 
 loc <- paste0(structuredir, "/", projectname, "/", paramsetname, "/Results")
 results <- dir(loc)
@@ -368,6 +370,7 @@ plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
   }
 
   sahriastrain <- rep("P", length(rownames(stmatrix)))
+  sahriastrain[grep("ARR", rownames(stmatrix))] <- "A"
   names(sahriastrain) <- rownames(stmatrix)
   sahriastrain[names(phenotypes["Strain",])] <- as.character(phenotypes["Strain",])
 
@@ -400,7 +403,7 @@ plotStructure <- function(stmatrix, doSort = FALSE, sortTwice = FALSE){
   mids <- mids[-length(mids)]
   
   text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Cluster ", 1:length(mids-1)), cex=0.8) 
-  #text(x = last, y = -0.1, paste0("Unassigned"), cex=0.8) 
+  text(x = last, y = -0.1, paste0("Unassigned"), cex=0.8) 
   axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
   axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
   abline(v = breaks + 0.5,lwd=0.5, lty=2)
@@ -422,15 +425,15 @@ for(analysis in paste0(loc, "/", results)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
-  postscript(paste0("STRUCTURE",cnt,".eps"), width = 16.0, height = 6.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+  #postscript(paste0("STRUCTURE_NEW_4groups.eps"), width = 16.0, height = 6.0, horizontal = FALSE, onefile = FALSE, paper = "special")
   plotStructure(stmatrix, TRUE, FALSE)
-  dev.off()
-  cat("--All individuals--\n")
-  counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
-  cat("--High purity (> 0.8)--\n")
-  counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
-  cat("----\n")
-  if(ncol(stmatrix) == 2) break                 # We did more but I want too see if Saria's hypothesis is correct
+  #dev.off()
+  #cat("--All individuals--\n")
+  #counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
+  #cat("--High purity (> 0.8)--\n")
+  #counts <- analyzeStructure(stmatrix, 0.8)     # Compare how good the pure structure model fits with the breeders perspective
+  #cat("----\n")
+  #if(ncol(stmatrix) == 2) break                 # We did more but I want too see if Saria's hypothesis is correct
   cnt <- cnt +1
 }
 

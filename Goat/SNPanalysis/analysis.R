@@ -146,7 +146,7 @@ stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst val
 stammpinput.fst$Fsts
 write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")
 
-stammpinput.amova <- stamppAmova(stammp.D.ind, stammpinput.freq, 100)
+stammpinput.amova <- stamppAmova(stammp.D.ind, stammpinput.freq, 10000)
 write.table(stammpinput.amova[[1]], file = "amovaSSD.txt", sep = "\t")
 write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
 
@@ -172,7 +172,7 @@ colnames(stammp.D.ind) <- samples[colnames(stammp.D.ind), "Breed"]
 
 # Add the reference animal to the dataset, since reference is always coded as 1
 #numsnpdata <- cbind(numsnpdata, Reference = 1)
-differences <- dist(t(numsnpclustering), method = "manhattan")
+differences <- dist(numsnpclustering, method = "manhattan")
 stmpD <- as.dist(stammp.D.ind)
 
 clustering1 <- hclust(differences)
@@ -202,7 +202,9 @@ dendrogram2.col <- dendrapply(dendrogram2, labelCol)
 
 op <- par(mfrow=c(1,2), cex=0.5)
 plot(dendrogram1.col, main = "Manhattan distance",cex.axis=1.4, cex.main=1.4)
-plot(dendrogram2.col, main = "Nei's genetic distance",cex.axis=1.4, cex.main=1.4)
+png("NeiDistanceSiham.png", width=1024, height=800)
+  plot(dendrogram2.col, main = "Nei's genetic distance",cex.axis=1.4, cex.main=1.4)
+dev.off()
 
 ### diversity analysis
 toGenPop <- function(genotypes){

@@ -17,7 +17,9 @@ samples    <- cbind(samples, locationShort = as.character(unlist(lapply(strsplit
 snpdata <- snpdata[,-which(colnames(snpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE
 samples <- samples[-which(rownames(samples) == "DN 2"),] # Throw away the duplicate individual because it confuses STRUCTURE
 
-write.table(samples, "merged_samples_NO_DN2.txt",sep="\t")
+if(!file.exists("merged_samples_NO_DN2.txt")){
+  write.table(samples, "merged_samples_NO_DN2.txt",sep="\t")
+}
 
 snpAlleles <- lapply(strsplit(as.character(snpinfo[,"allele"]), ""), "[", c(1,3))
 
@@ -38,7 +40,9 @@ snpinfo[rownames(snpinfo), "Pos_C1"] <- chir1[rownames(snpinfo),"Pos"]
 snpinfo[rownames(snpinfo), "Chr_C2"] <- chir2[rownames(snpinfo),"chrN"]
 snpinfo[rownames(snpinfo), "Pos_C2"] <- chir2[rownames(snpinfo),"Pos"]
 
-write.table(snpinfo, "merged_snp_info.txt",sep="\t")
+if(!file.exists("merged_snp_info.txt")){
+  write.table(snpinfo, "merged_snp_info.txt",sep="\t")
+}
 
 if(!file.exists("filtered_snps_numeric_NO_DN2.txt")){
   numsnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
@@ -85,6 +89,14 @@ if(!file.exists("filtered_snps_AB_NO_DN2.txt")){
 }else{
   absnpdata <- read.csv("filtered_snps_AB_NO_DN2.txt", sep="\t", check.names=FALSE)
 }
+
+library(heterozygous)
+
+resall <- HWE(absnpdata, "exact")
+resadj <- p.adjust(resall, "BH")
+length(which(resadj < 0.05))
+absnpdata[which(resadj < 0.05),]
+
 
 breeds <- as.character(unique(samples[,"Breed"]))
 # Minor Allele Frequencies for different breeds
@@ -172,7 +184,7 @@ colnames(stammp.D.ind) <- samples[colnames(stammp.D.ind), "Breed"]
 
 # Add the reference animal to the dataset, since reference is always coded as 1
 #numsnpdata <- cbind(numsnpdata, Reference = 1)
-differences <- dist(numsnpclustering, method = "manhattan")
+differences <- dist(t(numsnpclustering), method = "manhattan")
 stmpD <- as.dist(stammp.D.ind)
 
 clustering1 <- hclust(differences)
@@ -199,6 +211,10 @@ dendrogram1 <- as.dendrogram(clustering1)
 dendrogram2 <- as.dendrogram(clustering2)
 dendrogram1.col <- dendrapply(dendrogram1, labelCol)
 dendrogram2.col <- dendrapply(dendrogram2, labelCol)
+
+orderingInD <- colnames(numsnpdata)[clustering2$order]
+write.table(samples[orderingInD, ], "samplesOrderedNeisDistance.txt", sep="\t")
+
 
 op <- par(mfrow=c(1,2), cex=0.5)
 plot(dendrogram1.col, main = "Manhattan distance",cex.axis=1.4, cex.main=1.4)

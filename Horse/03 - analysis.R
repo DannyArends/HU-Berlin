@@ -99,7 +99,8 @@ labelCol <- function(x) {
     hclass <- strains[attr(x, "label")]             # Fetch the class label
     hcol <- cols[hclass]                            # Determine color of the label
     cat(attr(x, "label"), hclass, hcol, "\n")
-    attr(x, "nodePar") <- list(lab.col=hcol)
+    attr(x, "nodePar") <- list(col=hcol, cex=c(2,4))
+    #attr(x, "leaflab") <- "none"
     if(grepl("NORF", attr(x, "label"))){
       #attr(x, "label") <- paste0("NORF",cnt)
       cnt <<- cnt + 1
@@ -109,11 +110,12 @@ labelCol <- function(x) {
   return(x)
 }
 
-clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
+#clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-postscript("dendrogramArabPrzNorf_8_7.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
-plot(dendrogram.col, main = "", las=2, horiz = FALSE)
+postscript("dendrogramArabPrzNorf_10_8.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+plot(dendrogram.col, main = "", las=2, leaflab ="none", horiz = FALSE)
+text(1:length(labels(dendrogram.col)), -400, labels = labels(dendrogram.col))
 dev.off()
 
 ### stampp ANALYSIS

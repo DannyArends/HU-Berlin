@@ -14,10 +14,12 @@ samples    <- samples[-which(rownames(samples) == "DN 2"),] # Throw away the dup
 popinfo <- as.character(samples[,"Breed"])
 names(popinfo) <- gsub(" ", "", rownames(samples))
 
+
+##E:\Goat\DNA\Structure\test\10k2.5k\Results
 ## Structure results (run Structure)
-structuredir <- "E:/Goat/DNA/Structure/Goats"
-projectname <- "Goats"
-paramsetname <- "10kn2.5k"
+structuredir <- "E:/Goat/DNA/Structure/"
+projectname <- "test"
+paramsetname <- "10k2.5k"
 
 fullpath <- paste0(structuredir, "/", projectname, "/", paramsetname, "/Results")
 structureruns <- dir(fullpath)

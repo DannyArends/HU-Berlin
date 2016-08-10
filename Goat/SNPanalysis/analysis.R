@@ -124,7 +124,7 @@ MAFs[pca1snps,]
 breedSpecific <- names(which(apply(MAFs,1,function(x){(length(which(x == 0)) == 3)})))
 
 ## STRUCTURE
-if(!file.exists("cleaned_genotypes_structure_NO_DN2.txt")){
+if(!file.exists("cleaned_genotypes_structure_NO_DN2_pop.txt")){
   # Write out the data for STRUCTURE
   numsnpdata <- t(numsnpdata)
   structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
@@ -139,10 +139,16 @@ if(!file.exists("cleaned_genotypes_structure_NO_DN2.txt")){
     gg[is.na(gg)] <- 9
     structGeno <- rbind(structGeno, gg)
   }
-
+ 
   rownames(structGeno) <- gsub(" ","", unlist(lapply(rownames(numsnpdata), rep, 2)))    # Spaces are not allowed in sample names
   colnames(structGeno) <- colnames(numsnpdata)
-  write.table(structGeno, file="cleaned_genotypes_structure_NO_DN2.txt", sep = "\t")           # Save the genotypes to disk
+
+  rownames(samples) <- gsub(" ","", rownames(samples))
+  samples[gsub(" ","",rownames(structGeno)),]
+  
+  structGeno <- cbind(as.numeric(samples[gsub(" ","",rownames(structGeno)),"Breed"]), structGeno)
+
+  write.table(structGeno, file="cleaned_genotypes_structure_NO_DN2_pop.txt", sep = "\t")           # Save the genotypes to disk
 }
 
 library(StAMPP)

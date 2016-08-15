@@ -165,3 +165,11 @@ for(p in 1:ncol(phenotypesN)){
   cat(colnames(phenotypesN)[p], " = ", length(which(p.adjust(as.numeric(pvalues[,3]), "BH") < 0.05)), " marker\n")
   write.table(pvalues, file=paste0(colnames(phenotypesN)[p],"_adj_qtl.txt"), sep="\t",row.names=FALSE, quote=FALSE, col.names=FALSE)
 }
+
+
+setwd("E:/Goat/DNA/SihamQTL")
+
+for(f in dir()){
+  qtld <- read.table(f)
+  cat(f,max(-log10(qtld[,3])), qtld[which.max(-log10(qtld[,3])),1],"\n")
+}

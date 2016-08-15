@@ -15,6 +15,21 @@ popinfo <- as.character(samples[,"Breed"])
 names(popinfo) <- gsub(" ", "", rownames(samples))
 
 
+nubians <- samples[which(samples[,"Breed"] == "Nu"), 1:14]
+rownames(nubians) <- gsub(" ", "", rownames(nubians))
+write.table(nubians, "sample_info.txt",sep="\t", quote=FALSE)
+
+
+snpdata    <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE, colClasses="character")
+colnames(snpdata) <- gsub(" ", "", colnames(snpdata))
+
+write.table(snpdata[,rownames(nubians)], "snp_genotypes.txt",sep="\t", quote=FALSE)
+
+chir1 <- read.csv("FilteredLocationCHIR1.0.txt", sep="\t", row.names=1)
+chir1 <- cbind(chir1, Pos = (chir1[,"Start"] + chir1[,"Stop"])/2)
+chir1 <- cbind(chir1, name = rownames(chir1))
+chir1[rownames(snpdata),]
+
 ##E:\Goat\DNA\Structure\test\10k2.5k\Results
 ## Structure results (run Structure)
 structuredir <- "E:/Goat/DNA/Structure/"
@@ -110,9 +125,9 @@ for(analysis in paste0(fullpath, "/", structureruns)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
-  png(paste0(analysis, ".st.png"), width = 1024, height = 800)
+ # png(paste0(analysis, ".st.png"), width = 1024, height = 800)
   aa <- plotStructure(stmatrix, popinfo, TRUE, FALSE)
-  dev.off()
+ # dev.off()
   #cat("--All individuals--\n")
   #counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   #cat("--High purity (> 0.8)--\n")

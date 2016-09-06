@@ -30,6 +30,15 @@ chir1 <- cbind(chir1, Pos = (chir1[,"Start"] + chir1[,"Stop"])/2)
 chir1 <- cbind(chir1, name = rownames(chir1))
 chir1[rownames(snpdata),]
 
+
+snpdataloc <- cbind(rownames(snpdata), chir1[rownames(snpdata),c("chrN", "Pos")])
+snpdataloc <- snpdataloc[-which(is.na(snpdataloc[,2])),]
+
+write.table(snpdataloc, "snp_locations.map", row.names=FALSE, quote=FALSE)
+
+write.table(snpdata[rownames(snpdataloc), rownames(nubians)], "snp_genotypes_nubians_withloc.txt",sep="\t", quote=FALSE)
+
+
 ##E:\Goat\DNA\Structure\test\10k2.5k\Results
 ## Structure results (run Structure)
 structuredir <- "E:/Goat/DNA/Structure/"

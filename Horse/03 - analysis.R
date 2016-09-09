@@ -79,7 +79,11 @@ labelCol <- function(x) {
   return(x)
 }
 
-clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
+usingsamples <- rownames(phenotypes)[ii]
+usingsamples <- usingsamples[-which(usingsamples == "ARR1")]
+
+
+clusters <- hclust(dist(t(genotypes_num[,usingsamples]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
 plot(dendrogram.col, main = "Distance (manhattan)")
@@ -99,7 +103,7 @@ labelCol <- function(x) {
     hclass <- strains[attr(x, "label")]             # Fetch the class label
     hcol <- cols[hclass]                            # Determine color of the label
     cat(attr(x, "label"), hclass, hcol, "\n")
-    attr(x, "nodePar") <- list(col=hcol, cex=c(2,4))
+   # attr(x, "nodePar") <- list(col=hcol, cex=c(2,4))
     #attr(x, "leaflab") <- "none"
     if(grepl("NORF", attr(x, "label"))){
       #attr(x, "label") <- paste0("NORF",cnt)
@@ -113,7 +117,7 @@ labelCol <- function(x) {
 #clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-postscript("dendrogramArabPrzNorf_10_8.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+postscript("dendrogramArabPrzNorf_29_8.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
 plot(dendrogram.col, main = "", las=2, leaflab ="none", horiz = FALSE)
 text(1:length(labels(dendrogram.col)), -400, labels = labels(dendrogram.col))
 dev.off()

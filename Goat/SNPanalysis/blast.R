@@ -108,8 +108,66 @@ invertLWLT01Chr <- function(locs, chrs){
   return(locs)
 }
 locs <- invertLWLT01Chr(locs.orig, c("2", "3", "4", "7", "10", "12", "14", "15", "17", "23", "26", "27", "28"))
-
 locs <- locs[with(locs, order(chir1_Chr, chir1_Start)), ]
+write.table(locs,file="locs.txt",sep="\t")
+
+setwd("E:/Goat/DNA/")
+locs <- read.table("locs.txt", colClasses="character",sep='\t')
+
+changedChromosome <- function(locs){
+  chrcols <- colnames(locs)[which(grepl("Chr", colnames(locs)))]
+  iii <- NULL
+  for(x in 1:nrow(locs)){
+    if(max(table(as.character(unlist(locs[x,chrcols])))) < 3){
+      iii <- c(iii,x)
+    }
+  }
+  return(iii)
+}
+
+iii <- changedChromosome(locs)
+
+chrs.all <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", 
+          "15", "16", "17", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "X")
+chrs.gap <- 25000000
+chrs.len <- NULL
+chrs.sum <- 0
+ii <- 1
+for(chr in chrs.all){
+  chrs.len <- c(chrs.len, max(as.numeric(locs[which(locs[,1] == chr),2])))
+  chrs.sum <- c(chrs.sum, chrs.sum[ii] + chrs.len[ii] + chrs.gap )
+  ii <- ii +1
+}
+chrs.sum <- chrs.sum[-length(chrs.sum)]
+names(chrs.sum) <- chrs.all
+
+nI <- sum(unlist(lapply(chrs.len,as.numeric))) + (length(chrs.len)) * chrs.gap                         # Length + Gaps
+nS <- nI / 1000000
+nC <- chrs.sum / 1000000
+
+rot <- seq(1, 360, 360/nS)                                                          # Rotational axis
+cp <- seq(0, 2 * pi, length = length(rot))                                                                # Circle points in degrees
+coords <- t(rbind( sin(cp), cos(cp)))                                                             # Circle coordinates
+plot(coords[nC,])
+for(x in 1:nrow(locs)){
+  c1idx <-floor((chrs.sum[locs[x,1]] + as.numeric(locs[x,2])) / 1000000)
+  c2idx <-floor((chrs.sum[locs[x,5]] + as.numeric(locs[x,6])) / 1000000)
+  l1idx <-floor((chrs.sum[locs[x,9]] + as.numeric(locs[x,10])) / 1000000)
+  points(coords[c1idx,1], coords[c1idx,2], pch=18)
+  points(0.9*coords[c2idx,1], 0.9*coords[c2idx,2], pch=18)
+  
+  if(x %in% iii) points(c(coords[c1idx,1],0.9*coords[c2idx,1]), c(coords[c1idx,2],0.9*coords[c2idx,2]), t = 'l', col='red')
+  points(0.8*coords[l1idx,1], 0.8*coords[l1idx,2], pch=18)
+  if(x %in% iii) points(c(0.9*coords[c2idx,1], 0.8*coords[l1idx,1]), c(0.9*coords[c2idx,2],0.8*coords[l1idx,2]), t = 'l', col='blue')
+}
+
+ii <- 1
+for(chr in chrs.all){
+  idx <- (chrs.sum[ii] + (chrs.len[ii] /2)) / 1000000
+  text(0.7*coords[idx,1], 0.7*coords[idx,2], paste0("Chr ", chr), cex=0.8)
+  ii <- ii + 1
+}
+
 
 getOverlap <- function(on_g1, on_g2) {
   mgroup <- on_g1[which(on_g1 %in% on_g2)]

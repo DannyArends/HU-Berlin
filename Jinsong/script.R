@@ -34,31 +34,32 @@ phenotypes[1:5,1:10]; dim(phenotypes)
 # Phenotype names of interest, the rest is covar
 phe.names <- colnames(phenotypes[-c(1:5)])
 
-get.eff <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "Sex"){
+# Helper functions, simple linear models to get a 'handle; on the data
+get.eff <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "Sex") {
   phenotype.data <- as.numeric(phenotypes[, phe.name])
   group.factor <- as.factor(phenotypes[, effect])
   boxplot(phenotype.data ~ group.factor, main = phe.name, sort = TRUE)
   return(lm(phenotype.data ~ group.factor))
 }
 
-get.eff.lme <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "Sex"){
+get.eff.lme <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "Strain") {
   phenotype.data <- as.numeric(phenotypes[, phe.name])
   group.factor <- as.factor(phenotypes[, effect])
   boxplot(phenotype.data ~ group.factor, main = phe.name, sort = TRUE)
   return(lmer(phenotype.data ~ (1 | group.factor)))
 }
 
-get.eff.num <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "Sex"){
+get.eff.num <- function(phenotypes, phe.name = "Femur Length (mm) F", effect = "LogAGE") {
   phenotype.data <- as.numeric(phenotypes[, phe.name])
   return(lm(phenotype.data ~ as.numeric(phenotypes[, effect])))
 }
 
 get.residuals <- function(model) { 
-  idx <- as.numeric(names(model$residuals)); v   <- rep(NA, max(idx)); v[idx] <- as.numeric(model$residuals); return(v)
+  idx <- as.numeric(names(model$residuals)); v <- rep(NA, max(idx)); v[idx] <- as.numeric(model$residuals); return(v)
 }
 get.intercept <- function(model){ return(as.numeric(model$coefficients["(Intercept)"])) }
 
-# First, adjust for Sex
+# First, adjust for the major Sex effects we observe by using the residuals + mean
 phe.sex.adj <- NULL
 for(phe.name in phe.names){
   phe.adj <- get.residuals(get.eff(phenotypes, phe.name, "Sex")) +  mean(as.numeric(phenotypes[,phe.name]), na.rm = TRUE)
@@ -68,7 +69,7 @@ colnames(phe.sex.adj) <- phe.names
 phe.sex.adj <- cbind(phenotypes[,1:5], phe.sex.adj)
 phe.sex.adj[1:5, 1:8]
 
-# Then, adjust for LogAGE
+# Then, adjust for the major logAge effects we observe by using the residuals + mean, on the sex adjusted data
 phe.sex.age.adj <- NULL
 for(phe.name in phe.names){
   phe.adj <- get.residuals(get.eff.num(phe.sex.adj, phe.name, "LogAGE")) +  mean(as.numeric(phe.sex.adj[,phe.name]), na.rm = TRUE)

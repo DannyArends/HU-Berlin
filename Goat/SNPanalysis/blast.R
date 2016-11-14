@@ -154,11 +154,11 @@ for(x in 1:nrow(locs)){
   c2idx <-floor((chrs.sum[locs[x,5]] + as.numeric(locs[x,6])) / 1000000)
   l1idx <-floor((chrs.sum[locs[x,9]] + as.numeric(locs[x,10])) / 1000000)
   points(coords[c1idx,1], coords[c1idx,2], pch=18)
-  points(0.9*coords[c2idx,1], 0.9*coords[c2idx,2], pch=18)
+  points(0.7*coords[c2idx,1], 0.7*coords[c2idx,2], pch=18)
   
-  if(x %in% iii) points(c(coords[c1idx,1],0.9*coords[c2idx,1]), c(coords[c1idx,2],0.9*coords[c2idx,2]), t = 'l', col='red')
-  points(0.8*coords[l1idx,1], 0.8*coords[l1idx,2], pch=18)
-  if(x %in% iii) points(c(0.9*coords[c2idx,1], 0.8*coords[l1idx,1]), c(0.9*coords[c2idx,2],0.8*coords[l1idx,2]), t = 'l', col='blue')
+  if(x %in% iii) points(c(coords[c1idx,1],0.7*coords[c2idx,1]), c(coords[c1idx,2],0.7*coords[c2idx,2]), t = 'l', col=as.numeric(as.factor(locs[,1]))[x])
+  #points(0.8*coords[l1idx,1], 0.8*coords[l1idx,2], pch=18)
+  #if(x %in% iii) points(c(0.9*coords[c2idx,1], 0.8*coords[l1idx,1]), c(0.9*coords[c2idx,2],0.8*coords[l1idx,2]), t = 'l', col='blue')
 }
 
 ii <- 1

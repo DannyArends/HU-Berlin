@@ -202,7 +202,10 @@ names(breeds) <- rownames(samples)
 
 # Create colors
 cols <- c("red", "blue", "orange", "black")
-names(cols) <- c("Tagg", "Dese", "Ni", "Nu")
+names(cols) <- c("T", "D", "Ni", "Nu")
+
+viewn <- c("T", "D", "Ni", "Nu")
+names(viewn) <- c("Tagg", "Dese", "Ni", "Nu")
 
 labelCol <- function(x) {
   if (is.leaf(x)) {
@@ -213,6 +216,10 @@ labelCol <- function(x) {
   }
   return(x)
 }
+
+clustering1$labels <- viewn[clustering1$labels]
+clustering2$labels <- viewn[clustering2$labels]
+
 dendrogram1 <- as.dendrogram(clustering1)
 dendrogram2 <- as.dendrogram(clustering2)
 dendrogram1.col <- dendrapply(dendrogram1, labelCol)
@@ -222,10 +229,12 @@ orderingInD <- colnames(numsnpdata)[clustering2$order]
 write.table(samples[orderingInD, ], "samplesOrderedNeisDistance.txt", sep="\t")
 
 
+
+
 op <- par(mfrow=c(1,2), cex=0.5)
 plot(dendrogram1.col, main = "Manhattan distance",cex.axis=1.4, cex.main=1.4)
-png("NeiDistanceSiham.png", width=1024, height=800)
-  plot(dendrogram2.col, main = "Nei's genetic distance",cex.axis=1.4, cex.main=1.4)
+png("NeiDistanceSiham.png", width=2048, height=900, res=300, pointsize = 5)
+  plot(dendrogram2.col, main = "Nei's genetic distance",cex.axis=1.2, cex.main=1.4, las=2)
 dev.off()
 
 ### diversity analysis
@@ -305,14 +314,20 @@ sumpca <- summary(pcares)
 pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " var explained)")
 pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " var explained)")
 
-plot(c(-50,100), c(-100,150), col = cols[as.character(groups)],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), t = 'n',xaxt='n',yaxt='n', main="PCA analysis")
-axis(1, at = seq(-50, 100, 5))
-#abline(v = seq(-50, 100, 15), col="gray", lty=2)
-axis(2, at = seq(-100, 150, 20),las=2)
-#abline(h = seq(-100, 150, 50), col="gray", lty=2)
-points(pcares$x[,1], pcares$x[,2], col = cols[as.character(groups)], pch = 20, cex=1.4)
-legend("topright", names(cols), col=cols, pch=20,bg="white")
+# Create colors
+types <- c("x","o","#","%")
+names(types) <- c("T", "D", "Ni", "Nu")
 
+png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
+plot(c(-50,100), c(-100,150), col = cols[as.character(viewn[as.character(groups)])],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), 
+      t = 'n',xaxt='n', yaxt='n', main="PCA analysis", cex.lab=0.8)
+axis(1, at = seq(-50, 100, 20),cex.axis=0.8)
+#abline(v = seq(-50, 100, 15), col="gray", lty=2)
+axis(2, at = seq(-100, 150, 20),las=2,cex.axis=0.8)
+#abline(h = seq(-100, 150, 50), col="gray", lty=2)
+points(pcares$x[,1], pcares$x[,2], col = cols[as.character(viewn[as.character(groups)])], pch = types[viewn[as.character(groups)]], cex=0.6)
+legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white", cex=0.8)
+dev.off()
 
  # Correlation between variables and principal components
 var_cor_func <- function(var.loadings, comp.sdev){

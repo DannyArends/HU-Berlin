@@ -41,12 +41,14 @@ write.table(snpdata[rownames(snpdataloc), rownames(nubians)], "snp_genotypes_nub
 
 ##E:\Goat\DNA\Structure\test\10k2.5k\Results
 ## Structure results (run Structure)
-structuredir <- "E:/Goat/DNA/Structure/"
-projectname <- "test"
-paramsetname <- "10k2.5k"
+structuredir <- "E:/Goat/DNA/Structure/Goats"
+projectname <- "Goats"
+paramsetname <- "75kn10k"
 
 fullpath <- paste0(structuredir, "/", projectname, "/", paramsetname, "/Results")
 structureruns <- dir(fullpath)
+
+structureruns <- structureruns[c(10,11,2,3)]  # Look at only a subset of the runs
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)       # Returns string w/o leading or trailing whitespace
 
@@ -134,9 +136,9 @@ for(analysis in paste0(fullpath, "/", structureruns)){
   rownames(stmatrix) <- unlist(lapply(strsplit(structuredata[st:et], "\""),"[", 2))
   cat("--", analysis, "--\n")
   cat(structuredata[bt:(st-5)],sep="\n")        # Print some structure information
- # png(paste0(analysis, ".st.png"), width = 1024, height = 800)
+  png(paste0(analysis, ".st_75kn10k.png"), width = 1024, height = 800)
   aa <- plotStructure(stmatrix, popinfo, TRUE, FALSE)
- # dev.off()
+  dev.off()
   #cat("--All individuals--\n")
   #counts <- analyzeStructure(stmatrix)          # Compare how good the structure model fits with the breeders perspective
   #cat("--High purity (> 0.8)--\n")

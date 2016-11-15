@@ -169,10 +169,12 @@ for(phe.name in phe.names) {
       dev.off()
 
       # Create a row in the output table for this QTL
-      output.row <- c(paste0("QTL", qtl.idx), phe.name, chrs[i], map[top.start, "Mb"], 
-                      map[top.marker, "Mb"], map[top.stop, "Mb"], top.marker, top.value, 
-                      interaction.LRS[phe.name, top.marker], 
-                      mean(as.numeric(phenotype[which(marker.geno == "B")]), na.rm=TRUE), mean(as.numeric(phenotype[which(marker.geno == "D")]), na.rm=TRUE), sum(as.numeric(mAboveT)))
+      output.row <- c(paste0("QTL", qtl.idx), phe.name,
+                      chrs[i], map[top.start, "Mb"], map[top.marker, "Mb"], map[top.stop, "Mb"],
+                      top.marker, top.value, interaction.LRS[phe.name, top.marker],
+                      mean(as.numeric(phenotype[which(marker.geno == "B")]), na.rm=TRUE),
+                      mean(as.numeric(phenotype[which(marker.geno == "D")]), na.rm=TRUE),
+                      sum(as.numeric(mAboveT)))
       output.tablular <- rbind(output.tablular, output.row)
       
       qtl.idx <- qtl.idx + 1
@@ -215,4 +217,3 @@ boxplot(as.numeric(phenotype) ~ sex + as.factor(genotypes[strains, m]), notch = 
 
 # We observe that the QTLs we find here, have no sex specific component
 # Directions of effect are the same between M.B and M.D versus F.B and F.D
-# Also all of these 4 QTLs are real, since we can see the effect in the raw data

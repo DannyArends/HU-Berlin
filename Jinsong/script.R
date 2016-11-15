@@ -1,8 +1,6 @@
 # Script by Danny Arends, for analysis of BXD bone density data by glm
 
 library("lme4")
-library("qtl")
-library("ctl")
 
 setwd("D:/Collegues/Jinsong")
 

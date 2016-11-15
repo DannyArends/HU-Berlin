@@ -123,13 +123,14 @@ for(phe.name in phe.names) {
   }
 }
 
-# Write the results as marices to HDD
+# Write the results as matrices to HDD
 write.table(marker.LRS, "marker.LRS.txt", sep = "\t", quote = FALSE)
 write.table(interaction.LRS, "interaction.LRS.txt", sep = "\t", quote = FALSE)
 
 # Create plots of the different phenotypes
 for(phe.name in phe.names) {
-  plot(y = c(0, 25), x = c(0, max(map[,"cMplot"])), t = 'n', ylab = "LRS", xlab = "cM", main = phe.name)
+  png(paste0(gsub("%", "Pct", gsub("/", ".", gsub(" F", "", phe.name))), ".png"), width = 1200, height =  600)
+  plot(y = c(0, 25), x = c(0, max(map[,"cMplot"])), t = 'n', ylab = "LRS", xlab = "cM", main = gsub(" F", "", phe.name))
   for(i in 1:length(chrs)){
     mOnChr <- rownames(map[which(map[,"Chr"] == chrs[i]),])
     chrID <- ((i%%2) + 1)
@@ -138,27 +139,37 @@ for(phe.name in phe.names) {
   }
   abline(h = 15, col="green", lty = 2)
   abline(h = 12, col="gold", lty = 2)
+  dev.off()
 }
 
+LRS.cutoff <- 13.5
+LRS.threshold <- LRS.cutoff - (1.5 * toLRS)
 
+# Create an output table for QTL results
+output.tablular <- NULL
+for(phe.name in phe.names) {
+  for(i in 1:length(chrs)) {
+    mOnChr <- rownames(map[which(map[,"Chr"] == chrs[i]),])
+    mAboveC <- marker.LRS[phe.name, mOnChr] > LRS.cutoff
+    if(any(mAboveC)){
+      top.value <- max(marker.LRS[phe.name, mOnChr], na.rm = TRUE)
+      top.marker <- mOnChr[which.max(marker.LRS[phe.name, mOnChr])]
+      mAboveT <- marker.LRS[phe.name, mOnChr] > LRS.threshold
+      top.start <- names(which(mAboveT)[1])
+      top.stop <- names(which(mAboveT)[length(which(mAboveT))])
+      output.row <- c(phe.name, chrs[i], map[top.start, "cM"], map[top.marker, "cM"], map[top.stop, "cM"], top.marker, top.value, interaction.LRS[phe.name, top.marker], sum(as.numeric(mAboveT)))
+      output.tablular <- rbind(output.tablular, output.row)
+    }
+  }
+}
+colnames(output.tablular) <- c("Phenotype", "Chr", "Start", "Top", "Stop", "top marker", "max LRS", "G:SEX LRS", "M in region")
 
+# Write the output table with QTL results to HDD
+write.table(output.tablular, "output.tablular.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
-get.eff.lme(phe.sex.age.adj, phe.name, "Strain")
-
-lvls <- seq(0,1,length.out = nlevels(as.factor(phenotypes[,"Sex"])))
-cols <- rgb(lvls, rep(1,length(lvls)), 1.0 - lvls, 0.5)
-phe.adj.sex <- get.residuals(get.eff(phenotypes, phe.name, "Sex")) +  mean(as.numeric(phenotypes[,phe.name]), na.rm = TRUE)
-
-op <- par(mfrow=c(2, 1))
-
-boxplot(as.numeric(phenotypes[,phe.name]) ~ as.factor(phenotypes[,"Sex"]), col = cols, notch = TRUE)
-boxplot(phe.adj.sex ~ as.factor(phenotypes[,"Sex"]), add=TRUE, col = cols, notch = TRUE)
-
-phe.adj.logAge <- get.residuals(get.eff.num(phenotypes, phe.name, "LogAGE")) +  mean(as.numeric(phenotypes[,phe.name]), na.rm = TRUE)
-
-plot(as.numeric(phenotypes[,phe.name]) ~ as.numeric(phenotypes[,"LogAGE"]), col = rgb(1.0, 0.0, 0.0, 0.7), pch = 18, ylab = phe.name, main = phe.name)
-points(phe.adj.logAge ~ as.numeric(phenotypes[,"LogAGE"]), col = rgb(0.5, 1.0, 0.2, 0.7), pch = 18)
-legend("topright", c("Before Age correction", "After Age correction") ,col =c(rgb(1.0, 0.0, 0.0, 0.7), rgb(0.5, 1.0, 0.2, 0.7)), pch = 18, bg  = "white")
-
-
-
+# Double check for G:Sex effects
+for(phe.name in phe.names) {
+  if(any(interaction.LRS[phe.name, ] > LRS.cutoff)){
+    cat(phe.name, "might have a strong G:Sex effect", "\n")
+  }
+}

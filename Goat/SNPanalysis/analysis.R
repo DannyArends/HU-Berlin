@@ -5,7 +5,7 @@
 # first written Apr, 2016
 library(ape)
 
-setwd("E:/Goat/DNA/SihamAnalysis")
+setwd("D:/Edrive/Goat/DNA/SihamAnalysis")
 
 snpdata    <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE, colClasses="character")
 snpinfo    <- read.table("snpinfo.txt", sep="\t", na.strings=c("", "NA", "N.D."))

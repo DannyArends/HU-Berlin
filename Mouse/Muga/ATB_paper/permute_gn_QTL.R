@@ -1,12 +1,12 @@
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 
 patRegions <- read.table("Analysis/ATB_PAT.txt",sep="\t",header=TRUE, check.names=FALSE, colClasses="character")
 matRegions <- read.table("Analysis/ATB_MAT.txt",sep="\t",header=TRUE, check.names=FALSE, colClasses="character")
 
 #allRegions <- matRegions
-allRegions <- rbind(matRegions, patRegions)
+allRegions <- rbind(matRegions)
 
-setwd("E:/Mouse/DNA/MegaMuga/GeneNetwork")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/GeneNetwork")
 searchres <- read.csv("BXDpheno.txt", sep = "\t", header=FALSE, colClasses="character")
 
 chr <- unlist(lapply(strsplit(searchres[,7], ": "),"[", 1))
@@ -18,6 +18,9 @@ searchres <- cbind(searchres, chr=chr, loc=loc)
 searchres <- searchres[-which(searchres[,"chr"] == "N/A"),]
 
 searchres[1:5,]
+
+significant.lrs <- which(as.numeric(searchres[, 6]) > 16) # LRS scores not LOD :(
+searchres <- searchres[significant.lrs,]
 
 keywords <- c("Obesity", "Metabolism", "Body Weight", "Weight", "Fat", "Growth")
 
@@ -38,7 +41,7 @@ testQTLs <- function(allRegions){
       hasQTL <- TRUE
       for(word in keywords){
         if(any(grepl(word, searchres[idx,2], ignore.case=TRUE))){
-          #cat(" - ", word,"\n")
+          #cat(x, " - ", word, " - ", idx,"\n")
           hasKW <- TRUE
         }
       }
@@ -46,8 +49,8 @@ testQTLs <- function(allRegions){
     if(hasQTL) nQTL <- nQTL + 1
     if(hasKW) nKeyw <- nKeyw + 1
   }
-  cat("Regions with QTL:", nQTL / nrow(allRegions) * 100, "\n")
-  cat("Keywords per QTL:", nKeyw / nQTL * 100, "\n")
+  #cat("Regions with QTL:", nQTL / nrow(allRegions) * 100, "\n")
+  #cat("Keywords per QTL:", nKeyw / nQTL * 100, "\n")
   return(list(nQTL, nKeyw))
 }
 
@@ -65,13 +68,29 @@ randomRegions <- function(allRegions){
   return(newRegions)
 }
 
-testQTLs(allRegions)
-res <- vector("list", 1000)
+realdata <- testQTLs(allRegions)
+keywordsQTL <- realdata[[2]] / realdata[[1]]
+
+nperms <- 5000
+
+permutedata <- vector("list", nperms)
 x <- 1
-for(x in 1:1000){
+for(x in 1:nperms){
   newRegions <- randomRegions(allRegions)
-  res[[x]] <- testQTLs(newRegions)
+  permutedata[[x]] <- testQTLs(newRegions)
 }
 
-mean(unlist(lapply(res,"[",2)) / unlist(lapply(res,"[",1)))
-sd(unlist(lapply(res,"[",2)) / unlist(lapply(res,"[",1)))
+# Mean and sd for n QTLs in 85 regions
+mean(unlist(lapply(permutedata,"[",1))/nrow(allRegions))
+sd(unlist(lapply(permutedata,"[",1))/nrow(allRegions))
+
+pvalQTLs <- length(which(realdata[1] < unlist(lapply(permutedata,"[",1)))) + 1 / nperms
+cat(pvalQTLs, "\n")
+
+# Mean and sd for n regions with QTLs, that have one or more keywords
+mean(unlist(lapply(permutedata,"[",2)) / unlist(lapply(permutedata,"[",1)))
+sd(unlist(lapply(permutedata,"[",2)) / unlist(lapply(permutedata,"[",1)))
+
+permute.sorted <- sort(unlist(lapply(permutedata,"[",2)) / unlist(lapply(permutedata,"[",1)))
+pvalKWregions <- length(which(keywordsQTL < permute.sorted)) / nperms
+cat(pvalKWregions, "\n")

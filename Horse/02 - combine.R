@@ -1,6 +1,8 @@
+# Combined all the different sources of horse data together for analysis of the horse SNP chip data
 #
-# Combined analysis for all the horse data
-#
+# copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
+# last modified Nov, 2016
+# first written Feb, 2015
 
 toNumeric <- function(genotypes){
   numericG <- apply(genotypes, 1, function(x){

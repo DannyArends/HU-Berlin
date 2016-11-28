@@ -1,6 +1,9 @@
+# Pre-process horse SNP chip data into a single format
 #
-# Pre-process the horse data into a single format
-#
+# copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
+# last modified Nov, 2016
+# first written Feb, 2015
+
 
 opposite <- function(x){
   if(is.na(x)) return("")

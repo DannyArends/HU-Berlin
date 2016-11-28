@@ -19,7 +19,7 @@ toGenPop <- function(genotypes){
   return(t(numericG))
 }
 
-setwd("E:/Horse/DNA/")
+setwd("D:/Edrive/Horse/DNA/")
 
 genotypes_snp  <- read.csv("combined/input/genotypes_snp.txt", sep="\t")
 markerinfo     <- read.csv("combined/input/map.txt", sep="\t")
@@ -284,7 +284,68 @@ for(phe in colnames(pvalues)) {
 }
 
 #Principal component analysis
+
+ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "Arabian"))
+
+strains <- as.character(phenotypes[ii,"Strain"])
+names(strains) <- rownames(phenotypes)[ii]
+
+
+
+geno_num <- genotypes_num[,which(colnames(genotypes_num) %in% names(strains))]
+
+misdata <- which(apply(geno_num, 1, function(x){any(is.na(x))}))
+geno_num <- geno_num[-misdata,]
+
+res <- apply(t(geno_num),2,table)
+markersBad <- names(which(lapply(res, length) == 1))
+geno_num <- geno_num[-which(rownames(geno_num) %in% markersBad),]
+
+pcares <- prcomp(t(geno_num), scale=TRUE)
+sumpca <- summary(pcares)
+
+groups <- strains
+
+plot(pcares$x[,1], pcares$x[,2], col=as.numeric(as.factor(groups)), cex=1.6, pch=18)
+legend("topleft", col=as.numeric(unique(as.factor(groups))), legend = unique(as.factor(groups)),cex = 0.8, pch=18)
+
+# Correlation between variables and principal components
+var_cor_func <- function(var.loadings, comp.sdev){
+  var.loadings*comp.sdev
+}
+
+# Variable correlation/coordinates
+var.coord <- t(apply(pcares$rotation, 1, var_cor_func, pcares$sdev))
+head(var.coord[, 1:4])
+var.cos2 <- var.coord^2
+comp.cos2 <- apply(var.cos2, 2, sum)
+contrib <- function(var.cos2, comp.cos2){var.cos2*100/comp.cos2}
+var.contrib <- t(apply(var.cos2,1, contrib, comp.cos2))
+
+highcontrib <- names(which(var.contrib[,1] > (100 / length(var.contrib[,1])) * 10))
+
+markerinfo[highcontrib,]
+
+
+mafs <- NULL
+for(x in unique(groups)){
+	inG <- names(groups)[which(groups == x)]
+	geno_num[highcontrib,inG]
+	mafs <- rbind(mafs, apply(geno_num[highcontrib,inG],1,function(x){
+	  ss <- (sum(as.numeric(x == 1)) * 2) + sum(as.numeric(x == 2))
+	  cat(ss, (2*sum(table(x))), "\n")
+	  maf <- (ss / (2*sum(table(x)))) * 100
+	  return(maf)
+	}))
+}
+rownames(mafs) <- unique(groups)
+
+cbind(markerinfo[highcontrib,c(10,11)], t(mafs))
+
+
 library(pcaMethods)
+
+
 resSvd <- pca(genotypes_num, method = "svd", nPcs = 5, center = FALSE)
 
 colz <- as.numeric(as.factor(phenotypes[rownames(resSvd@loadings),"Strain"])) + 1

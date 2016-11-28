@@ -3,6 +3,7 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Feb, 2015
 # first written Feb, 2015
+
 setwd("E:/Horse/DNA/Kabadiner/")
 
 horsedata1   <- read.table("input/Kabadiner-1.txt", header=TRUE, sep = "\t",na.strings=c("--", "x", "unknown", ""), colClasses="character", row.names=2)

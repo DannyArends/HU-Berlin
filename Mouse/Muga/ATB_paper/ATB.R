@@ -2,11 +2,11 @@
 # Analyse ATB in megaMuga data from multiple generations after beagle phasing
 #
 
-source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
-source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
+source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
+source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
 
 # Load the genotype call data
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive//Mouse/DNA/MegaMuga/")
 phased.vcf <- read.table(gzfile(paste0("Analysis/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
 colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("Analysis/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
 

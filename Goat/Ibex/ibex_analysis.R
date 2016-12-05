@@ -14,7 +14,8 @@ sihamrawsnp  <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE, col
 sihamsamples <- read.csv("merged_samples_NO_DN2.txt",sep="\t")
 
 tagData <- rownames(sihamsamples)[which(sihamsamples[,"Breed"] == "Tagg")]
-
+sihamsamples <- sihamsamples[tagData,]
+sihamrawsnp <- sihamrawsnp[,tagData]
 
 # Load the Ibex data
 setwd("D:/Edrive/Goat/DNA/Ibex")
@@ -52,6 +53,11 @@ tooMuchMissingHQ <- rownames(snpdataHQ)[which(missingHQ > 0.05)]
 tooLowGenTrain   <- rownames(snpinfo)[which(snpinfo[,"GenTrain.Score"] < 0.6)]
 tooLowMinorA     <- rownames(snpinfo)[which(snpinfo[,"Minor.Freq"] < 0.05)]
 
+length(tooLowGenTrain)
+length(tooMuchMissingHQ) - length(which(tooMuchMissingHQ %in% tooLowGenTrain))
+length(tooLowMinorA) - length(which(tooLowMinorA %in% c(tooMuchMissingHQ, tooLowGenTrain)))
+
+
 badMarkers <- unique(c(tooMuchMissingHQ, tooLowGenTrain, tooLowMinorA))
 length(badMarkers)
 
@@ -75,13 +81,18 @@ dim(snpinfo); snpinfo[1:5,]
 ## Merge the SNP data from Sudanese Ibes with the taggar goat
 sihamrawsnp <- sihamrawsnp[which(rownames(sihamrawsnp) %in%  rownames(snpdata)),]
 snpdata <- snpdata[which(rownames(snpdata) %in%  rownames(sihamrawsnp)),]
+
 map <- map[rownames(snpdata), ]
 map <- map[with(map, order(chrN, Pos)), ]         # Order the map, chromosome then position
 snpdata <- snpdata[rownames(map), ]               # Order the SNP data, as to match the map
 sihamrawsnp <- sihamrawsnp[rownames(map), ]       # Order the SNP data, as to match the map
 snpinfo <- snpinfo[rownames(map), ]               # Order the SNP info to match the map
+snpdata <- cbind(snpdata, sihamrawsnp)
 
-snpdata <- cbind(snpdata, sihamrawsnp[,tagData])
+for(x in c(1:29, "X")){
+  diffs <- diff(map[which(map[,"chrN"] == x), "Pos"])
+  cat(x, round(mean(diffs) / 1000,1), round(min(diffs) / 1000,1), "/", round(max(diffs) / 1000,1),"\n")
+}
 
 snpinfo <- cbind(snpinfo, minorallele = NA, majorallele = NA)
 for(x in rownames(snpdata)){
@@ -108,7 +119,7 @@ colnames(numsnpdataHQ)[which(colnames(numsnpdataHQ) %in% tagData)] <- rep("Tagga
 
 
 distances <- dist(t(numsnpdataHQ))
-plot(hclust(distances), main="Clustering of High Quality data")
+plot(hclust(distances), main="Euclidean distances between populations", hang=-1)
 
 ## Principal component analysis
 misdata <- which(apply(numsnpdataHQ, 1, function(x){any(is.na(x))}))
@@ -123,15 +134,16 @@ groups <- colnames(numsnppca)
 
 sumpca <- summary(pcares)
 
-pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " var explained)")
-pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " var explained)")
+pca1 <- paste0("PC1 (", round(sumpca$importance[2,1] * 100,1), "%", " var explained)")
+pca2 <- paste0("PC2 (", round(sumpca$importance[2,2] * 100,1), "%", " var explained)")
+pca3 <- paste0("PC3 (", round(sumpca$importance[2,3] * 100,1), "%", " var explained)")
 
 # Create colors
 types <- c("x","o","#", "t")
-names(types) <- c("Sudan", "Zoo Ibex", "Bezoarziege", "Taggar")
+names(types) <- c("Ibex (Sudan)", "Ibex (Zoo)", "Bezoar", "Taggar")
 # Create colors
 cols <- c("red", "blue", "orange", "black")
-names(cols) <- c("Sudan", "Zoo Ibex", "Bezoarziege", "Taggar")
+names(cols) <- c("Ibex (Sudan)", "Ibex (Zoo)", "Bezoar", "Taggar")
 
 #png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
 plot(c(-250,100), c(-100,150), col = cols[as.character(as.character(groups))],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), 
@@ -140,8 +152,12 @@ axis(1, at = seq(-50, 100, 20),cex.axis=0.8)
 #abline(v = seq(-50, 100, 15), col="gray", lty=2)
 axis(2, at = seq(-100, 150, 20),las=2,cex.axis=0.8)
 #abline(h = seq(-100, 150, 50), col="gray", lty=2)
-plot(pcares$x[,1], pcares$x[,2], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=0.6)
-#legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white", cex=0.8)
+op <- par(mfrow = c(2,2))
+plot(pcares$x[,1], pcares$x[,2], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca3)
+plot(pcares$x[,1], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca3)
+plot(pcares$x[,2], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca2, ylab = pca3)
+plot(c(0,1),c(0,1), t = 'n',xaxt='n',yaxt='n', xlab="", ylab="")
+legend("topright", unique(groups), pch = types[unique(as.character(groups))], col= cols[unique(as.character(groups))], bg="white", cex=0.8)
 #dev.off()
 
  # Correlation between variables and principal components
@@ -217,6 +233,8 @@ distances <- dist(t(numsnpdata[, highQualityS]))
 plot(hclust(distances), main="Clustering of High Quality data")
 
 
+snpdata <- snpdata[, c(highQualityS, tagData)]
+
 # Transform SNPs to a format stampp can understand
 absnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames=list(rownames(snpdata), colnames(snpdata)))
 for(x in rownames(snpdata)){
@@ -230,7 +248,10 @@ for(x in rownames(snpdata)){
 library(StAMPP)
 
 stammpinput <- t(absnpdata)
-stammpinput <- cbind(Sample = rownames(stammpinput), Pop = as.character(samples[rownames(stammpinput), "Sum"]), Ploidy = 2, Format = "BiA", stammpinput)
+populations <- as.character(samples[rownames(stammpinput), "Sum"])
+populations[is.na(populations)] <- "Taggar"
+
+stammpinput <- cbind(Sample = rownames(stammpinput), Pop = populations, Ploidy = 2, Format = "BiA", stammpinput)
 stammpinput <- as.data.frame(stammpinput)
 
 stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
@@ -245,12 +266,11 @@ write.table(stammpinput.amova[[1]], file = "amovaSSD.txt", sep = "\t")
 write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
 
 # Nei's genetic distance
-rownames(stammp.D.ind) <- samples[rownames(stammp.D.ind), "Origin.Species"]
+rownames(stammp.D.ind) <- samples[rownames(stammp.D.ind), "Sum"]
+rownames(stammp.D.ind)[is.na(rownames(stammp.D.ind))] <- "Taggar"
+rownames(stammp.D.ind)[is.na(rownames(stammp.D.ind))] <- "Taggar"
 stmpD <- as.dist(stammp.D.ind)
 plot(hclust(stmpD), main="Nei's genetic distance")
-
-
-
 
 
 ### diversity analysis

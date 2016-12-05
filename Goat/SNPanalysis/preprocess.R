@@ -4,7 +4,7 @@
 # last modified Apr, 2016
 # first written Apr, 2016
 
-setwd("E:/Goat/DNA/Annotation")
+setwd("D:/Edrive/Goat/DNA/Annotation")
 
 arrayinfo <- read.csv("IGGC CapriBatch1.txt", sep="\t", skip = 29)
 arrayinfo[1:10,]

@@ -249,7 +249,7 @@ for(phe in colnames(pvalues)) {
 }
 write.table(results, "combined/output/pvaluesGWAS_0.05.txt", sep="\t", col.names=FALSE, row.names=FALSE)
 
-
+setwd("D:/Edrive/Horse/DNA/")
 pvalues     <- read.table("combined/output/pvaluesGWAS.txt", sep="\t")
 markerinfo  <- read.csv("combined/input/map.txt", sep="\t")
 
@@ -268,15 +268,39 @@ for(x in c("1", "2", "3", "4", "5", "6", "7", "8", "9","10", "11", "12", "13", "
   newpvalues <- rbind(newpvalues, pvalues[rownames(msubset),])
 }
 
+
+
+mlenghts <- table(unlist(as.numeric(as.character(newmarkerinfo[,"Chr"]))))
+mlenghtsd2 <- table(unlist(as.numeric(as.character(newmarkerinfo[,"Chr"])))) / 2
+
+chrend <- c()
+chrstart <- c(0)
+for(x in 1:32){
+  chrend <- c(chrend, chrstart[x] + mlenghts[x])
+  chrstart <- c(chrstart, chrend[x])
+}
+names(chrstart) <- 1:32
+names(chrend) <- 1:32
+
 markerinfo <- newmarkerinfo
 pvalues <- newpvalues
 
-chrcols <- 1+ (as.numeric(as.factor(markerinfo[,"Chr"])) %% 2)
+chrcols <- 1 + (as.numeric(as.character(markerinfo[,"Chr"])) %% 2)
+chrcols[is.na(chrcols)] <- 1
+
+chrcolsA <- as.numeric(as.character(markerinfo[,"Chr"]))
+chrcolsA[is.na(chrcolsA)] <- 1
 
 for(phe in colnames(pvalues)) {
   png(paste0("combined/output/GWAS_", gsub("\\\\hr", "pH", phe), ".png"), width=1024, height=600)
+   # op <- par(mfrow = c(2,1))
+   # plot(x = c(1, nrow(pvalues)), y = c(0,10), t='n', main=phe, ylab = "LOD score (-log10(p))", xlab = "Marker")
+   # points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=chrcols)
+   #  abline(v=chrstart)
+     
     plot(x = c(1, nrow(pvalues)), y = c(0,10), t='n', main=phe, ylab = "LOD score (-log10(p))", xlab = "Marker")
-    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=chrcols)
+    points(-log10(pvalues[,phe]), pch = 19, cex = 0.5, col=chrcolsA)
+    #abline(v=chrstart)
     abline(h = -log10(0.1/nrow(pvalues)), col="orange")
     abline(h = -log10(0.05/nrow(pvalues)), col="gold")
     abline(h = -log10(0.01/nrow(pvalues)), col="green")

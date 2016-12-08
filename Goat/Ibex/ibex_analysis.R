@@ -153,17 +153,15 @@ axis(1, at = seq(-50, 100, 20),cex.axis=0.8)
 axis(2, at = seq(-100, 150, 20),las=2,cex.axis=0.8)
 #abline(h = seq(-100, 150, 50), col="gray", lty=2)
 op <- par(mfrow = c(2,2))
-plot(pcares$x[,1], pcares$x[,2], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca3)
+plot(pcares$x[,1], pcares$x[,2], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca2)
 plot(pcares$x[,1], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca3)
 plot(pcares$x[,2], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca2, ylab = pca3)
 plot(c(0,1),c(0,1), t = 'n',xaxt='n',yaxt='n', xlab="", ylab="")
-legend("topright", unique(groups), pch = types[unique(as.character(groups))], col= cols[unique(as.character(groups))], bg="white", cex=0.8)
+legend("center", unique(groups), pch = types[unique(as.character(groups))], col= cols[unique(as.character(groups))], bg="white")
 #dev.off()
 
  # Correlation between variables and principal components
-var_cor_func <- function(var.loadings, comp.sdev){
-  var.loadings*comp.sdev
-}
+var_cor_func <- function(var.loadings, comp.sdev){ return(var.loadings * comp.sdev) }
 
 # Variable correlation/coordinates
 var.coord <- t(apply(pcares$rotation, 1, var_cor_func, pcares$sdev))
@@ -172,62 +170,100 @@ var.cos2 <- var.coord^2
 comp.cos2 <- apply(var.cos2, 2, sum)
 contrib <- function(var.cos2, comp.cos2){var.cos2*100/comp.cos2}
 var.contrib <- t(apply(var.cos2,1, contrib, comp.cos2))
-importantSNPsP1 <-  names(which(var.contrib[,1] >= 0.0083))
-#importantSNPsP2sh <-  names(which(var.contrib[,2] >= 0.05))
-#importantSNPsP2h <-  names(which(var.contrib[,2] >= 0.04))
+colz <- c(rep("black", nrow(var.contrib)-100), rep("red", 100))
+op <- par(mfrow = c(2,2))
+plot(sort(var.contrib[,1]), main="Sorted contribution to PC1", las=2, xlab="SNP", ylab="% Contribution", col=colz,pch=18)
+abline(h=mean(var.contrib[,1]))
+abline(h = mean(var.contrib[,1]) + sd(var.contrib[,1]), lty=2)
+abline(h = mean(var.contrib[,1]) + 2 * sd(var.contrib[,1]), lty=2, col="green")
+abline(h = mean(var.contrib[,1]) - sd(var.contrib[,1]), lty=2)
+plot(sort(var.contrib[,2]), main="Sorted contribution to PC2", las=2, xlab="SNP", ylab="% Contribution", col=colz,pch=18)
+abline(h=mean(var.contrib[,2]))
+abline(h = mean(var.contrib[,2]) + sd(var.contrib[,2]), lty=2)
+abline(h = mean(var.contrib[,2]) + 2 * sd(var.contrib[,2]), lty=2, col="green")
+abline(h = mean(var.contrib[,2]) - sd(var.contrib[,2]), lty=2)
+plot(sort(var.contrib[,3]), main="Sorted contribution to PC3", las=2, xlab="SNP", ylab="% Contribution", col=colz,pch=18)
+abline(h=mean(var.contrib[,3]))
+abline(h = mean(var.contrib[,3]) + sd(var.contrib[,3]), lty=2)
+abline(h = mean(var.contrib[,3]) + 2 * sd(var.contrib[,3]), lty=2, col="green")
+abline(h = mean(var.contrib[,3]) - sd(var.contrib[,3]), lty=2)
+plot(c(0,1),c(0,1), t = 'n',xaxt='n',yaxt='n', xlab="", ylab="", bty="n", box=FALSE)
+legend("center", c("Mean contribution", "Mean +/- sd", "Mean + 2*sd", "Top 100"), lty=c(1, 2, 2,0), pch=c(NA,NA,NA, 18), col=c(1,1,"green", "red"), bg="white")
+
+pc1thr <- mean(var.contrib[,1]) + 2 * sd(var.contrib[,1])
+pc2thr <- mean(var.contrib[,2]) + 2 * sd(var.contrib[,2])
+pc3thr <- mean(var.contrib[,3]) + 2 * sd(var.contrib[,3])
+
+importantSNPsP1 <-  names(which(var.contrib[,1] >= pc1thr)); length(importantSNPsP1)
+importantSNPsP1t <-  names(sort(var.contrib[,1],dec=TRUE))[1:100]; length(importantSNPsP1t)
+importantSNPsP2 <-  names(which(var.contrib[,2] >= pc2thr)); length(importantSNPsP2)
+importantSNPsP2t <-  names(sort(var.contrib[,2],dec=TRUE))[1:100]; length(importantSNPsP2t)
+importantSNPsP3 <-  names(which(var.contrib[,3] >= pc3thr)); length(importantSNPsP3)
+importantSNPsP3t <-  names(sort(var.contrib[,3],dec=TRUE))[1:100]; length(importantSNPsP3t)
+
 SNPsPCA1 <- map[importantSNPsP1, c("chrN", "Pos")]
-#SNPsPCA2 <- map[importantSNPsP2h, c("chrN", "Pos")]
+SNPsPCA1t <- map[importantSNPsP1t, c("chrN", "Pos")]
+SNPsPCA2 <- map[importantSNPsP2, c("chrN", "Pos")]
+SNPsPCA2t <- map[importantSNPsP2t, c("chrN", "Pos")]
+SNPsPCA3 <- map[importantSNPsP3, c("chrN", "Pos")]
+SNPsPCA3t <- map[importantSNPsP3t, c("chrN", "Pos")]
 
 chromosomes <- c(as.character(1:29),"X")
 ymax <- max(map[,"Pos"])
 
+op <- par(mfrow = c(1,1))
 plot(x=c(0,length(chromosomes)), y = c(0, ymax), t='n', xaxt='n', yaxt='n', ylab="", xlab="Chromosome")
 chrid <- 1
 for(chr in chromosomes){
   allG <- map[map[,"chrN"] == chr, "Pos"]
   chrM <- max(map[map[,"chrN"] == chr, "Pos"])
-  intG1 <- SNPsPCA1[which(SNPsPCA1[,"chrN"] == chr),"Pos"]
-  #intG2 <- SNPsPCA2[which(SNPsPCA2[,"chrN"] == chr),"Pos"]
-  #intP <- SNPlPCA1[which(SNPlPCA1[,"chrN"] == chr),"Pos"]
-  lines(x=c(chrid,chrid), y = c(0, chrM))
-  points(x = rep(chrid, length(allG)), allG, pch="-", col=rgb(0.9, 0.9, 0.9), cex=2)
-  #points(x = rep(chrid, length(intP)), intP, pch="-", col=rgb(0.5, 0.5, 0.5), cex=2)
-  #points(x = rep(chrid, length(intG2)), intG2, pch="-", col="darkgray", cex=2)
-  points(x = rep(chrid, length(intG1)), intG1, pch="-", col="orange", cex=2)
+  intG1 <- SNPsPCA1[which(SNPsPCA1[,"chrN"] == chr), "Pos"]
+  intG1t <- SNPsPCA1t[which(SNPsPCA1t[,"chrN"] == chr), "Pos"]
+  intG2 <- SNPsPCA2[which(SNPsPCA2[,"chrN"] == chr), "Pos"]
+  intG2t <- SNPsPCA2t[which(SNPsPCA2t[,"chrN"] == chr), "Pos"]
+  intG3 <- SNPsPCA3[which(SNPsPCA3[,"chrN"] == chr), "Pos"]
+  intG3t <- SNPsPCA3t[which(SNPsPCA3t[,"chrN"] == chr), "Pos"]
+  lines(x=c(chrid,chrid), y = c(0, chrM),lwd=2)
+  #points(x = rep(chrid, length(allG))+0.0, allG, pch="-", col="lightgray", cex=0.5)
+  points(x = rep(chrid, length(intG1))-0.2, intG1, pch="-", col=rgb(1,0,0,0.1), cex=2)
+  points(x = rep(chrid, length(intG1t))-0.2, intG1t, pch="-", col="red", cex=2)
+  points(x = rep(chrid, length(intG2))+0.0, intG2, pch="-", col="gray90", cex=2)
+  points(x = rep(chrid, length(intG2t))+0.0, intG2t, pch="-", col="black", cex=2)
+  points(x = rep(chrid, length(intG3))+0.2, intG3, pch="-", col="aliceblue", cex=2)
+  points(x = rep(chrid, length(intG3t))+0.2, intG3t, pch="-", col="blue", cex=2)
   chrid <- chrid + 1
 }
 axis(1, at = 1:length(chromosomes), chromosomes,cex.axis=0.8)
 axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "mb"),las=2)
+legend("top", c("PC1 > (mean + 2SD)", "PC1 - Top 100", "PC2 > (mean + 2SD)", "PC2 - Top 100", "PC3 > (mean + 2SD)", "PC3 - Top 100"), pch="-", col=c(rgb(1,0,0,0.1), "red", "gray90", "black", "aliceblue", "blue"),pt.cex=3)
 
-HighIbexAll <- numsnpdataALL[rownames(SNPsPCA1),]
-colnames(HighIbexAll) <- samples[colnames(numsnpdataALL[rownames(SNPsPCA1),]),"Sum"]
-
-highBetweenIbex <- numsnppca[rownames(SNPsPCA1),]
-#colnames(highBetweenIbex) <- samples[colnames(numsnppca[rownames(SNPsPCA1),]),"Sum"]
-
-res <- map[rownames(highBetweenIbex),]
+pc1map <- map[rownames(SNPsPCA1t),]
+pc2map <- map[rownames(SNPsPCA2t),]
+pc3map <- map[rownames(SNPsPCA3t),]
 
 proteins <- read.csv("D:/Edrive/Goat/DNA/annotation/ProteinTable10731_39633_ensembl.txt", sep="\t")
 
-genes <- NULL
-for(x in 1:nrow(res)){
-  inregion <- proteins[which(as.character(proteins[,1]) == res[x,"chrN"] & 
-                             proteins[,3] > as.numeric(res[x,"Pos"]) - 250000 & 
-                             proteins[,3] < as.numeric(res[x,"Pos"]) + 250000),]
-  genes <- rbind(genes, inregion)
+getGenes <- function(pcmap, proteins){
+  genes <- NULL
+  for(x in 1:nrow(pcmap)){
+    inregion <- proteins[which(as.character(proteins[,1]) == pcmap[x,"chrN"] & 
+                               proteins[,3] > as.numeric(pcmap[x,"Pos"]) - 250000 & 
+                               proteins[,3] < as.numeric(pcmap[x,"Pos"]) + 250000),]
+    genes <- rbind(genes, inregion)
+  }
+  gn <- unlist(lapply(strsplit(as.character(genes[,"Protein.name"]), " isoform"),"[",1))
+  genes <- genes[-which(duplicated(gn)),]
+  genes <- genes[with(genes, order(X.Replicon.Name, Start)), ]         # Order the map, chromosome then position
+  return(genes)
 }
-genes <- genes[-which(duplicated(genes[,"GeneID"])),]
 
-write.table(genes, file="res.txt", sep="\t")
+write.table(getGenes(pc1map, proteins), file="pc1genes.txt", sep="\t")
+write.table(getGenes(pc2map, proteins), file="pc2genes.txt", sep="\t")
+write.table(getGenes(pc3map, proteins), file="pc3genes.txt", sep="\t")
 
-
-#colnames(numsnpdata) <- paste0(samples[colnames(snpdata),"Origin.Species"]," ", round(100 * (1-as.numeric(samples[colnames(snpdata),"Call.Rate"])), d = 0))
-#idx <- grep("Sudan", colnames(numsnpdata))
-#numsnpdata <- numsnpdata[, idx]
-
+## OLD CLUSTERING PLOTS
 distances <- dist(t(numsnpdata))
 plot(hclust(distances), main="Clustering of High Quality data")
-
 
 distances <- dist(t(numsnpdata[, highQualityS]))
 plot(hclust(distances), main="Clustering of High Quality data")
@@ -244,6 +280,7 @@ for(x in rownames(snpdata)){
   absnpdata[x, snpdata[x,] == major.Homo] <- "BB"
   absnpdata[x, snpdata[x,] != major.Homo & snpdata[x,] != minor.Homo & !is.na(snpdata[x,])] <- "AB"
 }
+write.table(absnpdata, "absnpdata.txt", sep="\t", quote=FALSE)
 
 library(StAMPP)
 
@@ -290,19 +327,21 @@ toGenPop <- function(genotypes){
   rownames(numericG) <- colnames(genotypes)
   return(t(numericG))
 }
+genotypes_genpopA <- t(toGenPop(absnpdata))
 
-genotypes_genpop <- t(toGenPop(absnpdata))
-set.seed(0)
-rsample <- sample(ncol(genotypes_genpop), ncol(genotypes_genpop) / 20)
-genotypes_genpop <- genotypes_genpop[, rsample]
+write.table(genotypes_genpopA, "snpdataGP.txt", sep="\t", quote=FALSE)
+set.seed(1)
+rsample <- sample(ncol(genotypes_genpopA), 2000)
+genotypes_genpop <- genotypes_genpopA[, rsample]
 
 rownames(genotypes_genpop) <- samples[rownames(genotypes_genpop), "Sum"]
-
-
+rownames(genotypes_genpop)[is.na(rownames(genotypes_genpop))] <- "Taggar"
+rownames(genotypes_genpop) <- gsub(")", "", gsub("(", "", gsub(" ", "_", rownames(genotypes_genpop)), fixed = TRUE))
 
 ### Write out genotypes in genpop format for usage in diveRsity
 cat("BLANK\n", file="genotypes_genpop.txt")
 cat(paste0(colnames(genotypes_genpop), collapse="\n"), file="genotypes_genpop.txt", append=TRUE)
+cat("\n", file="genotypes_genpop.txt", append=TRUE)
 
 for(pop in unique(rownames(genotypes_genpop))) {
   cat("POP\n", file="genotypes_genpop.txt", append=TRUE)
@@ -321,9 +360,9 @@ names(basicStats$fis) <- colnames(basicStats$Ho)
 basicStats$Ho["overall",] # Observed
 basicStats$He["overall",] # Expected
 
-basicStats$fis[["Bezoarziege"]]["overall",]                   # Fis
-basicStats$fis[["Zoo Ibex"]]["overall",]                      # Fis
-basicStats$fis[["Sudan"]]["overall",]                         # Fis
+basicStats$fis[["Bezoar"]]["overall",]                   # Fis
+basicStats$fis[["Ibex_Zoo"]]["overall",]                      # Fis
+basicStats$fis[["Ibex_Sudan"]]["overall",]                         # Fis
 basicStats$fis[["Combined"]]["overall",]                      # Fis
 
 

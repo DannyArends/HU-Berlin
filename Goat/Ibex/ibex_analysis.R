@@ -365,6 +365,38 @@ basicStats$fis[["Ibex_Zoo"]]["overall",]                      # Fis
 basicStats$fis[["Ibex_Sudan"]]["overall",]                         # Fis
 basicStats$fis[["Combined"]]["overall",]                      # Fis
 
-
 advancedStats <- diffCalc(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
 advancedStats$pairwise$Fst # Pairwise Fst per populations
+
+## STRUCTURE
+if(!file.exists("cleaned_genotypes_structure.txt")){
+  # Write out the data for STRUCTURE
+  numsnpdata <- t(numsnpdataALL[, c(highQualityS, tagData)])
+  structGeno <- NULL #matrix(NA, nrow(numGeno) * 2, ncol(numGeno))
+  for(x in 1:nrow(numsnpdata)){
+    gg <- rbind(rep(NA, ncol(numsnpdata)), rep(NA, ncol(numsnpdata)))
+    a1 <- which(numsnpdata[x,] == 1)
+    a2 <- which(numsnpdata[x,] == 2)
+    a3 <- which(numsnpdata[x,] == 3)
+    gg[1, a1] <- 0; gg[2, a1] <- 0  # Pretty inefficient, but it will do the trick
+    gg[1, a2] <- 0; gg[2, a2] <- 1
+    gg[1, a3] <- 1; gg[2, a3] <- 1
+    gg[is.na(gg)] <- 9
+    structGeno <- rbind(structGeno, gg)
+  }
+ 
+  rownames(structGeno) <- gsub(" ","", unlist(lapply(rownames(numsnpdata), rep, 2)))    # Spaces are not allowed in sample names
+  colnames(structGeno) <- colnames(numsnpdata)
+
+  rownames(samples) <- gsub(" ","", rownames(samples))
+  samples[gsub(" ","",rownames(structGeno)),]
+  
+  pops <- samples[gsub(" ","",rownames(structGeno)),"Sum"]
+  pops[is.na(pops)] <- "Taggar"
+  pops <- as.factor(pops)
+  structGeno <- cbind(as.numeric(pops), structGeno)
+  # We need to remove the empty entry from the first line of the file
+  # Structure settings: 44 individuals, 33698 markers, missing data = 9, row markernames: yes, column individual id: yes, column pop id: yes
+  write.table(structGeno, file="cleaned_genotypes_structure.txt", sep = "\t")           # Save the genotypes to disk
+}
+

@@ -40,13 +40,14 @@ toAB <- function(genotypes){
   return(t(numericG))
 }
 
-setwd("E:/Horse/DNA/")
+setwd("D:/Edrive/Horse/DNA/")
 
 markerinfo  <- read.csv("60Karray/combinedmarkers.txt", sep="\t", na = "")
 petersen    <- read.csv("Petersen2013/analysis/genotypes_snp.txt", sep="\t", na = c("NA", ""), row.names=NULL, colClasses="character")
 arabian     <- read.csv("Equine60k/analysis/genotypes_snp.txt", sep="\t", na = c("NA", ""), row.names=NULL, colClasses="character")
 kabadiner1  <- read.csv("Kabadiner/analysis/genotypes_snp_kabadiner-1.txt", sep="\t", na = c("NA", ""), row.names=NULL, colClasses="character")
 kabadiner2  <- read.csv("Kabadiner/analysis/genotypes_snp_kabadiner-2.txt", sep="\t", na = c("NA", ""), row.names=NULL, colClasses="character")
+
 
 all(markerinfo[,"Name"] == petersen[,1],na.rm=TRUE)   # Does the ordering match ?
 all(petersen[,1] == arabian[,1],na.rm=TRUE)           # Does the ordering match ?

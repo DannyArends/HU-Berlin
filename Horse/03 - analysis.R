@@ -191,7 +191,7 @@ classicalpheno <- c("WH", "CW", "CH", "NG", "TG", "ChG", "ChD", "ChW", "BLL", "B
 
 racepheno <- c("Distance..km.", "Speed.km.hr.")
 
-# Calculate thesignificance of the fixed effects
+# Calculate the significance of the fixed effects
 pClassical <- matrix(NA, length(classicalpheno), 3, dimnames = list(classicalpheno, c("Sex", "Age", "Strain")))
 for(ph in classicalpheno) {
   model <- anova(lm(as.numeric(phenotypes[ii,ph]) ~ sex + ageAtM + strain))

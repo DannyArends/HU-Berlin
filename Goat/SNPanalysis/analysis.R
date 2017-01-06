@@ -3,6 +3,7 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Apr, 2016
 # first written Apr, 2016
+
 library(ape)
 
 setwd("D:/Edrive/Goat/DNA/SihamAnalysis")
@@ -311,8 +312,8 @@ groups <- samples[colnames(numsnppca), "Breed"]
 
 sumpca <- summary(pcares)
 
-pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " var explained)")
-pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " var explained)")
+pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " variance explained)")
+pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " variance explained)")
 
 # Create colors
 types <- c("x","o","#","%")
@@ -375,7 +376,7 @@ for(chr in chromosomes){
   chrid <- chrid + 1
 }
 axis(1, at = 1:length(chromosomes), chromosomes,cex.axis=0.8)
-axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "mb"),las=2)
+axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "Mb"),las=2)
 
 SNPsPCA1 <- cbind(SNPsPCA1, var.contrib = var.contrib[row.names(SNPsPCA1),1])
 

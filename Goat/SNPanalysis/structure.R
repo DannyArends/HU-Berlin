@@ -41,14 +41,14 @@ write.table(snpdata[rownames(snpdataloc), rownames(nubians)], "snp_genotypes_nub
 
 ##E:\Goat\DNA\Structure\test\10k2.5k\Results
 ## Structure results (run Structure)
-structuredir <- "E:/Goat/DNA/Structure/Goats"
+structuredir <- "D:/Edrive/Goat/DNA/Structure/Goats"
 projectname <- "Goats"
-paramsetname <- "75kn10k"
+paramsetname <- "10kn2.5k"
 
 fullpath <- paste0(structuredir, "/", projectname, "/", paramsetname, "/Results")
 structureruns <- dir(fullpath)
 
-structureruns <- structureruns[c(10,11,2,3)]  # Look at only a subset of the runs
+#structureruns <- structureruns[c(10,11,2,3)]  # Look at only a subset of the runs
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)       # Returns string w/o leading or trailing whitespace
 
@@ -94,7 +94,7 @@ plotStructure <- function(stmatrix, popinfo, doSort = FALSE, sortTwice = FALSE){
     mx <- nrow(stmatrix)
   }
   
-  plot(c(1, mx), c(-0.15, 1), t = 'n', xaxt='n', xlab = "Individual", ylab = "Cluster membership (%)", yaxt='n', main=paste0("STRUCTURE, clusters = ", ncol(stmatrix)))
+  plot(c(1, mx), c(-0.15, 1), t = 'n', xaxt='n', xlab = "", ylab = "Cluster membership (%)", yaxt='n', main=paste0("STRUCTURE, K = ", ncol(stmatrix)))
   dsum <- rep(0, mx)
   mcol <- 2
   apply(stmatrix, 2, function(x){
@@ -105,17 +105,17 @@ plotStructure <- function(stmatrix, popinfo, doSort = FALSE, sortTwice = FALSE){
     mcol <<- mcol + 1
     cat(dsum, "\n")
   })
-  text(x = 1:mx, y = rep(-0.05, mx), popinfo[rownames(stmatrix)], srt = 90)
+  text(x = 1:mx, y = rep(-0.05, mx), popinfo[rownames(stmatrix)], srt = 90, cex=0.9)
   mids <- diff(breaks) / 2 + 0.5
   for(x in 1:length(mids)) mids[x] <- mids[x] + breaks[x]
   
   last <- mids[length(mids)]
   mids <- mids[-length(mids)]
   
-  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Cluster ", 1:length(mids-1)), cex=0.8) 
-  text(x = last, y = -0.1, paste0("Unassigned"), cex=0.8) 
-  axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 0.8)
-  axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 0.8)
+  text(x = mids, y = rep(-0.1, length(mids)-1), paste0("Cluster ", 1:length(mids-1)), cex=1) 
+  text(x = last, y = -0.1, paste0(""), cex=1) 
+  #axis(1, at=1:nrow(stmatrix), rownames(stmatrix), las = 2, cex.axis = 1)
+  axis(2, at=seq(0, 1, 0.1), seq(0, 100, 10), las = 2, cex.axis = 1)
   abline(v = breaks + 0.5,lwd=0.5, lty=2)
   return(stmatrix)
   return(breaks)

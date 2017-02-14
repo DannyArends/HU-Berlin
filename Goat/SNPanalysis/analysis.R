@@ -362,6 +362,7 @@ SNPlPCA1 <- snpinfo[lessimpSNPs, c("Chr", "Position")]
 chromosomes <- c(as.character(1:29),"X")
 ymax <- max(snpinfo[,"Position"])
 
+png("PCAplotLocations.png", width=1200, height=600, res=300, pointsize = 5)
 plot(x=c(0,length(chromosomes)), y = c(0, ymax), t='n', xaxt='n', yaxt='n', ylab="", xlab="Chromosome")
 chrid <- 1
 for(chr in chromosomes){
@@ -377,6 +378,7 @@ for(chr in chromosomes){
 }
 axis(1, at = 1:length(chromosomes), chromosomes,cex.axis=0.8)
 axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "Mb"),las=2)
+dev.off()
 
 SNPsPCA1 <- cbind(SNPsPCA1, var.contrib = var.contrib[row.names(SNPsPCA1),1])
 

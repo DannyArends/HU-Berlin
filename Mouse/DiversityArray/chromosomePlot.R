@@ -40,7 +40,7 @@ chromosomePlot <- function(file, main, plotMarkers = TRUE){
   axis(1, seq(0, mlength, 10000000)/1000000, at=seq(0, mlength, 10000000), cex.axis=0.7)
 }
 
-setwd("E:/Mouse/DNA/DiversityArray/")
+setwd("D:/Edrive/Mouse/DNA/DiversityArray/")
 
 png(file="Analysis/Figures/BFMI861-S1vsALL_SNPs.png",width=1200, height=800)
   chromosomePlot("Analysis/Diabetes/BFMI861-S1vsALL_SNPs.txt", "BFMI861-S1 versus the other BFMI")
@@ -53,3 +53,12 @@ dev.off()
 png(file="Analysis/Figures/BFMI861-S1andBFMI860-12vsALL_SNPs.png",width=1200, height=800)
   chromosomePlot("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", "BFMI861-S1 equal to BFMI860-12 versus the other BFMI")
 dev.off()
+
+png(file="Analysis/Figures/BFMI861-S2vs861S1n860-12n860-S2_SNPs.png",width=1200, height=800)
+  chromosomePlot("Analysis/Diabetes/BFMI861-S2vs861S1n860-12n860-S2_SNPs.txt", "BFMI861-S2 different from BFMI861-S1,BFMI860-12, and BFMI860-S2", plotMarkers=FALSE)
+dev.off()
+
+png(file="Analysis/Figures/BFMI861-S2nB6Nvs861S1n860-12n860-S2_SNPs.png",width=1200, height=800)
+  chromosomePlot("Analysis/Diabetes/BFMI861-S2nB6Nvs861S1n860-12n860-S2_SNPs.txt", "BFMI861-S2 eq B6N different from BFMI861-S1,BFMI860-12, and BFMI860-S2", plotMarkers=FALSE)
+dev.off()
+

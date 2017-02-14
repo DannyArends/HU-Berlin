@@ -8,7 +8,7 @@
 
 chromosomes  <- as.character(c(1:19, "X", "Y", "M"))
 
-setwd("E:/Mouse/DNA/DiversityArray/")
+setwd("D:/Edrive/Mouse/DNA/DiversityArray/")
 chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 snpOUT       <- read.table("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_SNPs.txt", sep="\t", header=TRUE, colClasses=c("character"))
 regions      <- read.table("Analysis/Diabetes/BFMI861-S1andBFMI860-12vsALL_MarkersInRegions.txt", sep="\t", header=TRUE, colClasses=c("character"))

@@ -11,7 +11,7 @@ font_import()
 fonts()
 
 library("extrafont")
-setwd("d:/Ramona/")
+setwd("D:/Ddrive/Collegues/Ramona/")
 
 rawdata <- read.table("Period_FA_EU.txt", sep="\t", header=TRUE)
 

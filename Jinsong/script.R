@@ -2,7 +2,7 @@
 
 library("lme4")
 
-setwd("D:/Collegues/Jinsong")
+setwd("D:/Ddrive/Collegues/Jinsong")
 
 # Genotypes
 genotypes <- read.table("BXD.geno", sep="\t", header=TRUE, row.names=2, colClasses="character", na.string = c("U", "H", "NA"))
@@ -125,6 +125,9 @@ for(phe.name in phe.names) {
 write.table(marker.LRS, "marker.LRS.txt", sep = "\t", quote = FALSE)
 write.table(interaction.LRS, "interaction.LRS.txt", sep = "\t", quote = FALSE)
 
+marker.LRS <- read.table("marker.LRS.txt", sep = "\t",check.names=FALSE)
+interaction.LRS <- read.table("interaction.LRS.txt", sep = "\t",check.names=FALSE)
+
 # Create plots of the different phenotypes
 for(phe.name in phe.names) {
   png(paste0(gsub("%", "Pct", gsub("/", ".", gsub(" F", "", phe.name))), ".png"), width = 1200, height =  600)
@@ -140,7 +143,7 @@ for(phe.name in phe.names) {
   dev.off()
 }
 
-LRS.cutoff <- 13.5
+LRS.cutoff <- 15.00
 LRS.threshold <- LRS.cutoff - (1.5 * toLRS)
 
 # Create an output table for QTL results
@@ -149,13 +152,13 @@ qtl.idx <- 1
 for(phe.name in phe.names) {
   for(i in 1:length(chrs)) {
     mOnChr <- rownames(map[which(map[,"Chr"] == chrs[i]),])         # Markers on chromosome
-    mAboveC <- marker.LRS[phe.name, mOnChr] > LRS.cutoff            # Markers above 13.5 LRS
+    mAboveC <- marker.LRS[phe.name, mOnChr] >= LRS.cutoff            # Markers above 13.5 LRS
     if(any(mAboveC)){
       top.value <- max(marker.LRS[phe.name, mOnChr], na.rm = TRUE)     # Top LRS score on this chromosome
       top.marker <- mOnChr[which.max(marker.LRS[phe.name, mOnChr])]    # Marker showing the highest LRS on this chromosome
-      mAboveT <- marker.LRS[phe.name, mOnChr] > LRS.threshold
-      top.start <- names(which(mAboveT)[1])                            # Marker where the regions > LRS.threshold starts
-      top.stop <- names(which(mAboveT)[length(which(mAboveT))])        # Marker where the regions > LRS.threshold stops
+      mAboveT <- marker.LRS[phe.name, mOnChr] >= LRS.threshold
+      top.start <- mOnChr[which(mAboveT)][1]                            # Marker where the regions > LRS.threshold starts
+      top.stop <- mOnChr[which(mAboveT)[length(which(mAboveT))]]        # Marker where the regions > LRS.threshold stops
 
       # For the plot we need the phenotype data, and the genotype data at the top.marker
       strains <- phe.sex.age.adj[which(phe.sex.age.adj[,"Strain"] %in% rownames(genotypes)),"Strain"]
@@ -176,7 +179,6 @@ for(phe.name in phe.names) {
                       mean(as.numeric(phenotype[which(marker.geno == "D")]), na.rm=TRUE),
                       sum(as.numeric(mAboveT)))
       output.tablular <- rbind(output.tablular, output.row)
-      
       qtl.idx <- qtl.idx + 1
     }
   }
@@ -185,6 +187,8 @@ colnames(output.tablular) <- c("QTL ID", "Phenotype", "Chr", "Start", "Top", "St
 
 # Write the output table with QTL results to HDD
 write.table(output.tablular, "output.tablular.txt", sep = "\t", quote = FALSE, row.names=FALSE)
+
+output.tablular <- read.table("output.tablular.txt", sep = "\t", header=TRUE)
 
 # Double check for G:Sex effects
 for(phe.name in phe.names) {
@@ -197,11 +201,17 @@ for(phe.name in phe.names) {
 strains <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)),"Strain"]
 sex     <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), "Sex"]
 
-op <- par(mfrow=c(2, 2))
+op <- par(mfrow=c(1, 2))
 
 m <- "rs3659436"; phe <- "Tibia Trab.DA (ratio) F"
 phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
-boxplot(as.numeric(phenotype) ~ sex + as.factor(genotypes[strains, m]), notch = TRUE, xlab=m, ylab=phe, main="Raw data")
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw data")
+
+m <- "rs3659436"; phe <- "Tibia Trab.DA (ratio) F"
+phenotype <- phe.sex.age.adj[which(phe.sex.age.adj[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Adj data")
+
+
 
 m <- "rs3653769"; phe <- "Tibia Ct.BV (mm^3) F"
 phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
@@ -217,3 +227,64 @@ boxplot(as.numeric(phenotype) ~ sex + as.factor(genotypes[strains, m]), notch = 
 
 # We observe that the QTLs we find here, have no sex specific component
 # Directions of effect are the same between M.B and M.D versus F.B and F.D
+
+
+### Comparison to Jinsong
+
+m <- "rs3682996"; phe <- "Tibia Trab TV (mm^3) F"
+phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw phenotype data (Fttf1a)", sub = "Why is the LRS for males 1 in GN?")
+
+m <- "rs3687595"; phe <- "Femur Ct.Th (mm) F"
+phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw phenotype data (Fttf1b)")
+
+
+op <- par(mfrow=c(1,2))
+
+m <- "rs3657682"; phe <- "Femur Ct.TV (mm^3) F"
+phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw phenotype data (Fcvf12)")
+
+
+m <- "rs3657682"; phe <- "Femur Ct.TV (mm^3) F"
+phenotype <- phe.sex.adj[which(phe.sex.adj[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="phenotype data sex adj (Fcvf12)")
+
+
+m <- "rs3682996"; phe <- "Femur Ct.TV (mm^3) F"
+phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw phenotype data (Fcvf12)")
+
+
+
+
+
+
+op <- par(mfrow=c(1, 2))
+
+m <- "CEL-8_25820220"; phe <- "Femur Length (mm) F"
+phenotype <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Raw data")
+
+m <- "CEL-8_25820220"; phe <- "Femur Length (mm) F"
+phenotype <- phe.sex.age.adj[which(phe.sex.age.adj[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Adj data")
+
+
+
+
+
+# Show 4 QTLs in the RAW data (LRS above 15, should be visible in raw data more or less)
+strains <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)),"Strain"]
+sex     <- phenotypes[which(phenotypes[,"Strain"] %in% rownames(genotypes)), "Sex"]
+
+
+
+
+m <- "rs4226829"; phe <- "Tibia Ct.Th (mm) F"
+phenotype <- phe.sex.age.adj[which(phe.sex.age.adj[,"Strain"] %in% rownames(genotypes)), phe]
+boxplot(as.numeric(phenotype) ~ as.factor(genotypes[strains, m]) + sex, notch = TRUE, xlab=m, ylab=phe, main="Adj data")
+
+
+

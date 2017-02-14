@@ -3,7 +3,7 @@
 #
 #
 
-setwd("d:/Jasper")
+setwd("D:/Ddrive/Collegues/Jasper")
 
 ## CD 3 - 7mm
 mdata <- read.table("CD3.data.txt",sep="\t",header=TRUE, row.names=1)
@@ -15,7 +15,7 @@ for(x in 2:7){
   cat(colnames(mdata)[x], ":", pv1$p.value, pv2$p.value, pv3$p.value, "\n")
 }
 
-postscript("CD3.groups.eps", horizontal=FALSE)
+#postscript("CD3.groups.eps", horizontal=FALSE)
   op <- par(mfrow=c(2,1))
   plot(c(0.5,10), c(150,250),t='n',xlab="Gewebe", ylab="Zellzahl", main="CD3 Gesamt",xaxt='n')
   rect(0,0,3.5,1000,col="white")
@@ -52,13 +52,13 @@ postscript("CD3.groups.eps", horizontal=FALSE)
   boxplot(at=9, mdata[mdata[,"Group"] == 3,"Paracortes.CD3"],add=TRUE,col=rgb(0.8,0.8,0.8))
   axis(1, at=c(2, 5, 8),c("Keimzentrum","Rand", "Paracortex"))
   legend("topleft", fill=c(rgb(0.3,0.3,0.3), rgb(0.6,0.6,0.6), rgb(0.8,0.8,0.8)),c("Gruppe 1", "Gruppe 2", "Gruppe 3"),bg="white")
-dev.off()
+#dev.off()
 
 mdata <- read.table("CD3.comparison.txt",sep="\t",header=TRUE)
 anova(lm(mdata[,"Gesamt"] ~ mdata[,"Group"] + mdata[,"location"]))
 anova(lm(mdata[,"CD3"] ~ mdata[,"Group"] + mdata[,"location"]))
 
-postscript("CD3.eps", horizontal=FALSE)
+#postscript("CD3.eps", horizontal=FALSE)
   op <- par(mfrow=c(2,1))
   boxplot(CD3 ~ location + Group,data = mdata, col = c(rgb(0.3,0.3,0.3), rgb(0.7,0.7,0.7)),xaxt='n', main="CD3")
   rect(0,0,2.5,100,col=rgb(0.3,0.3,0.3,0.5))
@@ -75,7 +75,7 @@ postscript("CD3.eps", horizontal=FALSE)
   rect(4.5,0,9,1000,col=rgb(0.9,0.9,0.9,0.5))
   boxplot(Gesamt ~ location + Group,data = mdata, col = c(rgb(0.3,0.3,0.3), rgb(0.7,0.7,0.7)),add=TRUE,xaxt='n')
   axis(1, at=c(1.5, 3.5, 5.5), c("Gruppe 1", "Gruppe 2", "Gruppe 3"))
-dev.off()
+#dev.off()
 
 postscript("legend.eps", horizontal=FALSE)
   plot(1:10,t='n')
@@ -113,7 +113,7 @@ for(x in 2:7){
 }
 
 
-postscript("CD4.groups.eps", horizontal=FALSE)
+#postscript("CD4.groups.eps", horizontal=FALSE)
   op <- par(mfrow=c(2,1))
   plot(c(0.5,10), c(100,240),t='n',xlab="Gewebe", ylab="Zellzahl", main="CD4 Gesamt",xaxt='n')
   rect(0,0,3.5,1000,col="white")
@@ -150,7 +150,7 @@ postscript("CD4.groups.eps", horizontal=FALSE)
   boxplot(at=9, mdata[mdata[,"Group"] == 3,"Paracortes.CD4"],add=TRUE,col=rgb(0.8,0.8,0.8))
   axis(1, at=c(2, 5, 8),c("Keimzentrum","Rand", "Paracortex"))
   legend("topleft", fill=c(rgb(0.3,0.3,0.3), rgb(0.6,0.6,0.6), rgb(0.8,0.8,0.8)),c("Gruppe 1", "Gruppe 2", "Gruppe 3"),bg="white")
-dev.off()
+#dev.off()
 
 mdata <- read.table("CD4.comparison.txt",sep="\t",header=TRUE)
 anova(lm(mdata[,"Gesamt"] ~ mdata[,"Group"] + mdata[,"location"]))

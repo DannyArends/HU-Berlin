@@ -143,6 +143,7 @@ cat("Left with", nrow(genotypes), "markers\n")
 write.table(map, file="input/cleaned_map.txt", sep = "\t")                                      # Save the clean map to disk
 write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t")                          # Save the clean genotypes to disk
 write.table(toNumeric(genotypes), file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
+genotypes <- read.table(file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
 write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")                        # Save the clean phenotypes to disk
 
 setwd("E:/Horse/DNA/Equine60k/")

@@ -1,0 +1,2 @@
+65156 SNP calls in the original file
+62333 SNP calls in the after filtering for GenTrain >= 0.6

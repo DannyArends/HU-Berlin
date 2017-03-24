@@ -6,7 +6,7 @@
 
 ### Load in SNP data, sample and SNP information files
 
-setwd("E:/Goat/DNA/SihamAnalysis")
+setwd("D:/Edrive/Goat/DNA/SihamAnalysis")
 
 numsnpdata <- read.csv("filtered_snps_numeric_NO_DN2.txt", sep="\t", check.names=FALSE)
 snpinfo <- read.csv("merged_snp_info.txt", sep="\t", check.names=FALSE)
@@ -24,16 +24,23 @@ pheNames <- c("Averagemilk", "Weight", "Withersheight", "Rumpheight", "Bodylengt
 
 phenotypes <- samples[colnames(numsnpdata),pheNames]
 breed  <- as.factor(samples[colnames(numsnpdata),"Breed"])
+age  <- as.numeric(samples[colnames(numsnpdata),"Age"])
 location  <- as.factor(samples[colnames(numsnpdata),"locationShort"])
 
-setwd("E:/Goat/DNA/SihamQTL")
+setwd("D:/Edrive/Goat/DNA/SihamQTL")
+
+## Figure out the Age effects, and how to correct for them
 
 ### Create supplement table 1
 
 breedeffects <- NULL
+ageeffects <- NULL
+breedageeff <- NULL
 meansandsds <- NULL
 for(x in 1:ncol(phenotypes)){
   breedeffects <- rbind(breedeffects, c(colnames(phenotypes)[x], anova(lm(phenotypes[,x] ~ breed))[[5]][1]))
+  ageeffects <- rbind(ageeffects, c(colnames(phenotypes)[x], anova(lm(phenotypes[,x] ~ age))[[5]][1]))
+  breedageeff <- rbind(breedageeff, c(colnames(phenotypes)[x], unlist(anova(lm(phenotypes[,x] ~ age + breed))[[5]][1:2])))
   tagg <- round(c(mean(phenotypes[breed == "Tagg",x],na.rm=TRUE), sd(phenotypes[breed == "Tagg",x],na.rm=TRUE)),3)
   nu <- round(c(mean(phenotypes[breed == "Nu",x],na.rm=TRUE), sd(phenotypes[breed == "Nu",x],na.rm=TRUE)),3)
   ni <- round(c(mean(phenotypes[breed == "Ni",x],na.rm=TRUE), sd(phenotypes[breed == "Ni",x],na.rm=TRUE)),3)
@@ -113,12 +120,12 @@ box()
 
 ### QTL analysis
 
-## Breed in the model
+## Breed and Age in the model
 for(p in 1:ncol(phenotypes)){
   pvalues <- NULL
   for(x in 1:nrow(numsnpdata)){
-    pvals <- anova(lm(phenotypes[,p] ~ breed + as.numeric(numsnpdata[x,])))[[5]]
-    if(length(pvals) == 3) {
+    pvals <- anova(lm(phenotypes[,p] ~ breed + age + as.numeric(numsnpdata[x,])))[[5]]
+    if(length(pvals) == 4) {
       pvalues <- rbind(pvalues, c(rownames(numsnpdata)[x], pvals))
     }else{
       cat("Unable to fit model at marker ",x," :", rownames(numsnpdata)[x], "\n")
@@ -128,7 +135,7 @@ for(p in 1:ncol(phenotypes)){
   plot(-log10(as.numeric(pvalues[,3])))
   plot(-log10(as.numeric(pvalues[,2])))
   cat(colnames(phenotypes)[p], " = ", length(which(p.adjust(as.numeric(pvalues[,3]), "BH") < 0.05)), " marker\n")
-  write.table(pvalues, file=paste0(colnames(phenotypes)[p],"_qtl.txt"), sep="\t",row.names=FALSE, quote=FALSE, col.names=FALSE)
+  write.table(pvalues, file=paste0("QTL/", colnames(phenotypes)[p],"_BreedAge_qtl.txt"), sep="\t",row.names=FALSE, quote=FALSE, col.names=FALSE)
 }
 
 for(p in 1:ncol(phenotypes)){
@@ -138,6 +145,8 @@ for(p in 1:ncol(phenotypes)){
   plot(-log10(as.numeric(results[,2])))
   cat(colnames(phenotypes)[p], " = ", max(-log10(as.numeric(results[,3]))), " marker\n")
 }
+
+## Age corrected first/second?
 
 ## Breed corrected first, then basic QTL mapping
 

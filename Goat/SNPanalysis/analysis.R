@@ -68,6 +68,30 @@ if(!file.exists("filtered_snps_numeric_NO_DN2.txt")){
   numsnpdata <- read.csv("filtered_snps_numeric_NO_DN2.txt", sep="\t", check.names=FALSE)
 }
 
+if(!file.exists("filtered_snps_numeric_NO_DN2.txt")){
+  numsnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
+  for(x in 1:length(snpAlleles)) {
+    if(!is.na(snpinfo[x, "reference"]) && snpAlleles[[x]][1] !=  snpinfo[x, "reference"]){  # C/T while reference is T, so flip it around
+      snpAlleles[[x]] <- snpAlleles[[x]][2:1]
+    }
+
+    g1 <- paste(snpAlleles[[x]][1], snpAlleles[[x]][1],sep="")
+    g2a <- paste(snpAlleles[[x]][1], snpAlleles[[x]][2],sep="")
+    g2b <- paste(snpAlleles[[x]][2], snpAlleles[[x]][1],sep="")
+    g3 <- paste(snpAlleles[[x]][2], snpAlleles[[x]][2],sep="")
+    if(!all(snpdata[x,] %in% c(g1,g2a,g2b,g3, NA))) stop("Nope")
+    numsnpdata[x, which(snpdata[x, ] == g1)] <- 1
+    numsnpdata[x, which(snpdata[x, ] == g2a)] <- 2
+    numsnpdata[x, which(snpdata[x, ] == g2b)] <- 2
+    numsnpdata[x, which(snpdata[x, ] == g3)] <- 3
+  }
+
+  write.table(numsnpdata, "filtered_snps_numeric_NO_DN2.txt", sep="\t", quote=FALSE)
+}else{
+  numsnpdata <- read.csv("filtered_snps_numeric_NO_DN2.txt", sep="\t", check.names=FALSE)
+}
+
+
 if(!file.exists("filtered_snps_AB_NO_DN2.txt")){
   absnpdata <- matrix(NA, nrow(snpdata), ncol(snpdata), dimnames = list(rownames(snpdata), colnames(snpdata)))
   for(x in 1:length(snpAlleles)) {
@@ -113,6 +137,17 @@ for(breed in breeds){
     if(ref >= alt) return(alt / (ref+alt))
   })
 }
+
+
+op <- par(mfrow=c(2,2))
+hist(MAFs[,"Tagg"], breaks=c(0,0.05, 0.1, 0.3, 0.5), col=c("red", "purple", "blue", "green"), main="Taggar", xlab="Allele frequency", freq=TRUE)
+legend("topleft", c("Rare", "Intermediate", "Common", "Very common"), fill =c("red", "purple", "blue", "green"), bty='n')
+hist(MAFs[,"Dese"], breaks=c(0,0.05, 0.1, 0.3, 0.5), col=c("red", "purple", "blue", "green"), main="Desert", xlab="Allele frequency", freq=TRUE)
+legend("topleft", c("Rare", "Intermediate", "Common", "Very common"), fill =c("red", "purple", "blue", "green"), bty='n')
+hist(MAFs[,"Ni"], breaks=c(0,0.05, 0.1, 0.3, 0.5), col=c("red", "purple", "blue", "green"), main="Nilotic", xlab="Allele frequency", freq=TRUE)
+legend("topleft", c("Rare", "Intermediate", "Common", "Very common"), fill =c("red", "purple", "blue", "green"), bty='n')
+hist(MAFs[,"Nu"], breaks=c(0,0.05, 0.1, 0.3, 0.5), col=c("red", "purple", "blue", "green"), main="Nubian", xlab="Allele frequency", freq=TRUE)
+legend("topleft", c("Rare", "Intermediate", "Common", "Very common"), fill =c("red", "purple", "blue", "green"), bty='n')
 
 ### (Non-)Polymorphic loci per group
 apply(MAFs,2, function(x){return(length(which(x < 0.05)))})
@@ -165,6 +200,7 @@ stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst val
 stammpinput.fst$Fsts
 write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")
 
+
 stammpinput.amova <- stamppAmova(stammp.D.ind, stammpinput.freq, 10000)
 write.table(stammpinput.amova[[1]], file = "amovaSSD.txt", sep = "\t")
 write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
@@ -175,6 +211,35 @@ tagg <- rownames(samples)[which(samples[,"Breed"] == "Tagg")]
 dese <- rownames(samples)[which(samples[,"Breed"] == "Dese")]
 ni <- rownames(samples)[which(samples[,"Breed"] == "Ni")]
 nu <- rownames(samples)[which(samples[,"Breed"] == "Nu")]
+
+### FST
+TvsAll <- FST(numsnpdata[,c(tagg, dese, ni, nu)], c(rep(1,length(tagg)), rep(2, length(dese) + length(ni) + length(nu))))
+DvsAll <- FST(numsnpdata[,c(dese, tagg, ni, nu)], c(rep(1,length(dese)), rep(2, length(tagg) + length(ni) + length(nu))))
+NIvsAll <- FST(numsnpdata[,c(ni, dese, tagg, nu)], c(rep(1,length(ni)), rep(2, length(dese) + length(tagg) + length(nu))))
+NUvsAll <- FST(numsnpdata[,c(nu, dese, tagg, ni)], c(rep(1,length(nu)), rep(2, length(dese) + length(tagg) + length(ni))))
+
+
+
+op <- par(mfrow=c(2,2))
+par("mar"=c(1, 4, 4, 2))
+plot((TvsAll$Fst), col=c("black", "orange", "red")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n')
+plot((DvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Desert vs the rest", las = 2, xaxt='n')
+par("mar"=c(2, 4, 4, 2))
+plot((NIvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nilotic vs the rest", las = 2, xaxt='n')
+plot((NUvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nubian vs the rest", las = 2, xaxt='n')
+
+
+
+op <- par(mfrow=c(2,2))
+plot((TvsAll$Fst), col=c("black", "orange", "red")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n')
+plot(TvsAll$Fst, DvsAll$Fst)
+plot(TvsAll$Fst, NIvsAll$Fst)
+plot(TvsAll$Fst, NUvsAll$Fst)
+abline(v=0.12)
+
+
+
+plot(TvsAll$Fst + DvsAll$Fst + NIvsAll$Fst + NUvsAll$Fst / 4)
 
 taggtbl <- apply(numsnpdata[,tagg], 1,table)
 taggval <- unlist(lapply(taggtbl, function(x){ return(max(x) / sum(x)) }))
@@ -312,23 +377,64 @@ groups <- samples[colnames(numsnppca), "Breed"]
 
 sumpca <- summary(pcares)
 
+pIC <- pcares$x[,1:10]
+npIC <- apply(pIC, 2, function(x){
+  r <- (max(x) - min(x))
+  (((x - min(x)) / r) - 0.5)
+})
+
+png("PCAplotLocations.png", width=2600, height = (2400 / 3) - 50, res = 600)
+
+layout(matrix(c(1,1,2,3,3,2), 2, 3, byrow = TRUE))
+op <- par(mar=c(2, 4, 1, 2) + 0.1)
+op <- par(cex=0.15)
+op <- par(lwd=0.5)
+colfunc <- colorRampPalette(c("red", "yellow", "green"))
+image(npIC, xaxt='n', yaxt='n', col=colfunc(50))
+grid(nx=95, ny=10,lty=1, col="white")
+box()
+axis(1, at= 0:94 / 94, viewn[as.character(breeds[rownames(pcares$x)])], las=2, lwd=0, lwd.tick=0.4)
+axis(2, at= 0:9 / 9, colnames(pcares$x[,1:10]), las=2, lwd=0, lwd.tick=0.4)
+rownames(npIC) <-viewn[as.character(breeds[rownames(npIC)])]
+
+#op <- par(mfrow=c(3,3))
+#for(x in 1:9){
+#  plot(y=npIC[,x], as.factor(rownames(npIC)), main=paste0("Contribution to PC", x))
+#}
+
+op <- par(mar=c(5, 4, 1, 2) + 0.1)
+
 pca1 <- paste0("(", round(sumpca$importance[2,1] * 100,1), "%", " variance explained)")
 pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " variance explained)")
+pca3 <- paste0("(", round(sumpca$importance[2,3] * 100,1), "%", " variance explained)")
+
+
+
+#png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
+plot(c(-50,100), c(-100,150), col = cols[as.character(viewn[as.character(groups)])],pch = 19, xlab=paste0("PCA 2 ",pca2), ylab=paste0("PCA 3 ",pca3), 
+      t = 'n',xaxt='n', yaxt='n')
+axis(1, at = seq(-50, 100, 20), lwd=0, lwd.tick=0.4)
+#abline(v = seq(-50, 100, 15), col="gray", lty=2)
+axis(2, at = seq(-100, 150, 20),las=2, lwd=0, lwd.tick=0.4)
+#abline(h = seq(-100, 150, 50), col="gray", lty=2)
+points(pcares$x[,2], pcares$x[,3], col = cols[as.character(viewn[as.character(groups)])], pch = types[viewn[as.character(groups)]], cex=1.2)
+legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white")
+
 
 # Create colors
 types <- c("x","o","#","%")
 names(types) <- c("T", "D", "Ni", "Nu")
 
-png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
+#png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
 plot(c(-50,100), c(-100,150), col = cols[as.character(viewn[as.character(groups)])],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), 
-      t = 'n',xaxt='n', yaxt='n', main="PCA analysis", cex.lab=0.8)
-axis(1, at = seq(-50, 100, 20),cex.axis=0.8)
+      t = 'n',xaxt='n', yaxt='n')
+axis(1, at = seq(-50, 100, 20), lwd=0, lwd.tick=0.4)
 #abline(v = seq(-50, 100, 15), col="gray", lty=2)
-axis(2, at = seq(-100, 150, 20),las=2,cex.axis=0.8)
+axis(2, at = seq(-100, 150, 20),las=2, lwd=0, lwd.tick=0.4)
 #abline(h = seq(-100, 150, 50), col="gray", lty=2)
-points(pcares$x[,1], pcares$x[,2], col = cols[as.character(viewn[as.character(groups)])], pch = types[viewn[as.character(groups)]], cex=0.6)
-legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white", cex=0.8)
-dev.off()
+points(pcares$x[,1], pcares$x[,2], col = cols[as.character(viewn[as.character(groups)])], pch = types[viewn[as.character(groups)]], cex=1.2)
+legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white")
+#dev.off()
 
  # Correlation between variables and principal components
 var_cor_func <- function(var.loadings, comp.sdev){
@@ -343,12 +449,12 @@ comp.cos2 <- apply(var.cos2, 2, sum)
 contrib <- function(var.cos2, comp.cos2){var.cos2*100/comp.cos2}
 var.contrib <- t(apply(var.cos2,1, contrib, comp.cos2))
 
-library(devtools)
-library(ggbiplot)
-g <- ggbiplot(pcares, choices = c(1, 2), obs.scale = 1, var.scale = 1, groups = groups, ellipse = TRUE, circle = TRUE, var.axes = FALSE)
-g <- g + scale_color_discrete(name = '')
-g <- g + theme(legend.direction = 'horizontal', legend.position = 'top')
-print(g)
+#library(devtools)
+#library(ggbiplot)
+#g <- ggbiplot(pcares, choices = c(1, 2), obs.scale = 1, var.scale = 1, groups = groups, ellipse = TRUE, circle = TRUE, var.axes = FALSE)
+#g <- g + scale_color_discrete(name = '')
+#g <- g + theme(legend.direction = 'horizontal', legend.position = 'top')
+#print(g)
 
 ### Look into the rotations
 importantSNPs <-  names(which(var.contrib[,1] >= 0.02))
@@ -362,7 +468,9 @@ SNPlPCA1 <- snpinfo[lessimpSNPs, c("Chr", "Position")]
 chromosomes <- c(as.character(1:29),"X")
 ymax <- max(snpinfo[,"Position"])
 
-png("PCAplotLocations.png", width=1200, height=600, res=300, pointsize = 5)
+op <- par(mar=c(5, 4, 1, 2) + 0.1)
+
+#png("PCAplotLocations.png", width=1200, height=600, res=300, pointsize = 5)
 plot(x=c(0,length(chromosomes)), y = c(0, ymax), t='n', xaxt='n', yaxt='n', ylab="", xlab="Chromosome")
 chrid <- 1
 for(chr in chromosomes){
@@ -370,21 +478,23 @@ for(chr in chromosomes){
   chrM <- max(snpinfo[snpinfo[,"Chr"] == chr, "Position"])
   intG <- SNPsPCA1[which(SNPsPCA1[,"Chr"] == chr),"Position"]
   intP <- SNPlPCA1[which(SNPlPCA1[,"Chr"] == chr),"Position"]
-  lines(x=c(chrid,chrid), y = c(0, chrM))
+  lines(x=c(chrid,chrid), y = c(0, chrM *0.9))
   points(x = rep(chrid, length(allG)), allG, pch="-", col=rgb(0.9, 0.9, 0.9), cex=2)
   points(x = rep(chrid, length(intP)), intP, pch="-", col=rgb(0.5, 0.5, 0.5), cex=2)
   points(x = rep(chrid, length(intG)), intG, pch="-", col="black", cex=2)
   chrid <- chrid + 1
 }
-axis(1, at = 1:length(chromosomes), chromosomes,cex.axis=0.8)
-axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "Mb"),las=2)
+axis(1, at = 1:length(chromosomes), chromosomes, lwd=0, lwd.tick=0.4)
+axis(2, at = seq(0, ymax, 10000000), paste(seq(0, ymax, 10000000) / 1000000, "Mb"),las=2, lwd=0, lwd.tick=0.4)
 dev.off()
+
+
 
 SNPsPCA1 <- cbind(SNPsPCA1, var.contrib = var.contrib[row.names(SNPsPCA1),1])
 
 res <- NULL
 for(x in chromosomes){
-  res <- rbind(res, SNPsPCA1[which(SNPsPCA1[,"Chr"] == x),])
+  res <- rbind(res, SNPsPCA1[which(as.character(SNPsPCA1[,"Chr"]) == x),])
 }
 
 proteins <- read.csv("../annotation/ProteinTable10731_39633_ensembl.txt",sep="\t")
@@ -398,3 +508,40 @@ for(x in 1:nrow(res)){
 }
 genes <- genes[-which(duplicated(genes[,"GeneID"])),]
 write.table(genes[,-c(2,7)], file="genesNearbyPCA1snps.txt", sep="\t", row.names=FALSE, quote=FALSE)
+
+
+subsetSNPINFO <- snpinfo[,c("Chr", "Position")]
+fstTagg <- cbind(subsetSNPINFO, TvsAll$Fst)
+fstDess <- cbind(subsetSNPINFO, DvsAll$Fst)
+fstNi <- cbind(subsetSNPINFO, NIvsAll$Fst)
+fstNu <- cbind(subsetSNPINFO, NUvsAll$Fst)
+plot(y=c(0,0.25), x=c(1, nrow(res)), t = 'n', xaxt='n', xlab="Position (Chr:Mb)", ylab="Fst")
+for(x in 1:nrow(res)){
+  inregionT <- fstTagg[which(as.character(fstTagg[,1]) == as.character(res[x,"Chr"]) & 
+                             as.numeric(fstTagg[,2]) > as.numeric(res[x,"Position"]) - 1 & 
+                             as.numeric(fstTagg[,2]) < as.numeric(res[x,"Position"]) + 1),3]
+  points(x=(x), y=inregionT, add = TRUE, pch = "x", col="red",cex=0.8)
+
+    inregionD <- fstDess[which(as.character(fstDess[,1]) == as.character(res[x,"Chr"]) & 
+                             as.numeric(fstDess[,2]) > as.numeric(res[x,"Position"]) - 1 & 
+                             as.numeric(fstDess[,2]) < as.numeric(res[x,"Position"]) + 1),3]
+  points(x=(x), y=inregionD, add = TRUE, pch = "o", col="blue",cex=0.8)
+
+  
+    inregionNi <- fstNi[which(as.character(fstNi[,1]) == as.character(res[x,"Chr"]) & 
+                             as.numeric(fstNi[,2]) > as.numeric(res[x,"Position"]) - 1 & 
+                             as.numeric(fstNi[,2]) < as.numeric(res[x,"Position"]) + 1),3]
+  points(x=(x), y=inregionNi, add = TRUE, pch = "#", col="orange",cex=0.8)
+
+  
+    inregionNu <- fstNu[which(as.character(fstNu[,1]) == as.character(res[x,"Chr"]) & 
+                             as.numeric(fstNu[,2]) > as.numeric(res[x,"Position"]) - 1 & 
+                             as.numeric(fstNu[,2]) < as.numeric(res[x,"Position"]) + 1),3]
+  points(x=(x), y=inregionNu, add = TRUE, pch = "%", col="black",cex=0.8)
+}
+abline(h=mean(TvsAll$Fst), col='black', lty=2, lwd=2)
+abline(h=mean(TvsAll$Fst)+ sd(TvsAll$Fst), col='orange', lty=2, lwd=2)
+abline(h=mean(TvsAll$Fst)+ (2 * sd(TvsAll$Fst)), col='green', lty=2, lwd=2)
+axis(1, at = 1:nrow(res),  paste0(res[,1], ":", round(as.numeric(res[,2]) / 1000000,0)), las=2, cex.axis=0.8)
+legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white")
+legend("topleft", c("mean(Fst)", "mean(Fst) + SD", "mean(Fst) + 2SD"), col=c("black", "orange", "green"), lty=2,lwd=1, bg="white")

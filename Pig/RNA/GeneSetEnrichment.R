@@ -3,12 +3,14 @@ library(biomaRt)
 setwd("D:/Edrive/Pig/RNA/Zink_mRNASequencing")
 
 
-mRNA <- read.csv("differentialExpressed.txt", sep="\t", header = TRUE)
 #mRNA <- mRNA[-which(duplicated(mRNA[,1])),]
+mRNA <- read.csv("differentialExpressed.txt", sep="\t", header = TRUE)
+mRNA <- mRNA[order(mRNA$pvalue), ]
+write.table(mRNA[which(mRNA$pvalue < 0.05), ], "DifferentialExpression.txt", sep = "\t",row.names=FALSE)
+
 ensembl = useMart("ensembl", "sscrofa_gene_ensembl")
 conversionBioMart  <- getBM(attributes = c("ensembl_gene_id", "entrezgene"), filter="ensembl_gene_id", values=mRNA[,"ensembl_gene_id"], mart = ensembl)
 conversionViaHuman <- read.csv("conv_2F28242CF0081487844190251.txt", row.names=NULL,sep="\t", colClasses="character")
-
 
 mRNA <- cbind(mRNA, ENTREZ = NA)
 for(x in 1:nrow(mRNA)){
@@ -28,7 +30,8 @@ for(x in 1:nrow(mRNA)){
 
 filteredMRNA <- mRNA
 
-#filteredMRNA <- mRNA[-which(is.na(mRNA[,"ENTREZ"])),]
+#filteredMRNA <- filteredMRNA[-which(is.na(filteredMRNA[,"ENTREZ"])),]
+#filteredMRNA <- filteredMRNA[-which(duplicated(filteredMRNA[,"ensembl_gene_id"])),]
 
 rankings <- filteredMRNA[,"pvalue"]
 names(rankings) <- filteredMRNA[,"ENTREZ"]
@@ -36,12 +39,12 @@ names(rankings) <- filteredMRNA[,"ENTREZ"]
 pathways <- reactomePathways(names(rankings))
 
 set.seed(1)
-fgseaRes <- fgsea(pathways, rankings, nperm = 10000, maxSize=500, minSize=20)
+fgseaRes <- fgsea(pathways, rankings, nperm = 10000000, maxSize=500, minSize=100)
 fgseaRes <- fgseaRes[order(padj), ]
 
-topPathwaysUp <- unlist(head(fgseaRes[NES > 0], n = 10)[,"pathway"])
-topPathwaysDown <- unlist(head(fgseaRes[NES < 0], n = 10)[,"pathway"])
-topPathways <- c(topPathwaysUp, topPathwaysDown)
+topPathwaysUp <- unlist(head(fgseaRes[NES > 0], n = 8)[,"pathway"])
+#topPathwaysDown <- unlist(head(fgseaRes[NES < 0], n = 10)[,"pathway"])
+topPathways <- c(unlist(topPathwaysUp[-which(duplicated(topPathwaysUp))])) #, topPathwaysDown)
 
 #png("GSEAtable_top10up_top10down.png", width=1024, height=800)
 plotGseaTable(pathways[topPathways], rankings, fgseaRes, gseaParam = 0.5)

@@ -31,8 +31,8 @@ write.table(resultsM, file="GT_UniGiessen.txt", sep="\t", quote=FALSE)
 
 resultsM <- read.table("GT_UniGiessen.txt", header=TRUE)
 
-ann776 <- read.csv("Samples_Table_LOMs_776.csv", header=TRUE, sep = ";",check.names=FALSE, colClasses='character')
-ann842 <- read.csv("Samples_Table_LOMs_842.csv", header=TRUE, sep = ";",check.names=FALSE, colClasses='character')
+ann776 <- read.csv("Giessen/Samples_Table_LOMs_776.csv", header=TRUE, sep = ";",check.names=FALSE, colClasses='character')
+ann842 <- read.csv("Giessen/Samples_Table_LOMs_842.csv", header=TRUE, sep = ";",check.names=FALSE, colClasses='character')
 
 ann_all <- rbind(ann776, ann842[,-c(10,11)])
 annotation <- ann_all[, "LOM"]
@@ -80,7 +80,7 @@ write.table(sampleInfo[colnames(fugato),], file="Fugato/sampleInfo_matched.txt",
 setwd("D:/Ddrive/GiesenFugato")
 giessen <- read.table("GT_UniGiessen_LOM.txt",check.names=FALSE, colClasses='character',stringsAsFactor=FALSE,na.strings=c("--"))
 fugato <- read.table("Fugato/genotypes.txt",check.names=FALSE, colClasses='character',stringsAsFactor=FALSE)
-vit <- read.table("recoded_VIT.txt",check.names=FALSE, colClasses='character',stringsAsFactor=FALSE)
+vit <- read.table("GT_VIT.txt",check.names=FALSE, colClasses='character',stringsAsFactor=FALSE)
 
 snp_info <- read.table("Fugato/FilteredLocs.txt",check.names=FALSE, colClasses='character',stringsAsFactor=FALSE, header=TRUE)
 snpall <- cbind(snp_info, SNPpos = abs(as.numeric(snp_info[,"Start"]) + as.numeric(snp_info[,"Stop"])) / 2)
@@ -147,19 +147,24 @@ write.table(all50Kdata, file="merged_GVF.txt", sep="\t", quote=FALSE)
 # Write out the file to scale down the complete SNP calling
 write.table(cbind(as.character(snpinfo[,"Chr"]), snpinfo[,"SNPpos"]), "vcf_filter.txt",sep="\t",quote=FALSE,row.names=FALSE, col.names=FALSE)
 # Copy to server, run vcftools to extract a subset
-#vcftools --vcf /home/danny/NAS/Cattle/DSN/SNPcalling/combined/population41/0000_gatk.vcf --positions vcf_filter.txt --recode --out subset_0000_gatk.vcf
+#vcftools --vcf /home/danny/NAS/Cattle/DSN/SNPcalling/combined/population41/population.combined.vcf --positions vcf_filter.txt --recode --out subset_population.combined.vcf
 # Copy results back to my pc, remove the # in front of the header
 
 ## Merge with DNA-Seq data
 setwd("D:/Ddrive/GiesenFugato")
 all50Kdata <- read.table("merged_GVF.txt", header=TRUE, colClasses="character", stringsAsFactor=FALSE, check.names=FALSE)
 snpinfo <- read.table("merged_SNPinfo.txt", header=TRUE, colClasses="character", stringsAsFactor=FALSE, check.names=FALSE)
+#snpinfoPaula <- read.table("paula/snpinfo50k_UG_VIT_HU.txt", header=TRUE, colClasses="character", stringsAsFactor=FALSE, check.names=FALSE)
 
-seqVCF <- read.table("DNASeq/subset_0000_gatk.vcf.recode.vcf", header=TRUE, colClasses="character", stringsAsFactor=FALSE)
+all(rownames(snpinfo) %in% snpinfoPaula[, "Name"])
+snpinfoPaula[!(snpinfoPaula[, "Name"] %in% rownames(snpinfo)),]
+
+
+seqVCF <- read.table("DNASeq/subset_population.combined.vcf.recode.vcf", header=TRUE, colClasses="character", stringsAsFactor=FALSE)
 complexAlleles <-  grep(",", seqVCF[,"ALT"])
-seqVCF <- seqVCF[-complexAlleles, ]
+if(length(complexAlleles) > 0 ) seqVCF <- seqVCF[-complexAlleles, ]
 seqVCF <- cbind(ChrPos = paste(seqVCF[,"CHROM"], seqVCF[,"POS"], sep="_"), seqVCF)
-write.table(seqVCF, "DNASeq/subset_0000_gatk.vcf.recode.matched.txt", sep="\t", quote=FALSE)
+write.table(seqVCF, "DNASeq/subset_population.combined.vcf.recode.matched.txt", sep="\t", quote=FALSE)
 
 matchedSNPs <- NULL
 for(x in 1:nrow(snpinfo)){
@@ -237,7 +242,7 @@ for(x in 1:nrow(matchedSNPinfo)){
 write.table(mergedData, file = "merged_GVF_DNAseq.txt", sep="\t", quote=FALSE)
 
 # Do some QC checks since not all SNPs merge correctly
-numNAs <- apply(mergedData,1,function(x){ return(length(which(is.na(x)))); })
+numNAs <- apply(mergedData,1,function(x){ return(sum(is.na(x))); })
 tooMuchMissing <- which(numNAs / ncol(mergedData) >= .95)
 
 mergedData <- mergedData[-tooMuchMissing, ]

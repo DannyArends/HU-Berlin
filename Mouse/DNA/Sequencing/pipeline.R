@@ -111,7 +111,7 @@ cat("-----------------------------------\n")
 ### Mark duplicates, using the Picard tools (~ 30 minutes) ###
 outputSBAID    <- paste0(fileBase, "P_trimmed.aligned.sorted.dedup.bam")
 outputMetrics  <- paste0(fileBase, ".metrics.txt")
-command        <- paste0("java -jar ", picard, "MarkDuplicates.jar INPUT=", outputSBAM, " OUTPUT=", outputSBAID," METRICS_FILE=", outputMetrics," MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000")
+command        <- paste0("java -jar ", picard, " MarkDuplicates INPUT=", outputSBAM, " OUTPUT=", outputSBAID," METRICS_FILE=", outputMetrics," MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000")
 cat("Execute:", command, "\n")
 execute(command)
 cat("-----------------------------------\n")
@@ -139,7 +139,7 @@ if(!file.exists(outputSNPS)){
   execute(command)
   cat("-----------------------------------\n")
 }
-command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner -R ", reference, " -targetIntervals ", outputSNPS, " -I ", outputSBAID, " -o ",outputSIBAM," -known ",knownindels, " --consensusDeterminationModel KNOWNS_ONLY --fix_misencoded_quality_scores")
+command <- paste0("java -Xmx4g -jar ", gatk, " -T IndelRealigner --filter_bases_not_stored -R ", reference, " -targetIntervals ", outputSNPS, " -I ", outputSBAID, " -o ",outputSIBAM," -known ",knownindels, " --consensusDeterminationModel KNOWNS_ONLY")
 cat("Execute:", command, "\n")
 execute(command)
 cat("-----------------------------------\n")

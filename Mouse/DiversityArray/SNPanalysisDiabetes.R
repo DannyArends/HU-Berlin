@@ -68,6 +68,25 @@ ComparisonD2OUT <- ComparisonD1OUT[refEq,]
 
 write.table(ComparisonD2OUT, file="Analysis/Diabetes/BFMI861-S2nB6Nvs861S1n860-12n860-S2_SNPs.txt", sep="\t", row.names = FALSE)
 
+###### Comparison Deike 3:  BFMI861-S1 versus BFMI861-S2,BFMI860-12, and BFMI860-S2 ######
+resistant <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]
+nonresistant <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S2"),])[1]
+nonresistant <- c(nonresistant, rownames(annotation[which(annotation[,"Line"] == "BFMI860-12"),])[1])
+nonresistant <- c(nonresistant, rownames(annotation[which(annotation[,"Line"] == "BFMI860-S2"),])[1])
+
+res <- apply(SNPdata[,c(resistant, nonresistant)],1,function(x){
+  if(x[1] %in% x[2:4]) return(FALSE)
+  return(TRUE)
+})
+cat(sum(as.numeric(res),na.rm=TRUE),"Out of",length(res),"\n")
+ComparisonD1OUT <- cbind(SNPdata[which(res),1:8], SNPdata[which(res), resistant], SNPdata[which(res), nonresistant])      # Create the ouput (subset the whole SNP arrays)
+colnames(ComparisonD1OUT)[9:12] <- c("BFMI861-S2", "BFMI861-S1", "BFMI860-12", "BFMI860-S2")
+
+ComparisonD1OUT <- ComparisonD1OUT[-which(is.na(ComparisonD1OUT[,9])),]
+naInRest <- which(apply(ComparisonD1OUT[,10:12],1,function(x){sum(is.na(x))}) == 3)
+ComparisonD1OUT <- ComparisonD1OUT[-naInRest,]
+write.table(ComparisonD1OUT, file="Analysis/Diabetes/BFMI861-S1vs861S2n860-12n860-S2_SNPs.txt", sep="\t", row.names = FALSE)
+
 
 ###### Comparison Sebastiaan 1: BFMI861-S1 versus BFMI861-S2 ######
 S1 <- rownames(annotation[which(annotation[,"Line"] == "BFMI861-S1"),])[1]

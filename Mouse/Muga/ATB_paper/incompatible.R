@@ -92,11 +92,11 @@ library(genetics)
 resultsMine <- NULL
 resultsLD <- NULL
 resultsMAFS <- NULL
-for(r in 1:100){
+for(r in 1:500){
   scoresMine <- NULL
   scoresLD <- NULL
   scoresMAFs <- NULL
-  for(x in 1:10){
+  for(x in 10:15){
     markers <- generate(50, r)
     scoresMine <- c(scoresMine, incompatible(markers[[1]],markers[[2]])$chisq)
     scoresLD <- c(scoresLD, doLD(markers[[1]],markers[[2]]))

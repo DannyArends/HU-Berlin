@@ -23,12 +23,10 @@ cbind(apply(phenotypes[,names(strains[which(strains == "S")])],1,median,na.rm=TR
   apply(phenotypes[,names(strains[which(strains == "H")])],1,median,na.rm=TRUE))
 
 for(trait in rownames(phenotypes)) {
-
   model <- lm(as.numeric(phenotypes[trait, ]) ~ strains)
   pval <- anova(model)[[5]][1]
   
 }
-
 
 for(trait in rownames(phenotypes)) {
   pval <- anova(lm(as.numeric(phenotypes[trait, ]) ~ strains))[[5]][1]
@@ -42,6 +40,8 @@ for(trait in rownames(phenotypes)) {
 }
 
 phenotypes <- phenotypes.corrected 
+
+write.table(phenotypes.corrected, "phenotypes_filtered_NoSex_Outliers_Strain.txt", sep="\t", quote=FALSE)
 
 # Do the GWAS using a single QTL model *Do not correct for race of horse
 pvalues <- matrix(NA, nrow(genotypes), nrow(phenotypes), dimnames = list(rownames(genotypes), rownames(phenotypes)))
@@ -60,6 +60,8 @@ allelefreq <- apply(genotypes, 1 , function(x){
 
 write.table(pvalues, "pvalues.txt", sep="\t", quote=FALSE)
 write.table(round(-log10(pvalues),d=2), "lodscores.txt", sep="\t", quote=FALSE)
+
+pvalues <- read.table("pvalues.txt", sep = "\t")
 
 chr <- as.numeric(as.character(map$Chromosome))
 chr[is.na(chr)] <- 32

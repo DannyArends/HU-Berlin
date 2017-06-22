@@ -155,3 +155,6 @@ for(trait in morphological) {
 }
 
 write.table(phenotypes.corrected, "phenotypes_corrected_filtered.txt", sep="\t", quote=FALSE)
+
+#CC TC TT 
+#10 18  9

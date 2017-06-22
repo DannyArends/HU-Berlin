@@ -143,10 +143,10 @@ cat("Left with", nrow(genotypes), "markers\n")
 write.table(map, file="input/cleaned_map.txt", sep = "\t")                                      # Save the clean map to disk
 write.table(genotypes, file="input/cleaned_genotypes.txt", sep = "\t")                          # Save the clean genotypes to disk
 write.table(toNumeric(genotypes), file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
-genotypes <- read.table(file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
 write.table(phenotypes, file="input/cleaned_phenotypes.txt", sep = "\t")                        # Save the clean phenotypes to disk
+genotypes <- read.table(file="input/cleaned_numeric_genotypes.txt", sep = "\t")       # Encode the genotypes to be used for QTL mapping
 
-setwd("E:/Horse/DNA/Equine60k/")
+setwd("D:/Edrive/Horse/DNA/Equine60k/")
 
 # We now clean up the phenotypes manually after this step (fix stuff like "20 " -> "20") and only keep a single date for racing
 phenotypes     <- read.table(file="input/OLDWORNG/cleaned_phenotypes_man.txt", sep = "\t", colClasses="character")
@@ -177,7 +177,7 @@ pdata <- pdata[rownames(genotypes), ]
 genotypesnref <- cbind(genotypes, kabadinergenotypes[,przewalski_ref], kabadinergenotypes[,kabardian_ref], kabadinergenotypes[,thoroughbred_ref], pdata)
 write.table(genotypesnref, "input/allgenotypes.txt",sep="\t",quote=FALSE)
 
-setwd("E:/Horse/DNA/Equine60k/")
+setwd("D:/Edrive/Horse/DNA/Equine60k/")
 genotypesnref <- read.table("input/allgenotypes.txt",sep="\t", colClasses="character")
 
 cat("Shared:", nrow(genotypesnref), "markers\n")

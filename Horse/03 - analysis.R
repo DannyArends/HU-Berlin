@@ -79,14 +79,19 @@ labelCol <- function(x) {
   return(x)
 }
 
-usingsamples <- rownames(phenotypes)[ii]
-usingsamples <- usingsamples[-which(usingsamples == "ARR1")]
+#usingsamples <- rownames(phenotypes)[ii]
+#usingsamples <- usingsamples[-which(usingsamples == "ARR1")]
 
 
-clusters <- hclust(dist(t(genotypes_num[,usingsamples]),"manhattan"))
+clusters <- hclust(dist(t(genotypes_num[,ii]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
 plot(dendrogram.col, main = "Distance (manhattan)")
+
+postscript("dendrogram2017.eps", width = 16.0, height = 6.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+plot(dendrogram.col, main = "", las=2, leaflab ="none", horiz = FALSE)
+text(1:length(labels(dendrogram.col)), -500, labels = labels(dendrogram.col))
+dev.off()
 
 
 ii <- which(as.character(phenotypes[,"Strain"]) %in% c("K","H","S", "PrzH", "Arabian"))
@@ -117,10 +122,10 @@ labelCol <- function(x) {
 #clusters <- hclust(dist(t(genotypes_num[,rownames(phenotypes)[ii]]),"manhattan"))
 dendrogram <- as.dendrogram(clusters)
 dendrogram.col <- dendrapply(dendrogram, labelCol)
-postscript("dendrogramArabPrzNorf_29_8.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
+#postscript("dendrogramArabPrzNorf_29_8.eps", width = 16.0, height = 4.0, horizontal = FALSE, onefile = FALSE, paper = "special")
 plot(dendrogram.col, main = "", las=2, leaflab ="none", horiz = FALSE)
 text(1:length(labels(dendrogram.col)), -400, labels = labels(dendrogram.col))
-dev.off()
+#dev.off()
 
 ### stampp ANALYSIS
 library(StAMPP)

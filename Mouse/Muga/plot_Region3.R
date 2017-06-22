@@ -8,7 +8,7 @@ filters = c("chromosomal_region", "biotype"), values = list("3:32500000:40000000
 
 
 
-setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                              # Normal A, H, B genotypes
 phenotypes <- read.csv("Phenotypes/MatchedPhenotypes.txt", sep="\t", header=TRUE)
@@ -19,7 +19,7 @@ genotypes <- genotypes[, F2]
 phenotypes <- phenotypes[F2, ]
 
 
-setwd("E:/Mouse/ClassicalPhenotypes/AIL")
+setwd("D:/Edrive/Mouse/ClassicalPhenotypes/AIL")
 qtl42Fat     <- read.table("Analysis/qtls_mri42d_fat.txt",   sep="\t")
 qtl42Lean    <- read.table("Analysis/qtls_mri42d_lean.txt",   sep="\t")
 qtl42FatLean <- read.table("Analysis/qtls_mri42d_fatDlean.txt",   sep="\t")
@@ -30,12 +30,13 @@ submap <- submap[submap[,"Chr"] == 3,]                                    #  &
 submap <- submap[rownames(submap) %in% rownames(qtl42Fat),]
 
 #op <- par(mfrow = c(2,1))
-plot(c(0, max(as.numeric(submap[,2]))), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3", xaxt='n', las = 2, main= "MRI measurements (Day 42)")
-points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red")
-points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Lean[rownames(submap), "marker"], t = 'l', col = "blue")
-points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42FatLean[rownames(submap), "marker"], t = 'l', col = "green")
+pop <- par(cex=1.5)
+plot(c(-1, max(as.numeric(submap[,2]))), y = c(0, 65), t = 'n', ylab = "LOD", xlab = "Chromosome 3", xaxt='n', las = 2, main= "MRI measurements (day 42)")
+points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Fat[rownames(submap), "marker"], t = 'l', col = "red",lwd=3)
+points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42Lean[rownames(submap), "marker"], t = 'l', col = "blue",lwd=3)
+points(x = as.numeric(submap[,"Mb_NCBI38"]), y = qtl42FatLean[rownames(submap), "marker"], t = 'l', col = "orange",lwd=3)
 points(x = as.numeric(submap[,"Mb_NCBI38"]), y = rep(-1.3, nrow(submap)), pch="|", col = "black", cex=0.5)
-legend("topright", c("MRI fat mass","MRI lean mass", "Fat / Lean mass"), col=c("red","blue","green"), lwd=1)
+legend("topright", c("MRI fat mass","MRI lean mass", "Fat / Lean mass"), col=c("red","blue","orange"), lwd=3)
 axis(1, at=seq(0, max(as.numeric(submap[,2])), 10000000), seq(0, max(as.numeric(submap[,2])), 10000000) / 1000000)
 
 submap <- submap[as.numeric(submap[,"Mb_NCBI38"]) > 32500000 &  as.numeric(submap[,"Mb_NCBI38"]) < 40000000,]

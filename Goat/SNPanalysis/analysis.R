@@ -138,6 +138,18 @@ for(breed in breeds){
   })
 }
 
+getMAFs <- function(x){
+  return(round(c(length(which(x <= 0.05)) / length(x),
+  length(which(x > 0.05 & x <= 0.1)) / length(x),
+  length(which(x > 0.1 & x <= 0.3)) / length(x),
+  length(which(x > 0.3 & x <= 0.5)) / length(x)),3))
+}
+
+getMAFs(as.numeric(MAFs[,"Tagg"]))
+getMAFs(as.numeric(MAFs[,"Dese"]))
+getMAFs(as.numeric(MAFs[,"Ni"]))
+getMAFs(as.numeric(MAFs[,"Nu"]))
+
 
 op <- par(mfrow=c(2,2))
 hist(MAFs[,"Tagg"], breaks=c(0,0.05, 0.1, 0.3, 0.5), col=c("red", "purple", "blue", "green"), main="Taggar", xlab="Allele frequency", freq=TRUE)
@@ -222,7 +234,7 @@ NUvsAll <- FST(numsnpdata[,c(nu, dese, tagg, ni)], c(rep(1,length(nu)), rep(2, l
 
 op <- par(mfrow=c(2,2))
 par("mar"=c(1, 4, 4, 2))
-plot((TvsAll$Fst), col=c("black", "orange", "red")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n')
+plot((TvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n')
 plot((DvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Desert vs the rest", las = 2, xaxt='n')
 par("mar"=c(2, 4, 4, 2))
 plot((NIvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nilotic vs the rest", las = 2, xaxt='n')
@@ -409,6 +421,9 @@ pca2 <- paste0("(", round(sumpca$importance[2,2] * 100,1), "%", " variance expla
 pca3 <- paste0("(", round(sumpca$importance[2,3] * 100,1), "%", " variance explained)")
 
 
+# Create colors
+types <- c("x","o","#","%")
+names(types) <- c("T", "D", "Ni", "Nu")
 
 #png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
 plot(c(-50,100), c(-100,150), col = cols[as.character(viewn[as.character(groups)])],pch = 19, xlab=paste0("PCA 2 ",pca2), ylab=paste0("PCA 3 ",pca3), 
@@ -421,9 +436,6 @@ points(pcares$x[,2], pcares$x[,3], col = cols[as.character(viewn[as.character(gr
 legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white")
 
 
-# Create colors
-types <- c("x","o","#","%")
-names(types) <- c("T", "D", "Ni", "Nu")
 
 #png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
 plot(c(-50,100), c(-100,150), col = cols[as.character(viewn[as.character(groups)])],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), 

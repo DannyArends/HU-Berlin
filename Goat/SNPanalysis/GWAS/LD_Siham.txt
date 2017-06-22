@@ -1,0 +1,18 @@
+# Siham LD:
+We pruned for Linkage Disequilibrium using the combined dataset 
+containing all 4 breeds. Pruning parameters used around each SNP, 
+window size +/- 1 Mb around the SNP, LD between markers was 
+defined as R2 > 0.5, and in each LD block, we keep the marker 
+with the highest MAF
+
+This resulted in the removal of 1523 markers in LD, reducing the 
+total number of markers from 48505 to 46982
+
+We redid the PCA analysis on the LD pruned data, and now discover 61 
+compared to 49 SNPs above the threshold (0.02). All SNPs previously 
+identified are still in the 61 SNPs identified using the LD pruned data.
+The additional 12 SNPs have become significant due to the reduced 
+number of markers, which has increased the contribution of each SNPs 
+(since previously 48505 markers add up to 100 %, after LD pruning 
+46982 markers add up to 100%). However we observe that markers with 
+high contribution tend to benefit more from this increased contribution.

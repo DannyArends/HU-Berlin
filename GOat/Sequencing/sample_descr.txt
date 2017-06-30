@@ -1,0 +1,34 @@
+Sample ID	Breed	Location
+TD11	Tagg	Dalang
+TD33 	Tagg	Dalang
+TD49 	Tagg	Dalang
+TM650	Tagg	Taggar Research Center
+TD19	Tagg	Dalang
+DN1	Nubia	East Dongola
+NuK300	Nubia	Kuku research station
+SN4	Nubia	Sudan University
+Sh3	Nubia	South east Shendi
+NE4	Nubia	East Nile
+NE1	Nubia	East Nile
+NE2	Nubia	East Nile
+DBBA1	Dese	Bara
+DBBA6	Dese	Bara
+DBBA12	Dese	Bara
+DBBA14	Dese	Bara
+DBB41 	Dese	Bara
+K20	Nilo	Kosti
+K23	Nilo	Kosti
+Ks1	Nilo	Kosti
+Ks5	Nilo	Kosti
+Ks21	Nilo	Rabak
+K40	Nilo	Kosti
+Ks16	Nilo	Rabak
+10SB	Saanen	Sudan 
+Z106	Wild	Zoo
+Z107	Wild	Zoo
+Z110	Ibex	Zoo
+TD43 	Tagg	Dalang
+TM526	Tagg	Taggar Research Center
+2SB	Saanen	Sudan 
+U02N	Ibex	Sudan
+U10N	Ibex	Sudan

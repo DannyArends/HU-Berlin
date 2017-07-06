@@ -1,5 +1,6 @@
 #
 # Annotation of SNPs found using capture Seq in Capra Hircus
+# NOTE: This approach doesnt work since it assumes all CDS regions are alligned on a 3 codon DNA barrier
 #
 setwd("D:/Edrive/Goat/DNA/Sequencing")
 library(seqinr)

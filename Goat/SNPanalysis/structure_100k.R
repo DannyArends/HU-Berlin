@@ -184,27 +184,27 @@ colz <- brewer.pal(4,"Accent")
 op <- par(mar=c(3,4,2,1))
 h = hist(MAFs[,"Tagg"], breaks=c(0,0.05, 0.1, 0.3, 0.5), plot=FALSE)
 h$density = h$counts/sum(h$counts)*100
-plot(h, freq=FALSE, col=colz, main="Taggar", xlab="Allele frequency", ylab="%",yaxt='n', lwd=0.2)
-axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 1, lwd=0.2)
-legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='n',cex=0.6)
+plot(h, freq=FALSE, col=colz, main="Taggar", xlab="", ylab="",yaxt='n', lwd=0.2, cex.axis = 2, cex.main=2)
+axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 2, lwd=0.2)
+legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='y', bg="white",cex=1.5)
 
 h = hist(MAFs[,"Dese"], breaks=c(0,0.05, 0.1, 0.3, 0.5), plot=FALSE)
 h$density = h$counts/sum(h$counts)*100
-plot(h, freq=FALSE, col=colz, main="Desert", xlab="Allele frequency", ylab="%",yaxt='n', lwd=0.2)
-axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 1, lwd=0.2)
-legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='n',cex=0.6)
+plot(h, freq=FALSE, col=colz, main="Desert", xlab="", ylab="",yaxt='n', lwd=0.2, cex.axis = 2, cex.main=2)
+axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 2, lwd=0.2)
+legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='y', bg="white",cex=1.5)
 
 h = hist(MAFs[,"Ni"], breaks=c(0,0.05, 0.1, 0.3, 0.5), plot=FALSE)
 h$density = h$counts/sum(h$counts)*100
-plot(h, freq=FALSE, col=colz, main="Nilotic", xlab="Allele frequency", ylab="%",yaxt='n', lwd=0.2)
-axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 1, lwd=0.2)
-legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill = colz, bty='n',cex=0.6)
+plot(h, freq=FALSE, col=colz, main="Nilotic", xlab="", ylab="",yaxt='n', lwd=0.2, cex.axis = 2, cex.main=2)
+axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 2, lwd=0.2)
+legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill = colz, bty='y', bg="white",cex=1.5)
 
 h = hist(MAFs[,"Nu"], breaks=c(0,0.05, 0.1, 0.3, 0.5), plot=FALSE)
 h$density = h$counts/sum(h$counts)*100
-plot(h, freq=FALSE, col=colz, main="Nubian", xlab="Allele frequency", ylab="%",yaxt='n', lwd=0.2)
-axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 1, lwd=0.2)
-legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='n',cex=0.6)
+plot(h, freq=FALSE, col=colz, main="Nubian", xlab="", ylab="",yaxt='n', lwd=0.2, cex.axis = 2, cex.main=2)
+axis(2, at=seq(0, 50, 10), seq(0, 50, 10), las = 2, cex.axis = 2, lwd=0.2)
+legend("topleft", c("Rare", "Intermediate", "Common", "Frequent"), fill =colz, bty='y', bg="white",cex=1.5)
 dev.off()
 
 

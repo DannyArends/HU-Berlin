@@ -234,11 +234,11 @@ NUvsAll <- FST(numsnpdata[,c(nu, dese, tagg, ni)], c(rep(1,length(nu)), rep(2, l
 
 op <- par(mfrow=c(2,2))
 par("mar"=c(1, 4, 4, 2))
-plot((TvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n')
-plot((DvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Desert vs the rest", las = 2, xaxt='n')
+plot((TvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Taggar vs the rest", las = 2, xaxt='n', ylim=c(0,0.3))
+plot((DvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Desert vs the rest", las = 2, xaxt='n', ylim=c(0,0.3))
 par("mar"=c(2, 4, 4, 2))
-plot((NIvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nilotic vs the rest", las = 2, xaxt='n')
-plot((NUvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nubian vs the rest", las = 2, xaxt='n')
+plot((NIvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nilotic vs the rest", las = 2, xaxt='n', ylim=c(0,0.3))
+plot((NUvsAll$Fst), col=c("black", "orange")[(snpinfo[,"Chr_C1"] %% 2) + 1], pch=19, cex=0.7, xlab="", ylab="Fst", main="Nubian vs the rest", las = 2, xaxt='n', ylim=c(0,0.3))
 
 
 
@@ -527,33 +527,33 @@ fstTagg <- cbind(subsetSNPINFO, TvsAll$Fst)
 fstDess <- cbind(subsetSNPINFO, DvsAll$Fst)
 fstNi <- cbind(subsetSNPINFO, NIvsAll$Fst)
 fstNu <- cbind(subsetSNPINFO, NUvsAll$Fst)
-plot(y=c(0,0.25), x=c(1, nrow(res)), t = 'n', xaxt='n', xlab="Position (Chr:Mb)", ylab="Fst")
+plot(y=c(0,0.25), x=c(1, nrow(res)), t = 'n', xaxt='n', xlab="", ylab="",cex.axis=1.4, las=2)
 for(x in 1:nrow(res)){
   inregionT <- fstTagg[which(as.character(fstTagg[,1]) == as.character(res[x,"Chr"]) & 
                              as.numeric(fstTagg[,2]) > as.numeric(res[x,"Position"]) - 1 & 
                              as.numeric(fstTagg[,2]) < as.numeric(res[x,"Position"]) + 1),3]
-  points(x=(x), y=inregionT, add = TRUE, pch = "x", col="red",cex=0.8)
+  points(x=(x), y=inregionT, add = TRUE, pch = "x", col="red",cex=1.2)
 
     inregionD <- fstDess[which(as.character(fstDess[,1]) == as.character(res[x,"Chr"]) & 
                              as.numeric(fstDess[,2]) > as.numeric(res[x,"Position"]) - 1 & 
                              as.numeric(fstDess[,2]) < as.numeric(res[x,"Position"]) + 1),3]
-  points(x=(x), y=inregionD, add = TRUE, pch = "o", col="blue",cex=0.8)
+  points(x=(x), y=inregionD, add = TRUE, pch = "o", col="blue",cex=1.2)
 
   
     inregionNi <- fstNi[which(as.character(fstNi[,1]) == as.character(res[x,"Chr"]) & 
                              as.numeric(fstNi[,2]) > as.numeric(res[x,"Position"]) - 1 & 
                              as.numeric(fstNi[,2]) < as.numeric(res[x,"Position"]) + 1),3]
-  points(x=(x), y=inregionNi, add = TRUE, pch = "#", col="orange",cex=0.8)
+  points(x=(x), y=inregionNi, add = TRUE, pch = "#", col="orange",cex=1.2)
 
   
     inregionNu <- fstNu[which(as.character(fstNu[,1]) == as.character(res[x,"Chr"]) & 
                              as.numeric(fstNu[,2]) > as.numeric(res[x,"Position"]) - 1 & 
                              as.numeric(fstNu[,2]) < as.numeric(res[x,"Position"]) + 1),3]
-  points(x=(x), y=inregionNu, add = TRUE, pch = "%", col="black",cex=0.8)
+  points(x=(x), y=inregionNu, add = TRUE, pch = "%", col="black",cex=1.2)
 }
 abline(h=mean(TvsAll$Fst), col='black', lty=2, lwd=2)
 abline(h=mean(TvsAll$Fst)+ sd(TvsAll$Fst), col='orange', lty=2, lwd=2)
 abline(h=mean(TvsAll$Fst)+ (2 * sd(TvsAll$Fst)), col='green', lty=2, lwd=2)
-axis(1, at = 1:nrow(res),  paste0(res[,1], ":", round(as.numeric(res[,2]) / 1000000,0)), las=2, cex.axis=0.8)
-legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white")
-legend("topleft", c("mean(Fst)", "mean(Fst) + SD", "mean(Fst) + 2SD"), col=c("black", "orange", "green"), lty=2,lwd=1, bg="white")
+axis(1, at = 1:nrow(res),  paste0(res[,1], ":", round(as.numeric(res[,2]) / 1000000,0)), las=2, cex.axis=1.4)
+legend("topright", c("Taggar", "Desert", "Nilotic", "Nubian"), col=cols, pch=types, bg="white",cex=1.4)
+legend("topleft", c("mean(Fst)", "mean(Fst) + SD", "mean(Fst) + 2SD"), col=c("black", "orange", "green"), lty=2,lwd=1, bg="white",cex=1.4)

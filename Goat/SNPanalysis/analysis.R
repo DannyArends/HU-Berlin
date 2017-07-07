@@ -208,7 +208,7 @@ stammpinput <- as.data.frame(stammpinput)
 stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
 stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
 stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE) # Population D values
-stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
+stammpinput.fst <- stamppFst(stammpinput.freq, 10000, 95, 4) # Population Fst values
 stammpinput.fst$Fsts
 write.table(stammpinput.fst$Fsts, file = "fsts.txt", sep = "\t")
 
@@ -375,7 +375,7 @@ basicStats$fis[["Nu,"]]["overall",]              # Fis
 basicStats$fis[["Dese,"]]["overall",]              # Fis
 basicStats$fis[["Combined"]]["overall",]     # Fis
 
-advancedStats <- diffCalc(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
+advancedStats <- diffCalc(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", bs_pairwise=TRUE, fst=TRUE, pairwise=TRUE, boots = 100, para=TRUE)
 # Pairwise Fst per populations
 advancedStats$pairwise$Fst
 

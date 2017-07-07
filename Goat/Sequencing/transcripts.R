@@ -67,7 +67,7 @@ AAtranslate <- AAtranslate[,-1]
 
 #toProtein(genedata[[1]][[1]])
 
-snps <- read.csv("filteredSNPs.txt", comment.char="#", sep="\t", header=TRUE, check.names=FALSE)
+snps <- read.csv("filteredSNPs_DBsnp.txt", comment.char="#", sep="\t", header=TRUE, check.names=FALSE)
 snps <- cbind(snps, inGene = NA)            # Name of the gene in which the SNP is located
 snps <- cbind(snps, GeneOri = NA)           # Orientation of the gene
 snps <- cbind(snps, inTranscript = NA)      # Transcript of the gene in which the SNP is located
@@ -207,5 +207,5 @@ for(breed in unique(samples[,1])){
   }
 }
 
-write.table(SNPsinCDS[,-c(3,6,7,8,9)], file="SNPsInTranscriptsMAFGeno.txt", sep="\t", quote=FALSE, row.names=FALSE)
-write.table(SNPsinCDS[,-c(3,6,7,8,9,10:42)], file="SNPsInTranscriptsMAF.txt", sep="\t", quote=FALSE, row.names=FALSE)
+write.table(SNPsinCDS[,-c(6,7,8,9)], file="SNPsInTranscriptsMAFGeno.txt", sep="\t", quote=FALSE, row.names=FALSE, na = "")
+write.table(SNPsinCDS[,-c(6,7,8,9,10:42)], file="SNPsInTranscriptsMAF.txt", sep="\t", quote=FALSE, row.names=FALSE, na = "")

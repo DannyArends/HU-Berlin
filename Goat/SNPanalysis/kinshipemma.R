@@ -64,7 +64,10 @@ names(breeds) <- rownames(samples)
 colnames(kinship) <- breeds[colnames(kinship)]
 rownames(kinship) <- breeds[rownames(kinship)]
 
-heatmap(kinship, scale="none", col=gray.colors(50))
+colfunc <- colorRampPalette(c("green", "red", "white"))
+
+
+heatmap(kinship, scale="none", col=colfunc(10))
 
 snpdata <- read.table("filtered_snps.txt", sep="\t", check.names=FALSE, colClasses="character")
 snpdata <- snpdata[,-which(colnames(snpdata) == "DN 2")] # Throw away the duplicate individual because it confuses STRUCTURE

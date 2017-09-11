@@ -2,9 +2,10 @@
 # copyright (c) 2014-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Mar, 2015
 # first written Mar, 2015
+
 library(ape)
 
-setwd("E:/Mouse/DNA/DiversityArray/")
+setwd("D:/Edrive/Mouse/DNA/DiversityArray/")
 
 annotation <- read.table("Annotation/MouseAnnotation.txt", header=TRUE)                           # Load the annotation
 

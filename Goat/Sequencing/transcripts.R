@@ -1,7 +1,8 @@
 #
 # Annotation of SNPs found using capture Seq in Capra Hircus
 # Using the full CDS to determine which AA is hit, this does not assume DNA codons are aligned with the start of the CDS
-#
+# GFF3 from : ftp://ftp.ncbi.nlm.nih.gov/genomes/Capra_hircus/GFF/ref_ASM170441v1_top_level.gff3.gz
+# GoatGenome_6_8_14 ASSEMBLY NAME: ARS1
 
 setwd("D:/Edrive/Goat/DNA/Sequencing")
 library(seqinr)
@@ -209,3 +210,29 @@ for(breed in unique(samples[,1])){
 
 write.table(SNPsinCDS[,-c(6,7,8,9)], file="SNPsInTranscriptsMAFGeno.txt", sep="\t", quote=FALSE, row.names=FALSE, na = "")
 write.table(SNPsinCDS[,-c(6,7,8,9,10:42)], file="SNPsInTranscriptsMAF.txt", sep="\t", quote=FALSE, row.names=FALSE, na = "")
+
+
+SNPselection <- rbind(
+  c("SNP1", "CSN1S1", "ENA|CM004567|CM004567.1", 85981710, "[C/A]"),
+  c("SNP1a", "CSN1S1", "ENA|CM004567|CM004567.1", 85988705, "[G/A]"),
+  c("SNP2", "CSN2", "ENA|CM004567|CM004567.1", 86008016, "[A/G]"),
+  c("SNP3", "CSN1S2", "ENA|CM004567|CM004567.1", 86079098, "[T/C]"),
+  c("SNP4", "CSN3", "ENA|CM004567|CM004567.1", 86208960, "[A/G]"),
+  c("SNP5", "DGAT1", "ENA|CM004575|CM004575.1", 81331681, "[C/A]"),
+  c("SNP6", "HSF1", "ENA|CM004575|CM004575.1", 81326608, "[T/G]")
+)
+
+SNPselection <- cbind(SNPselection, reference = NA)
+SNPselection <- cbind(SNPselection, front = NA)
+SNPselection <- cbind(SNPselection, SNP = NA)
+SNPselection <- cbind(SNPselection, back = NA)
+
+for(x in 1:nrow(SNPselection)){
+  SNPselection[x, "reference"] <- toupper(paste0(fastaSeq[[ SNPselection[x,3] ]][(as.numeric(SNPselection[x,4]) - 60):(as.numeric(SNPselection[x,4]) + 60)], collapse=""))
+  SNPselection[x, "front"] <- toupper(paste0(fastaSeq[[ SNPselection[x,3] ]][(as.numeric(SNPselection[x,4]) - 60):(as.numeric(SNPselection[x,4]) -1)], collapse=""))
+  SNPselection[x, "back"] <- toupper(paste0(fastaSeq[[ SNPselection[x,3] ]][(as.numeric(SNPselection[x,4]) + 1):(as.numeric(SNPselection[x,4]) + 60)], collapse=""))
+  SNPselection[x, "SNP"] <- SNPselection[x,5]
+}
+
+write.table(SNPselection, "FlankingSequences.txt", sep ="\t", row.names=FALSE)
+

@@ -205,6 +205,8 @@ stammpinput <- t(absnpdata)
 stammpinput <- cbind(Sample = rownames(stammpinput), Pop = as.character(samples[rownames(stammpinput),"Breed"]), Ploidy = 2, Format = "BiA", stammpinput)
 stammpinput <- as.data.frame(stammpinput)
 
+write.table(t(stammpinput), "StammpInput.txt", sep="\t")
+
 stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
 stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
 stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE) # Population D values

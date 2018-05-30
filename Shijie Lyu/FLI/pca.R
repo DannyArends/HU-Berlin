@@ -74,6 +74,22 @@ numGT[numGT == "B_B"] <- 3
 numGT <- apply(numGT, 2, function(x){as.numeric(x)} )
 rownames(numGT) <- rownames(genotypes)
 
+
+library(cluster)
+library(HSAUR)
+dat <- dist(t(numGT[sample(rownames(numGT), 5000),]))
+dat <- as.matrix(dat)
+dim(dat)
+rownames(dat) <- colnames(dat) <- phenotypes["popPk",rownames(dat)]
+km2 <- kmeans(dat, 2)
+km9 <- kmeans(dat, 9)
+
+
+
+clusplot(dat, km2$cluster, color=TRUE, shade=TRUE, labels=2, lines=0, main="2 types")
+clusplot(dat, km9$cluster, color=TRUE, shade=TRUE, labels=2, lines=0, main="9 breeds")
+
+
 ind.distances <- dist(t(numGT[sample(rownames(numGT), 100000), ]))
 dendro <- as.dendrogram(hclust(ind.distances, method="complete"))
 
@@ -302,7 +318,11 @@ var.contrib <- t(apply(var.cos2, 1, contrib, comp.cos2))
 
 # Pvalue and LOD scores for contribution
 pcaDistObs <- (sign(pca$rotation[,1]) * var.contrib[,1])    #  mydistExp <- (sign(pca$rotation[,1]) * sqrt(var.contrib[,1]))
+pcaZ <- (pcaDistObs - mean(pcaDistObs)) / sd(pcaDistObs)
 pcaPvals <- 2 * pnorm(abs(pcaDistObs), 0, sd=sd(pcaDistObs), lower.tail=FALSE)
+
+pcaPvalsZ <- 2 * pnorm(abs(pcaZ), 0, sd = 1, lower.tail=FALSE)
+
 pcaPvals.adj <- p.adjust(pcaPvals, "holm")
 
 inPCA <- rownames(annot[rownames(var.contrib),])

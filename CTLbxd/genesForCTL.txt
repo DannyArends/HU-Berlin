@@ -1,0 +1,23 @@
+
+BxD Gene expression sets in genenetwork
+
+UMUTAffy Hippocampus Exon (Feb09) RMA                                 66 BxD
+Hippocampus Consortium M430v2 (Jun06) RMA                             63 BxD
+INIA Amygdala Cohort Affy MoGene 1.0 ST (Mar11) RMA                   46 BxD
+INIA Hypothalamus Affy MoGene 1.0 ST (Nov10)                          46 BxD
+EPFL/LISP BXD CD+HFD Liver Affy Mouse Gene 1.0 ST (Apr13) RMA         40 BxD
+HZI Lung M430v2 (Apr08) RMA Database                                  43 BxD
+UT-VGX Hepatocytes Affy Mouse Gene 1.0 ST Gene Level (Oct14) RMA      25 BxD
+
+
+- Which genes to investigate ?
+
+CD <- CD4/CD8 antigen
+IL <- Interleukines
+HLA <- Major histocompatibility complex (MHC)
+ACE <-  Angiotensin-converting enzyme
+ESR1 <- Estrogen receptor 1
+APP <- Amyloid precursor protein (Alzheimer's Disease)
+LEP <- Leptin (Obesity)
+INS <- Insulin (Diabetes mellitus)
+NPPB <- Brain Natriuretic Peptide (Cardiovascular disease)

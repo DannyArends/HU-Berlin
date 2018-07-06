@@ -18,15 +18,19 @@ strains <- as.factor(unlist(pheALL["Strain",colnames(phenotypes)]))
 
 phenotypes.corrected <- phenotypes
 
-cbind(apply(phenotypes[,names(strains[which(strains == "S")])],1,median,na.rm=TRUE),
-  apply(phenotypes[,names(strains[which(strains == "K")])],1,median,na.rm=TRUE),
-  apply(phenotypes[,names(strains[which(strains == "H")])],1,median,na.rm=TRUE))
+mtable <- cbind(apply(phenotypes[,names(strains[which(strains == "S")])],1,median,na.rm=TRUE),apply(phenotypes[,names(strains[which(strains == "S")])],1,sd,na.rm=TRUE),
+  apply(phenotypes[,names(strains[which(strains == "K")])],1,median,na.rm=TRUE), apply(phenotypes[,names(strains[which(strains == "K")])],1,sd,na.rm=TRUE),
+  apply(phenotypes[,names(strains[which(strains == "H")])],1,median,na.rm=TRUE), apply(phenotypes[,names(strains[which(strains == "H")])],1,sd,na.rm=TRUE))
+
+colnames(mtable) <- c("S(mean)", "S(SD)", "K(mean)", "K(SD)", "H(mean)", "H(SD)")
+mtable <- cbind(mtable, "Pval" =  NA)
 
 for(trait in rownames(phenotypes)) {
   model <- lm(as.numeric(phenotypes[trait, ]) ~ strains)
-  pval <- anova(model)[[5]][1]
-  
+  mtable[trait, "Pval"] <- round(anova(model)[[5]][1],3)
 }
+
+write.table(mtable, "Table_withSD.txt", sep="\t", quote=FALSE)
 
 for(trait in rownames(phenotypes)) {
   pval <- anova(lm(as.numeric(phenotypes[trait, ]) ~ strains))[[5]][1]

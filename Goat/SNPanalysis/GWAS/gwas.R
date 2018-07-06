@@ -99,6 +99,32 @@ for(pheno in pheNames){
   }
 }
 
+phenotypes.adjusted <- phenotypes.adjusted[,-c(1:2)]
+
+# review 1
+
+corM <- round(cor(phenotypes.adjusted, use="pair", method="spearman"),2) * upper.tri(round(cor(phenotypes.adjusted, use="pair", method="spearman"),2))
+max(corM)
+min(corM)
+
+corM[corM == 0] <- NA
+
+write.table(corM, "correlationMatrix.txt", quote=FALSE, sep="\t")
+
+
+# review 2
+ind <- colnames(genotypes)[which(genotypes["snp10185-scaffold1365-620922",] == "GG")]
+table(samples[ind,"Breed"])
+
+
+bb <- genotypes["snp56482-scaffold89-467312",]
+
+topMbl <- as.character(unlist(bb))
+breeds <- as.character(samples[names(bb),"Breed"])
+table(topMbl,breeds)
+
+
+
 pvalues.add <- matrix(NA, nrow(genotypes), length(pheNames), dimnames=list(rownames(genotypes), pheNames))
 pvalues.dom <- matrix(NA, nrow(genotypes), length(pheNames), dimnames=list(rownames(genotypes), pheNames))
 cnt <- 1
@@ -275,6 +301,7 @@ names(chr.starts) <- chrs
 names(chr.lengths) <- chrs
 phenotype <- "Bicoastaldiameter"
 
+png("SihamGWASPaperPlot.png", height=4956, width=7020, res=600)
 layout(matrix(c(1,1,2,3),2,2,byrow=T))
 op <- par(mar = c(4,4,2,1))
 i <- 1
@@ -324,7 +351,7 @@ legend("topleft", c(paste0("Original λ = ", lambda.ori), "Adjusted λ = 1.00"),
 abline(0, 1)
 boxplot(as.numeric(phenotypes.adjusted[,phenotype]) ~ as.character(unlist(genotypes[maxMarker,])), main=paste0(phenotype," @ ",maxMarker), xlab="Genotype", ylab=paste0(phenotype, " (cm)"),varwidth = TRUE)
 
-
+dev.off()
 
 marker <- which.max(lod.add[,phenotype])
 geno.char <- as.character(unlist(genotypes[marker,]))

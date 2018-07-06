@@ -114,16 +114,149 @@ numsnpdataALL <- numsnpdata
 numsnpdataHQ <- numsnpdata[,highQualityS]
 numsnpdataHQ <- cbind(numsnpdataHQ, numsnpdata[,tagData])
 
+samples[which(samples[, "Sum"] == "Ibex (Sudan)"),"Sum"] <- "Nubian ibex"
+samples[which(samples[, "Sum"] == "Ibex (Zoo)"),"Sum"] <- "Alpine ibex"
+samples[which(samples[, "Sum"] == "Bezoar"),"Sum"] <- "Bezoar ibex"
+
 colnames(numsnpdataHQ)[which(grepl("Ind", colnames(numsnpdataHQ)))] <- samples[colnames(numsnpdataHQ)[which(grepl("Ind", colnames(numsnpdataHQ)))], "Sum"]
 colnames(numsnpdataHQ)[which(colnames(numsnpdataHQ) %in% tagData)] <- rep("Taggar", length(tagData))
 
+for(x in c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")){
+  tablesBI <- apply(numsnpdataHQ[,which(colnames(numsnpdataHQ) == x)],1,table)
+  lengthsBI <- table(unlist(lapply(tablesBI, length)))
+  cat(x, " ", round((sum(lengthsBI) - lengthsBI["1"])  / sum(lengthsBI) * 100,1), "\n")
+}
+tablesBI <- apply(numsnpdataHQ,1,table)
+lengthsBI <- table(unlist(lapply(tablesBI, length)))
+cat("Combined: ", round((sum(lengthsBI) - lengthsBI["1"])  / sum(lengthsBI) * 100,1), "\n")
 
-distances <- dist(t(numsnpdataHQ))
-plot(hclust(distances), main="Euclidean distances between populations", hang=-1)
+snpinfo[rownames(map),"Chr"] <- map[,"chrN"]
+snpinfo[rownames(map),"Position"] <- map[,"Pos"]
+
+samples <- samples[highQualityS,]
+numsnpdataHQ <- numsnpdata[,highQualityS]
+numsnpdataHQ <- cbind(numsnpdataHQ, numsnpdata[,tagData])
+
+aa <- colnames(sihamsamples)[colnames(sihamsamples) %in% colnames(samples)]
+bb <- rownames(sihamsamples)[rownames(sihamsamples) %in% colnames(numsnpdataHQ)]
+for(x in 1:length(bb)){
+  samples <- rbind(samples, NA)
+}
+rownames(samples)[21:44] <- bb
+samples[21:44, "Sum"] <- "Taggar"
+samples[bb,aa] <- sihamsamples[bb, aa]
+
+write.table(numsnpdataHQ, "numeric_snps_combined.txt", sep="\t", quote=FALSE)
+write.table(samples, "samples_combined.txt", sep="\t", quote=FALSE)
+write.table(snpinfo, "snpinfo_combined.txt", sep="\t", quote=FALSE)
+
+# Pre-processing completed
+setwd("D:/Edrive/Goat/DNA/Ibex")
+
+numsnpdata <- read.table("numeric_snps_combined.txt", sep="\t", check.names=FALSE)
+samples <- read.table("samples_combined.txt", sep="\t", colClasses="character")
+snpinfo <- read.table("snpinfo_combined.txt", sep="\t")
+
+breeds <- samples[colnames(numsnpdata),"Sum"]
+names(breeds) <- colnames(numsnpdata)
+segIn3 <- c()
+for(x in 1:nrow(numsnpdata)){
+  S <- 0
+  for(breed in c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")){
+    ind <- names(breeds)[which(breeds == breed)]
+    if( var(as.numeric(numsnpdata[x, ind]), na.rm=TRUE) != 0){
+      S <- S + 1
+    }else if( any(as.numeric(numsnpdata[x, ind]) == 2, na.rm=TRUE)){
+      S <- S + 1
+    }
+  }
+  if(S >= 3) segIn3 <- c(segIn3, x)
+  cat(x, " ", S, " ", length(segIn3), "\n")
+}
+
+numsnpdataS3 <- numsnpdata[segIn3,]
+colnames(numsnpdata) <- samples[colnames(numsnpdata), "Sum"]
+colnames(numsnpdataS3) <- samples[colnames(numsnpdataS3), "Sum"]
+
+### HCLUST euclidean distance
+distances <- dist(t(numsnpdata))
+distancesS3 <- dist(t(numsnpdataS3))
+op <- par(mfrow=c(1, 2))
+plot(hclust(distances), main="Euclidean distances between populations (33,698 SNPs)", hang=-1,xlab="", sub="")
+plot(hclust(distancesS3), main="Euclidean distances between populations (662 SNPs)", hang=-1,xlab="", sub="")
+
+# Transform SNPs to a format stampp can understand
+absnpdata <- matrix(NA, nrow(numsnpdata), ncol(numsnpdata), dimnames=list(rownames(numsnpdata), colnames(numsnpdata)))
+for(x in rownames(numsnpdata)){
+  minor.Homo <- paste0(snpinfo[x, "minorallele"], snpinfo[x, "minorallele"])
+  major.Homo <- paste0(snpinfo[x, "majorallele"], snpinfo[x, "majorallele"])
+  absnpdata[x, numsnpdata[x,] == 1] <- "AA"
+  absnpdata[x, numsnpdata[x,] == 2] <- "AB"
+  absnpdata[x, numsnpdata[x,] == 3] <- "BB"
+}
+write.table(absnpdata, "absnpdata.txt", sep="\t", quote=FALSE)
+
+
+# Transform SNPs to a format stampp can understand
+absnpdataS3 <- matrix(NA, nrow(numsnpdataS3), ncol(numsnpdataS3), dimnames=list(rownames(numsnpdataS3), colnames(numsnpdataS3)))
+for(x in rownames(numsnpdataS3)){
+  minor.Homo <- paste0(snpinfo[x, "minorallele"], snpinfo[x, "minorallele"])
+  major.Homo <- paste0(snpinfo[x, "majorallele"], snpinfo[x, "majorallele"])
+  absnpdataS3[x, numsnpdataS3[x,] == 1] <- "AA"
+  absnpdataS3[x, numsnpdataS3[x,] == 2] <- "AB"
+  absnpdataS3[x, numsnpdataS3[x,] == 3] <- "BB"
+}
+write.table(absnpdataS3, "absnpdataS3.txt", sep="\t", quote=FALSE)
+
+
+library(StAMPP)
+
+colnames(absnpdata) <- colnames(numsnpdataHQ)
+colnames(absnpdataS3) <- colnames(numsnpdataHQ)
+
+stammpinput <- t(absnpdata)
+populations <- as.character(samples[rownames(stammpinput), "Sum"])
+stammpinput <- cbind(Sample = rownames(stammpinput), Pop = populations, Ploidy = 2, Format = "BiA", stammpinput)
+stammpinput <- as.data.frame(stammpinput)
+stammpinput.freq <- stamppConvert(stammpinput, "r") # Frequencies
+stammp.D.pop <- stamppNeisD(stammpinput.freq, TRUE) # Population D values
+stammp.D.ind <- stamppNeisD(stammpinput.freq, FALSE) # Population D values
+stammpinput.fst <- stamppFst(stammpinput.freq, 1000, 95, 4) # Population Fst values
+stammpinput.fst$Fsts
+write.table(stammpinput.fst$Fsts, file = "fstsHQ.txt", sep = "\t")
+stammpinput.amova <- stamppAmova(stammp.D.ind, stammpinput.freq, 10000)
+write.table(stammpinput.amova[[1]], file = "amovaSSD.txt", sep = "\t")
+write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
+# Nei's genetic distance
+rownames(stammp.D.ind) <- samples[rownames(stammp.D.ind), "Sum"]
+stmpD <- as.dist(stammp.D.ind)
+
+stammpinputS3 <- t(absnpdataS3)
+populationsS3 <- as.character(samples[rownames(stammpinputS3), "Sum"])
+stammpinputS3 <- cbind(Sample = rownames(stammpinputS3), Pop = populationsS3, Ploidy = 2, Format = "BiA", stammpinputS3)
+stammpinputS3 <- as.data.frame(stammpinputS3)
+stammpinputS3.freq <- stamppConvert(stammpinputS3, "r") # Frequencies
+stammpS3.D.pop <- stamppNeisD(stammpinputS3.freq, TRUE) # Population D values
+stammpS3.D.ind <- stamppNeisD(stammpinputS3.freq, FALSE) # Population D values
+stammpinputS3.fst <- stamppFst(stammpinputS3.freq, 1000, 95, 4) # Population Fst values
+stammpinputS3.fst$Fsts
+write.table(stammpinputS3.fst$Fsts, file = "fstsHQ_S3.txt", sep = "\t")
+stammpinputS3.amova <- stamppAmova(stammpS3.D.ind, stammpinputS3.freq, 10000)
+write.table(stammpinputS3.amova[[1]], file = "amovaSSD_S3.txt", sep = "\t")
+write.table(stammpinputS3.amova[[3]], file = "amovapvalues_S3.txt", sep = "\t")
+# Nei's genetic distance
+rownames(stammpS3.D.ind) <- samples[rownames(stammpS3.D.ind), "Sum"]
+stmpDS3 <- as.dist(stammpS3.D.ind)
+
+op <- par(mfrow=c(1, 2))
+plot(hclust(stmpD), main="Nei's genetic distance (33,698 SNPs)", hang=-1,xlab="", sub="")
+plot(hclust(stmpDS3), main="Nei's genetic distance (662 SNPs)", hang=-1,xlab="", sub="")
+
+
 
 ## Principal component analysis
-misdata <- which(apply(numsnpdataHQ, 1, function(x){any(is.na(x))}))
-numsnppca <- numsnpdataHQ[-misdata,]
+misdata <- which(apply(numsnpdata, 1, function(x){any(is.na(x))}))
+numsnppca <- numsnpdata[-misdata,]
 
 nonseg <- which(apply(numsnppca, 1, function(x){ length(table(x)) }) == 1 )
 numsnppca <- numsnppca[-nonseg,]
@@ -140,10 +273,11 @@ pca3 <- paste0("PC3 (", round(sumpca$importance[2,3] * 100,1), "%", " var explai
 
 # Create colors
 types <- c("x","o","#", "t")
-names(types) <- c("Ibex (Sudan)", "Ibex (Zoo)", "Bezoar", "Taggar")
+names(types) <- c("Nubian ibex", "Alpine ibex", "Bezoar ibex", "Taggar")
 # Create colors
 cols <- c("red", "blue", "orange", "black")
-names(cols) <- c("Ibex (Sudan)", "Ibex (Zoo)", "Bezoar", "Taggar")
+names(cols) <- c("Nubian ibex", "Alpine ibex", "Bezoar ibex", "Taggar")
+
 
 #png("PCAplot.png", width=600, height=600, res=300, pointsize = 5)
 plot(c(-250,100), c(-100,150), col = cols[as.character(as.character(groups))],pch = 19, xlab=paste0("PCA 1 ",pca1), ylab=paste0("PCA 2 ",pca2), 
@@ -156,7 +290,7 @@ op <- par(mfrow = c(2,2))
 plot(pcares$x[,1], pcares$x[,2], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca2)
 plot(pcares$x[,1], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca1, ylab = pca3)
 plot(pcares$x[,2], pcares$x[,3], col = cols[as.character(as.character(groups))], pch = types[as.character(groups)], cex=1.2, xlab = pca2, ylab = pca3)
-plot(c(0,1),c(0,1), t = 'n',xaxt='n',yaxt='n', xlab="", ylab="")
+plot(c(0,1),c(0,1), t = 'n',xaxt='n',yaxt='n', xlab="", ylab="", bty="n", box=FALSE)
 legend("center", unique(groups), pch = types[unique(as.character(groups))], col= cols[unique(as.character(groups))], bg="white")
 #dev.off()
 
@@ -305,7 +439,6 @@ write.table(stammpinput.amova[[3]], file = "amovapvalues.txt", sep = "\t")
 # Nei's genetic distance
 rownames(stammp.D.ind) <- samples[rownames(stammp.D.ind), "Sum"]
 rownames(stammp.D.ind)[is.na(rownames(stammp.D.ind))] <- "Taggar"
-rownames(stammp.D.ind)[is.na(rownames(stammp.D.ind))] <- "Taggar"
 stmpD <- as.dist(stammp.D.ind)
 plot(hclust(stmpD), main="Nei's genetic distance")
 
@@ -328,14 +461,15 @@ toGenPop <- function(genotypes){
   return(t(numericG))
 }
 genotypes_genpopA <- t(toGenPop(absnpdata))
+genotypes_genpopAS3 <- t(toGenPop(absnpdataS3))
 
 write.table(genotypes_genpopA, "snpdataGP.txt", sep="\t", quote=FALSE)
+write.table(genotypes_genpopAS3, "snpdataGPS3.txt", sep="\t", quote=FALSE)
 set.seed(1)
 rsample <- sample(ncol(genotypes_genpopA), 2000)
 genotypes_genpop <- genotypes_genpopA[, rsample]
 
 rownames(genotypes_genpop) <- samples[rownames(genotypes_genpop), "Sum"]
-rownames(genotypes_genpop)[is.na(rownames(genotypes_genpop))] <- "Taggar"
 rownames(genotypes_genpop) <- gsub(")", "", gsub("(", "", gsub(" ", "_", rownames(genotypes_genpop)), fixed = TRUE))
 
 ### Write out genotypes in genpop format for usage in diveRsity
@@ -367,6 +501,84 @@ basicStats$fis[["Combined"]]["overall",]                      # Fis
 
 advancedStats <- diffCalc(infile = "genotypes_genpop.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
 advancedStats$pairwise$Fst # Pairwise Fst per populations
+
+####### 662 SNPs
+genotypes_genpopS3 <- genotypes_genpopAS3
+
+rownames(genotypes_genpopS3) <- samples[rownames(genotypes_genpopS3), "Sum"]
+rownames(genotypes_genpopS3) <- gsub(")", "", gsub("(", "", gsub(" ", "_", rownames(genotypes_genpopS3)), fixed = TRUE))
+
+### Write out genotypes in genpop format for usage in diveRsity
+cat("BLANK\n", file="genotypes_genpopS3.txt")
+cat(paste0(colnames(genotypes_genpopS3), collapse="\n"), file="genotypes_genpopS3.txt", append=TRUE)
+cat("\n", file="genotypes_genpopS3.txt", append=TRUE)
+
+for(pop in unique(rownames(genotypes_genpopS3))) {
+  cat("POP\n", file="genotypes_genpopS3.txt", append=TRUE)
+  ii <- which(rownames(genotypes_genpopS3) == pop)
+  write.table(genotypes_genpopS3[ii,], sep = " ", quote=FALSE, na = "0000", file="genotypes_genpopS3.txt", append=TRUE, col.names=FALSE)
+}
+cat("POP\n", file="genotypes_genpopS3.txt", append=TRUE)
+genotypes_copy <- genotypes_genpopS3
+rownames(genotypes_copy) <- rep("Combined", nrow(genotypes_copy))
+write.table(genotypes_copy[,], sep = " ", quote=FALSE, na = "0000", file="genotypes_genpopS3.txt", append=TRUE, col.names=FALSE)
+
+library(diveRsity)
+basicStats <- divBasic(infile = "genotypes_genpopS3.txt", outfile="basicStatsOut.txt", gp=2, bootstraps = 100)
+names(basicStats$fis) <- colnames(basicStats$Ho)
+
+basicStats$Ho["overall",] # Observed
+basicStats$He["overall",] # Expected
+
+basicStats$fis[["Bezoar"]]["overall",]                   # Fis
+basicStats$fis[["Ibex_Zoo"]]["overall",]                      # Fis
+basicStats$fis[["Ibex_Sudan"]]["overall",]                         # Fis
+basicStats$fis[["Combined"]]["overall",]                      # Fis
+
+advancedStats <- diffCalc(infile = "genotypes_genpopS3.txt", outfile="fstOnlyOut.txt", fst=TRUE, pairwise=TRUE, boots = 1000)
+advancedStats$pairwise$Fst # Pairwise Fst per populations
+
+
+
+
+breeds <- samples[colnames(numsnpdata),"Sum"]
+names(breeds) <- colnames(numsnpdata)
+segInSpecies <- matrix(0, nrow(numsnpdata), 4, dimnames = list(rownames(numsnpdata),  c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")))
+for(x in 1:nrow(numsnpdata)){
+  S <- 0
+  for(breed in c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")){
+    ind <- which(colnames(numsnpdata) == breed)
+    if( var(as.numeric(numsnpdata[x, ind]), na.rm=TRUE) != 0){
+      segInSpecies[x, breed] = 1
+    }else if( any(as.numeric(numsnpdata[x, ind]) == 2, na.rm=TRUE)){
+      segInSpecies[x, breed] = 1
+    }
+  }
+}
+apply(segInSpecies,2,sum) / nrow(segInSpecies)
+
+
+
+breeds <- samples[colnames(numsnpdataS3),"Sum"]
+names(breeds) <- colnames(numsnpdataS3)
+segInSpeciesS3 <- matrix(0, nrow(numsnpdataS3), 4, dimnames = list(rownames(numsnpdataS3),  c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")))
+for(x in 1:nrow(numsnpdataS3)){
+  S <- 0
+  for(breed in c("Bezoar ibex", "Nubian ibex", "Alpine ibex", "Taggar")){
+    ind <- which(colnames(numsnpdataS3) == breed)
+    if( var(as.numeric(numsnpdataS3[x, ind]), na.rm=TRUE) != 0){
+      segInSpeciesS3[x, breed] = 1
+    }else if( any(as.numeric(numsnpdataS3[x, ind]) == 2, na.rm=TRUE)){
+      segInSpeciesS3[x, breed] = 1
+    }
+  }
+}
+apply(segInSpeciesS3,2,sum) / nrow(segInSpeciesS3)
+
+
+
+
+
 
 ## STRUCTURE
 if(!file.exists("cleaned_genotypes_structure.txt")){

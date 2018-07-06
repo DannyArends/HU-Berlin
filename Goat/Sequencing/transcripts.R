@@ -45,9 +45,9 @@ toProtein <- function(proteingff){
     codingsequence <- paste0(codingsequence, proteingff[x, "sequence"], collapse="")
   }
   if(all(proteingff[,"V7"] == "+")) { # Positive strand gene, just translate the CDS
-    return(list(codingsequence, as.character(translate(DNAString(codingsequence)))))
+    return(list(codingsequence, as.character(translate(DNAString(codingsequence), if.fuzzy.codon="solve"))))
   }else{                              # Negative strand gene, reverse complement the DNA and translate the rev complemented CDS
-    return(list(tolower(as.character(reverseComplement(DNAString(codingsequence)))), as.character(translate(reverseComplement(DNAString(codingsequence))))))
+    return(list(tolower(as.character(reverseComplement(DNAString(codingsequence)))), as.character(translate(reverseComplement(DNAString(codingsequence)), if.fuzzy.codon="solve"))))
   }
 }
 

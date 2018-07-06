@@ -4,11 +4,11 @@
 
 # Load the genotype call data
 
-source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
-source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
-source("D:/Github/HU-Berlin/Mouse/Muga/ATB_Paper/incompatible.R")
+source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
+source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
+source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/incompatible.R")
 
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 
 # Load the genotype call data
 phased.vcf <- read.table(gzfile(paste0("Analysis/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
@@ -175,7 +175,7 @@ sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 #tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
 postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, height=14, pointsize = 18)
   op <- par(mar= c(7, 7, 4, 10) + 0.1, xpd=FALSE)
-  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6n)")
+  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6N)")
 
   axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
   axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
@@ -195,7 +195,7 @@ postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, heig
   op <- par(xpd=TRUE)
   legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
          fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
-         cex=1, inset=c(-0.25,0))
+         cex=1, inset=c(-0.20,0))
   box()
 dev.off()
 

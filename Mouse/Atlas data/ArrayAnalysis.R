@@ -8,7 +8,7 @@ library(preprocessCore)
 library(biomaRt)
 
 # Loading data
-setwd("E:/Mouse/RNA/ArrayDesign/Atlas data")
+setwd("D:/Edrive/Mouse/RNA/ArrayDesign/Atlas data")
 arrays <- read.table("Annotation/arrays.txt", header=TRUE, sep="\t", colClasses="character")
 
 if(!file.exists("Analysis/arraydata.txt")){

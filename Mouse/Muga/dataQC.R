@@ -6,7 +6,7 @@
 library(lme4)
 
 source("D:/Github/HU-Berlin/Mouse/Muga/ATB_paper/dateToSeason.R")
-setwd("E:/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")                                                                                                                                   # Read in the data from the Mega Muga
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")                                                    # Normal A, H, B genotypes

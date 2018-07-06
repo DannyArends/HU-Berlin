@@ -189,6 +189,8 @@ ROH.DSN.16mb.vector <- apply(ROH.DSN.16mb.geno,1,sum)/ ncol(ROH.DSN.16mb.geno)
 cutoff.DSN.16mb <- median(ROH.DSN.16mb.vector) + 2* sd(ROH.DSN.16mb.vector)
 
 ### ROH plots
+png("ROH_genomewide.png", width=1024, height=600)
+
 op <- par(mfrow=c(3,1))
 colz <- c("blue", "orange")[as.numeric(as.numeric(chrs) %% 2 == 0)+1]
 
@@ -216,6 +218,7 @@ abline(h = cutoff.HF.16mb)
 points(x=sumpos, y=-ROH.DSN.16mb.vector, col=colz, pch=19, cex=0.4)
 abline(h = -cutoff.DSN.16mb)
 
+dev.off()
 ### Total length of genome covered by SNPs
 
 chr.length.total <- 0
@@ -252,19 +255,24 @@ DSN.8mb.hist <- hist(Frohs.8mb.DSN, breaks=seq(0,1,0.01), plot=FALSE)
 DSN.16mb.hist <- hist(Frohs.16mb.DSN, breaks=seq(0,1,0.01), plot=FALSE)
 
 ### Plot the F(ROH)
+png("F_ROH.png", width=800, height=800)
+
 xpos <- HF.4mb.hist$breaks[-length(HF.4mb.hist$breaks)] + 0.5 * diff(HF.4mb.hist$breaks)
 
 plot(c(0,0.3), c(0,0.5), t = 'n', ylab="Poportion in ROH", xlab="Inbreeding coefficient F(ROH)")
-points(x = xpos, y = HF.4mb.hist$counts / sum(HF.4mb.hist$counts), pch=19, cex=0.7, t='l')
-points(x = xpos, y = HF.4mb.hist$counts / sum(HF.4mb.hist$counts), pch=19, cex=0.7, t='p')
-points(x = xpos, y = HF.8mb.hist$counts / sum(HF.8mb.hist$counts), pch=17, cex=0.7, t='l')
-points(x = xpos, y = HF.8mb.hist$counts / sum(HF.8mb.hist$counts), pch=17, cex=0.7, t='p')
+points(x = xpos, y = HF.4mb.hist$counts / sum(HF.4mb.hist$counts), pch=19, t='l')
+points(x = xpos, y = HF.4mb.hist$counts / sum(HF.4mb.hist$counts), pch=19, t='p')
+points(x = xpos, y = HF.8mb.hist$counts / sum(HF.8mb.hist$counts), pch=17, t='l')
+points(x = xpos, y = HF.8mb.hist$counts / sum(HF.8mb.hist$counts), pch=17, t='p')
 
-points(x = xpos , y = DSN.4mb.hist$counts / sum(DSN.4mb.hist$counts), col=2, pch=19, cex=0.7, t='l')
-points(x = xpos , y = DSN.4mb.hist$counts / sum(DSN.4mb.hist$counts), col=2, pch=19, cex=0.7, t='p')
-points(x = xpos , y = DSN.8mb.hist$counts / sum(DSN.8mb.hist$counts), col=2, pch=17, cex=0.7, t='l')
-points(x = xpos , y = DSN.8mb.hist$counts / sum(DSN.8mb.hist$counts), col=2, pch=17, cex=0.7, t='p')
+points(x = xpos , y = DSN.4mb.hist$counts / sum(DSN.4mb.hist$counts), col=2, pch=19, t='l')
+points(x = xpos , y = DSN.4mb.hist$counts / sum(DSN.4mb.hist$counts), col=2, pch=19, t='p')
+points(x = xpos , y = DSN.8mb.hist$counts / sum(DSN.8mb.hist$counts), col=2, pch=17, t='l')
+points(x = xpos , y = DSN.8mb.hist$counts / sum(DSN.8mb.hist$counts), col=2, pch=17, t='p')
 
+legend("topright", c("Holstein roh>4mb", "Holstein roh>8mb","DSN roh>4mb","DSN roh>8mb"), pch=c(19,17,19,17), col=c(1,1,2,2))
+
+dev.off()
 
 ### Plot the ROH length versus the number of ROH segments
 ### Sum of length covered by ROH in an individual
@@ -303,7 +311,13 @@ ROH.segments.HF[,2]  <- ROH.segments.HF[,2] / 1000000
 xmax <- max(c(ROH.segments.HF[,2], ROH.segments.DSN[,2]))
 ymax <- max(c(ROH.segments.HF[,1], ROH.segments.DSN[,1]))
 
+png("ROH_segments.png", width=800, height=800)
 
 plot(c(0,xmax), c(0,ymax), t ='n', xlab="Covered genome length (Mb)", ylab="Number of ROH segements")
 points(ROH.segments.HF[,2], ROH.segments.HF[,1], col=1, pch=19,cex=0.7)
 points(ROH.segments.DSN[,2], ROH.segments.DSN[,1], col=2, pch=19,cex=0.7)
+
+legend("bottomright", c("Holstein roh>4mb","DSN roh>4mb"), pch=c(19,19), col=c(1,2))
+
+dev.off()
+

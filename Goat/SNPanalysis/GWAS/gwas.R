@@ -269,6 +269,51 @@ for(chr in chrs){
   i <- i + 1
 }
 
+names(chr.starts) <- chrs
+names(chr.lengths) <- chrs
+
+
+### Plots for the presentation: Bicoastaldiameter
+png(paste0("Manhattan_Bicoastaldiameter.png"), width=1024)
+phenotype <- "Bicoastaldiameter"
+plot(x = c(-gap, tail(chr.starts,1)), y = c(0,8), t = 'n', xlab="", ylab="-log10(P)",xaxt='n', xaxs="i", yaxs="i",las=2,main=paste0("Manhattan plot - ", phenotype, ", Additive Effect"))
+for(chr in chrs){
+  onChr <- rownames(map.sorted[map.sorted[,"Chr"] == chr,])
+  points(x=chr.starts[chr] + map.sorted[onChr,"Position"], y = -log10(pvalues.add.adj)[onChr, phenotype],t ='h', col=c("black", "cornflowerblue")[(i %% 2 == 1) + 1])
+  if(chr != "X") text(x=chr.starts[chr] + chr.lengths[chr] / 2, y = 0.25, chr, col=c("white", "black")[(i %% 2 == 1) + 1],cex=0.8)
+  if(chr == "X") text(x=chr.starts[chr] + 2*gap, y = 0.25, chr, col=c("white", "black")[(i %% 2 == 1) + 1],cex=0.8)
+  i <- i + 1
+}
+abline(h=-log10(0.05/24027), col="green",lty=3)
+abline(h=5, col="orange",lty=3)
+dev.off()
+
+png(paste0("Boxplot_Bicoastaldiameter.png"), width=1024)
+maxMarker <- rownames(lod.add.adj)[which.max(lod.add.adj[,phenotype])]
+boxplot(as.numeric(phenotypes.adjusted[,phenotype]) ~ as.character(unlist(genotypes[maxMarker,])), main=paste0(phenotype," @ ",maxMarker), xlab="Genotype", ylab=paste0(phenotype, " (cm)"),varwidth = TRUE)
+dev.off()
+
+png(paste0("Manhattan_Bodylength.png"), width=1024)
+### Plots for the presentation: Bodylength
+phenotype <- "Bodylength"
+plot(x = c(-gap, tail(chr.starts,1)), y = c(0,8), t = 'n', xlab="", ylab="-log10(P)",xaxt='n', xaxs="i", yaxs="i",las=2,main=paste0("Manhattan plot - ", phenotype, ", Additive Effect"))
+for(chr in chrs){
+  onChr <- rownames(map.sorted[map.sorted[,"Chr"] == chr,])
+  points(x=chr.starts[chr] + map.sorted[onChr,"Position"], y = -log10(pvalues.add.adj)[onChr, phenotype],t ='h', col=c("black", "cornflowerblue")[(i %% 2 == 1) + 1])
+  if(chr != "X") text(x=chr.starts[chr] + chr.lengths[chr] / 2, y = 0.25, chr, col=c("white", "black")[(i %% 2 == 1) + 1],cex=0.8)
+  if(chr == "X") text(x=chr.starts[chr] + 2*gap, y = 0.25, chr, col=c("white", "black")[(i %% 2 == 1) + 1],cex=0.8)
+  i <- i + 1
+}
+abline(h=-log10(0.05/24027), col="green",lty=3)
+abline(h=5, col="orange",lty=3)
+dev.off()
+
+png(paste0("Boxplot_Bodylength.png"), width=1024)
+maxMarker <- rownames(lod.add.adj)[which.max(lod.add.adj[,phenotype])]
+boxplot(as.numeric(phenotypes.adjusted[,phenotype]) ~ as.character(unlist(genotypes[maxMarker,])), main=paste0(phenotype," @ ",maxMarker), xlab="Genotype", ylab=paste0(phenotype, " (cm)"),varwidth = TRUE)
+dev.off()
+
+## Basic plots made earlier
 for(pheno in pheNames){
   png(paste0("GWASplots/GWAS",pheno,"_Add.png"), width=1024)
     plot(x = c(-gap, tail(chr.starts,1)), y = c(0,8), t = 'n', xlab="", ylab="-log10(P)",xaxt='n', xaxs="i", yaxs="i",las=2,main=paste0("Manhattan plot - ", pheno, ", Additive Effect"))

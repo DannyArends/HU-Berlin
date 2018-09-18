@@ -1,7 +1,7 @@
 library("haplo.stats")
 
 setwd("D:/Edrive/Goat/DNA/Sequencing/")
-sampleIDs <- read.table("samples_description.txt", colClasses="character", sep="\t", header=FALSE,na.strings=c(""),row.names=1, check.names=FALSE)
+sampleIDs <- read.table("samples_descriptionU.txt", colClasses="character", sep="\t", header=FALSE,na.strings=c(""),row.names=1, check.names=FALSE)
 
 setwd("D:/Edrive/Goat/DNA/Sequencing/SNPs")
 snps <- read.table("SNPsInTranscriptsMAFGeno.txt", colClasses="character", sep="\t", header=TRUE,na.strings=c(""),check.names=FALSE)
@@ -39,12 +39,13 @@ for(gene in genes){
   haploinput[haploinput == "X"] <- 0
 
   groups <- sampleIDs[rownames(snps[samples,]),1]
-  groups[groups == "Wild"] <- "Ibex"
+  #groups[groups == "Wild"] <- "Ibex"
 
   haplogroups <- haplo.group(groups, haploinput, colnames(geneSNPs), haplo.em.control(max.iter = 100, min.posterior = 1e-06, verbose=TRUE))
   haplogroups = haplogroups[[1]]
   colnames(haplogroups) <- gsub("groups=", "", colnames(haplogroups))
   rownames(haplogroups) <- paste("Haplotype", LETTERS[1:nrow(haplogroups)])
 
+  haplogroups <- cbind(haplogroups[,-which(colnames(haplogroups) %in% c("Total", unique(groups)))], apply(haplogroups[,c("Total", unique(groups))], 2,round,2))
   write.table(haplogroups, file=paste0("haplo_",gene,".txt"), sep="\t", na="")
 }

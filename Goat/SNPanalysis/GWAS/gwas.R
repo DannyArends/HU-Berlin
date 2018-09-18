@@ -41,6 +41,7 @@ pheNames <- c("Averagemilk", "Weight", "Withersheight", "Rumpheight", "Bodylengt
 breeds <- c("Dese", "Ni", "Nu", "Tagg")
               
 phenotypes <- apply(samples[, pheNames], 2, as.numeric)
+rownames(phenotypes) <- rownames(samples)
 
 # No milk, since they are not lactating yet
 noMilk <- which(phenotypes[,"Averagemilk"] == 0)
@@ -432,7 +433,7 @@ for(x in 1: ncol(lod.dom.adj)){
                              proteins[,"start_position_on_the_genomic_accession"] <  pos + 2000000),], file = paste0("proteins_sign_dom_near_",colnames(lod.dom.adj)[x],".txt"), sep="\t", quote=FALSE)
   }
   if(length(i.add) > 0){
-    cat(x, "sign dom for", colnames(lod.dom.adj)[x], rownames(lod.dom.adj)[i.add], "\n")
+    cat(x, "sign add for", colnames(lod.dom.adj)[x], rownames(lod.dom.adj)[i.add], "\n")
     probe <- rownames(lod.dom.adj)[i.add]
     chr <- map[probe,"chrN"]
     pos <- as.numeric(map[probe,"Position"])
@@ -472,3 +473,14 @@ for(x in 1: ncol(lod.dom.adj)){
     }
   }
 }
+
+
+
+n1 <-  phenotypes.adjusted[which(as.character(unlist(genotypes[maxMarker,])) == "AA"),phenotype]
+n2 <-  phenotypes.adjusted[which(as.character(unlist(genotypes[maxMarker,])) == "AG"),phenotype]
+n3 <-  phenotypes.adjusted[which(as.character(unlist(genotypes[maxMarker,])) == "GG"),phenotype]
+t.test(n1, n2)$p.value# * (3 * 24027)
+t.test(n1, n3)$p.value# * (3 * 24027)
+t.test(n2, n3)$p.value# * (3 * 24027)
+
+24,027 &

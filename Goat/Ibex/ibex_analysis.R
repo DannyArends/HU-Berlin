@@ -181,9 +181,12 @@ colnames(numsnpdataS3) <- samples[colnames(numsnpdataS3), "Sum"]
 ### HCLUST euclidean distance
 distances <- dist(t(numsnpdata))
 distancesS3 <- dist(t(numsnpdataS3))
-op <- par(mfrow=c(1, 2))
-plot(hclust(distances), main="Euclidean distances between populations (33,698 SNPs)", hang=-1,xlab="", sub="")
-plot(hclust(distancesS3), main="Euclidean distances between populations (662 SNPs)", hang=-1,xlab="", sub="")
+png("IbexFig1.png", res= 300, width=3600, height=2800)
+  op <- par(mfrow=c(2, 1))
+  op <- par(cex=1.4)
+  plot(as.dendrogram(hclust(distances)), main="Euclidean distances between populations (33,698 SNPs)",xlab="", sub="", las=2)
+  plot(as.dendrogram(hclust(distancesS3)), main="Euclidean distances between populations (662 SNPs)",xlab="", sub="", las=2)
+dev.off()
 
 # Transform SNPs to a format stampp can understand
 absnpdata <- matrix(NA, nrow(numsnpdata), ncol(numsnpdata), dimnames=list(rownames(numsnpdata), colnames(numsnpdata)))
@@ -249,9 +252,13 @@ rownames(stammpS3.D.ind) <- samples[rownames(stammpS3.D.ind), "Sum"]
 stmpDS3 <- as.dist(stammpS3.D.ind)
 
 op <- par(mfrow=c(1, 2))
-plot(hclust(stmpD), main="Nei's genetic distance (33,698 SNPs)", hang=-1,xlab="", sub="")
-plot(hclust(stmpDS3), main="Nei's genetic distance (662 SNPs)", hang=-1,xlab="", sub="")
 
+png("IbexFig1.png", res= 300, width=4000, height=2800)
+  op <- par(mfrow=c(2, 1))
+  op <- par(cex=1.3)
+  plot(as.dendrogram(hclust(stmpD)), main="Nei's genetic distance (33,698 SNPs)", xlab="", sub="", las=2)
+  plot(as.dendrogram(hclust(stmpDS3)), main="Nei's genetic distance (662 SNPs)", xlab="", sub="", las=2)
+dev.off()
 
 
 ## Principal component analysis

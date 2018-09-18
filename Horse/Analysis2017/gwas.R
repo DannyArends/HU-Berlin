@@ -78,6 +78,12 @@ padjustedBF <- apply(pvalues,2,function(x){
   p.adjust(x, "bonferroni")
 })
 
+m <- as.character(unlist(genotypes["BIEC2_444806",]))
+boxplot(as.numeric(phenotypes.corrected["ChW",]) ~ m, xaxt='n', main = "Chest width @t BIEC2_444806 (Chr19:50.8Mb)")
+axis(1, at = 1:3, paste0(names(table(m)), "( n = ",table(m), ")"))
+
+
+
 lodscores <- -log10(pvalues)
 lodadjusted <- -log10(padjusted)
 
@@ -90,12 +96,13 @@ for(trait in rownames(phenotypes)) {
 }
 #op <- par(mfrow=c(3,3))
 
+allVals <- NULL
 for(trait in rownames(phenotypes)) {
   # NG, ChW
   trait <- "ChW"
   significant <- which(padjusted[,trait] < 0.15)
 
-  cbind(map[significant,], MAF = round(map[significant,"MAF"], d = 2), P = pvalues[significant, trait], "P(FDR)" = padjusted[significant, trait] , "P(B)" = padjustedBF[significant, trait])
+  allVals <- cbind(map[significant,], MAF = round(map[significant,"MAF"], d = 2), P = pvalues[significant, trait], "P(FDR)" = padjusted[significant, trait] , "P(B)" = padjustedBF[significant, trait])
 
   observed.p <- pvalues[, trait]
   expected.p <- (rank(observed.p, ties.method="first")+0.5) / (length(observed.p) + 1)

@@ -3,7 +3,7 @@
 #
 
 source("D:/Github/HU-Berlin/Mouse/Muga/dateToSeason.R")
-setwd("E:/Mouse/DNA/MegaMuga/")                                                                                           # Read in the data from the MegaMuga
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")                                                                                           # Read in the data from the MegaMuga
 
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt",             sep="\t", check.names=FALSE, colClasses="character")      # Normal A, H, B genotypes

@@ -143,8 +143,9 @@ for (x in 1:nrow(snps)) {                   # Go through each of the SNPs
 
 snps[,c(1, 2, 4, 5, 43:54)]
 
-snps[which(snps[,"inCDS"] == 1),c(1, 2, 4, 5, 43:54)]
-write.table(snps, file="SNPs.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
+snpsincds <- snps[which(snps[,"inCDS"] == 1),c(1, 2, 4, 5, 43:54)]
+write.table(snpsincds, file="SNPsInCDS.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
+write.table(snps[,c(1, 2, 4, 5, 43:54)], file="SNPs.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
 
 snps <- cbind(snps, MAF = NA)          # Add a column to hold the answer for each snp
 for(x in 1:nrow(snps)){

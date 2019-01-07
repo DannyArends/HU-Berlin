@@ -6,7 +6,7 @@
 
 library("psych")
 
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
 genotypes   <- read.table("Analysis/genotypes.txt", sep="\t", check.names = FALSE, colClasses="character")
 

@@ -1,5 +1,5 @@
 # Analysis of RNA seq data for Filip Larsberg
-library("biomaRt")
+#library("biomaRt")
 
 setwd("D:/Edrive/Pig/RNA/S906 wholeRNAsequencing/03_exprdata")
 raw_counts <- read.table("raw_counts.tsv", sep = "\t",header=TRUE, row.names=1)

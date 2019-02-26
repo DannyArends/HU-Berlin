@@ -3,3 +3,10 @@ HLRN/*
 Uwe/Uwe.zip
 Uwe/genotypes_genpop.txt
 Cows/Sim/test.pdf
+*.bam
+*.fasta
+*.fna
+*.nhr
+*.nsq
+*.nin
+Pig/RNA/Filip/locations.txt

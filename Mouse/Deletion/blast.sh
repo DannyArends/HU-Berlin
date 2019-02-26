@@ -1,0 +1,1 @@
+blastn -task blastn -query primers.txt -db D:/Edrive/Mouse/DNA/DiversityArray/Analysis/Mus_musculus.GRCm38.74.dna.db -perc_identity 100 -outfmt 6 -evalue=0.1

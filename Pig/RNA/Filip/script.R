@@ -35,8 +35,15 @@ p.evuv <- t(apply(normalized_counts,1,function(x){
 }))
 colnames(p.evuv) <- c("mean(ctrl)", "sd(ctrl)", "mean(evuv)", "sd(evuv)", "ratio", "log2(ratio)", "p.value")
 
+p.efefuv <- t(apply(normalized_counts,1,function(x){
+  return(c(mean(x[ef]), round(sd(x[ef]),1), mean(x[efuv]), round(sd(x[efuv]),1), mean(x[efuv])/mean(x[ef]), log2(mean(x[efuv])/mean(x[ef])), wilcox.test(x[ef], x[efuv])$p.value))
+}))
+colnames(p.efefuv) <- c("mean(ef)", "sd(ef)", "mean(evuv)", "sd(evuv)", "ratio", "log2(ratio)", "p.value")
+
+
 diff.ev <- names(which(p.ev[,"p.value"] < 0.05))
 diff.evuv <- names(which(p.evuv[,"p.value"] < 0.05))
+diff.efefuv <- names(which(p.efefuv[,"p.value"] < 0.05))
 
 sug.ev <- p.ev[diff.ev,]
 sug.ev <- sug.ev[sort(sug.ev[,"log2(ratio)"], index.return=TRUE)$ix,]
@@ -69,8 +76,28 @@ sug.evuv <- cbind(genename = unlist(lapply(annot.evuv, "[", 6)), sug.evuv)
 rownames(sug.evuv) <- ensgid
 write.table(sug.evuv, "evuv_vs_ctrl_0.05.txt", sep="\t", quote=FALSE)
 
+sug.efefuv <- p.efefuv[diff.efefuv,]
+sug.efefuv <- sug.efefuv[sort(sug.efefuv[,"log2(ratio)"], index.return=TRUE)$ix,]
+ensgid <- rownames(sug.efefuv)
+annot.efefuv <- lapply(ensgid, function(x){
+  return(annot[which(annot[,1] == x)[1],])
+})
+sug.efefuv <- cbind(chr = unlist(lapply(annot.efefuv, "[", 2)), sug.efefuv)
+sug.efefuv <- cbind(start = unlist(lapply(annot.efefuv, "[", 3)), sug.efefuv)
+sug.efefuv <- cbind(stop = unlist(lapply(annot.efefuv, "[", 4)), sug.efefuv)
+sug.efefuv <- cbind(strand = unlist(lapply(annot.efefuv, "[", 5)), sug.efefuv)
+sug.efefuv <- cbind(description = unlist(lapply(annot.efefuv, "[", 7)), sug.efefuv)
+sug.efefuv <- cbind(genename = unlist(lapply(annot.efefuv, "[", 6)), sug.efefuv)
+rownames(sug.efefuv) <- ensgid
+write.table(sug.efefuv, "ev_vs_evuv_0.05.txt", sep="\t", quote=FALSE)
+
+
 mir_ev <- cbind(annot[grep("ssc-mir", annot[,"external_gene_name"]),], p.ev[annot[grep("ssc-mir", annot[,"external_gene_name"]),1],])
 write.table(mir_ev, "miRNA_ev.txt", sep="\t", quote=FALSE)
 
 mir_evuv <- cbind(annot[grep("ssc-mir", annot[,"external_gene_name"]),], p.evuv[annot[grep("ssc-mir", annot[,"external_gene_name"]),1],])
 write.table(mir_evuv, "miRNA_evuv.txt", sep="\t", quote=FALSE)
+
+mir_efefuv <- cbind(annot[grep("ssc-mir", annot[,"external_gene_name"]),], p.efefuv[annot[grep("ssc-mir", annot[,"external_gene_name"]),1],])
+write.table(mir_efefuv, "miRNA_efuv_vs_ef.txt", sep="\t", quote=FALSE)
+

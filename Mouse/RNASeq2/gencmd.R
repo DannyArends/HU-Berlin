@@ -4,7 +4,7 @@
 # last modified Sept, 2015
 # first written Juli, 2015
 
-setwd("E:/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/Experiment")
+setwd("D:/Edrive/Mouse/RNA/Sequencing/Reciprocal Cross B6 BFMI by MPI/Experiment")
 samples <- read.table("sampledescription.txt", sep="\t", header=TRUE, colClasses="character")
 
 fdone <- c("4422","4423","4424","4425","4426","4427","4868","5067","5068","5069","5070","5074","5075","5076","5077","5078","5079","5080","5081","6339","6340","6341","6342","6343","6344","6345","6346")

@@ -1,4 +1,4 @@
-# Pipeline for DNA re-seq analysis on chicken
+# Pipeline for DNA re-seq analysis on goat
 #
 # copyright (c) 2015-2020 - Brockmann group - HU Berlin, Danny Arends
 # last modified Jan, 2015

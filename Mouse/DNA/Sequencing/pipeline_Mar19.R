@@ -1,22 +1,8 @@
 # Pipeline for DNA re-seq analysis on mouse
 #
 # copyright (c) 2015-2020 - Brockmann group - HU Berlin, Danny Arends
-# last modified Jan, 2015
+# last modified Mar, 2019
 # first written Jan, 2015
-
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7254-1_NZO_S1_R /halde/MGP NZO &> ext_L7254-1_NZO_S1_nohup.out &
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7254-2_NZO_S3_R /halde/MGP NZO &> ext_L7254-2_NZO_S3_nohup.out &
-
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7255-3_SJL_S16_R /halde/MGP SJL &> ext_L7255-3_SJL_S16_nohup.out &
-
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7256-1_BFMI861-S1_S2_R /halde/MGP BFMI861-S1 &> ext_L7256-1_BFMI861-S1_S2_nohup.out &
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7256-2_BFMI861-S1_S4_R /halde/MGP BFMI861-S1 &> ext_L7256-2_BFMI861-S1_S4_nohup.out &
-
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7257-1_BFMI861-S2_S5_R /halde/MGP BFMI861-S2 &> ext_L7257-1_BFMI861-S2_S5_nohup.out &
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7257-2_BFMI861-S2_S6_R /halde/MGP BFMI861-S2 &> ext_L7257-2_BFMI861-S2_S6_nohup.out &
-
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7258-1_BFMI860-S12_S1_R /halde/MGP BFMI860-S12 &> ext_L7258-1_BFMI860-S12_S1_nohup.out &
-# nohup Rscript pipeline.R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ext_L7258-2_BFMI860-S12_S2_R /halde/MGP BFMI860-S12 &> ext_L7258-2_BFMI860-S12_S2_nohup.out &
 
 cmdlineargs   <- commandArgs(trailingOnly = TRUE)
 inputBASE     <- as.character(cmdlineargs[1])                        # File base of the fastq files
@@ -42,15 +28,6 @@ execute <- function(x, intern = FALSE){
 referenceDir  <- "~/References/Mouse/GRCm38_95"
 reference     <- paste0(referenceDir, "/Mus_musculus.GRCm38.dna.toplevel.fa.gz")
 
-# Sort the bam input file
-#sortedBAM <- paste0(fileBase, ".qsort.bam")
-#command <- paste0("samtools sort -n ", inputBAM, " -o ", sortedBAM)
-#cat(command, "\n")
-
-# Extract the FASTQ files from the sorted BAM file
-#command <- paste0("/home/danny/Github/bedtools2/bin/bamToFastq -i ", sortedBAM, " -fq ", paste0(fileBase, "_1.fq.gz"), " -fq2 ", paste0(fileBase, "_2.fq.gz"))
-#cat(command, "\n")
-
 ### Trimmomatic: Remove adapters and trim reads based on quality scores (1 to 2 hours) ###
 logfile       <- paste0(fileBase, "log.txt")
 trimmomatic   <- "/home/danny/Github/trimmomatic/trimmomatic-0.38/dist/jar/"
@@ -66,17 +43,13 @@ cmdBase <- paste0("java -jar ", trimmomatic, "trimmomatic-0.38.jar PE")
 params  <- paste0("ILLUMINACLIP:", adapters, ":2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36")
 
 command <- paste(cmdBase, inputfiles[1], inputfiles[2], outputfiles[1], outputfiles[2], outputfiles[3], outputfiles[4], params)
-cat("Execute:", command, "\n")
-execute(command)
+cat("Skip:", command, "\n")
+#execute(command)
 
-q("no")
-
-#cat("-----------------------------------\n")
-
-# first create the bwa index: ~/Github/bwa/bwa-0.7.15/bwa index GRCm38_68.fa
+cat("-----------------------------------\n")
 
 # Alignment using BWA
-command     <- paste0("~/Github/bwa/bwa-0.7.15/bwa mem -v 2 -t 6 -A 3 -B 2 -U 4 -O 2 -E 0 -T 10 -a ", reference," ", outputfiles[1], " ", outputfiles[3], " | ")
+command     <- paste0("~/Github/bwa/bwa mem -v 2 -t 6 -A 3 -B 2 -U 4 -O 2 -E 0 -T 10 -a ", reference," ", outputfiles[1], " ", outputfiles[3], " | ")
 
 ### Convert SAM to BAM (1 hour), we pipe the output to the next step ###
 # -Sb : Input sam, output bam
@@ -87,9 +60,10 @@ command     <- paste0(command, "samtools view -Sb - | ")
 # -m : Memory per CPU core
 outputSBAM   <- paste0(fileBase, "P_trimmed.aligned.sorted.bam")
 command      <- paste0(command, "samtools sort -@ 8 -m 4G - > ", outputSBAM)
-#cat("Execute:", command, "\n")
-#execute(command)
-#cat("-----------------------------------\n")
+cat("Execute:", command, "\n")
+execute(command)
+cat("-----------------------------------\n")
+q("no")
 
 ### Add a read group ###
 outputSRGBAM <- paste0(fileBase, "P_trimmed.aligned.sorted.rg.bam")

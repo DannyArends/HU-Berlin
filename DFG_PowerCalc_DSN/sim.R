@@ -64,7 +64,7 @@ op <- par(mfrow = c(3, 2))
 colorz <- colorRampPalette(c("red", "green"))(length(effectsizes))
 for(nmar in nmarkers){
   toplot <- res[res[,"nmar"] == nmar,]
-  plot(x = c(0, 0.5), y = c(0, 100), t = 'n', xlab = 'Minor allele frequency', ylab = "Power", las = 2, sub = paste0("# of markers in 5kb upstream: ", nmar))
+  plot(x = c(0, 0.5), y = c(0, 100), t = 'n', xlab = 'Minor allele frequency', ylab = "Power", las = 2, sub = paste0("# of markers in 1Mb upstream: ", nmar))
   n <- 1
   for(x in unique(toplot[,"eff"])){
     medians <- c()

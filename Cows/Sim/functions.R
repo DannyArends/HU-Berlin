@@ -81,4 +81,3 @@ plotFreq.change <- function(freqs.change, map, chromosomes, chr.starts, chr.leng
   points(as.numeric(map[,"CPOS"]), freqs.change, col=mcol, pch=mpch, cex=2)
   axis(1, at = chr.starts[1:length(chromosomes)] + (chr.lengths)/2, gsub("Chr", "", chromosomes))
 }
-

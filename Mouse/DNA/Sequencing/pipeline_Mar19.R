@@ -11,14 +11,38 @@
 
 # nohup Rscript pipeline_Mar19.R subset_R /home/danny/NAS/Mouse/DNA/Sequencing/BFMI860_Feb2019/ /halde/BFMI_Alignment_Mar19/ BFMI860-12 &> subset_nohup.out &
 
+# BFMI 860-12
 # nohup Rscript pipeline_Mar19.R ext_L7258-1_BFMI860-S12_S1_R /home/danny/NAS/Mouse/DNA/Sequencing/BFMI860_Feb2019/ /halde/BFMI_Alignment_Mar19/ BFMI860-12 &> ext_L7258-1_BFMI860-S12_S1_nohup.out &
 # nohup Rscript pipeline_Mar19.R ext_L7258-1_BFMI860-S12_S9_R /home/danny/NAS/Mouse/DNA/Sequencing/BFMI860_Feb2019/ /halde/BFMI_Alignment_Mar19/ BFMI860-12 &> ext_L7258-1_BFMI860-S12_S9_nohup.out &
 # nohup Rscript pipeline_Mar19.R ext_L7258-2_BFMI860-S12_S2_R /home/danny/NAS/Mouse/DNA/Sequencing/BFMI860_Feb2019/ /halde/BFMI_Alignment_Mar19/ BFMI860-12 &> ext_L7258-2_BFMI860-S12_S2_nohup.out &
 # nohup Rscript pipeline_Mar19.R ext_L7258-1_BFMI860-S12_S23_R /home/danny/NAS/Mouse/DNA/Sequencing/BFMI860_Feb2019/ /halde/BFMI_Alignment_Mar19/ BFMI860-12 &> ext_L7258-1_BFMI860-S12_S23_nohup.out &
 
-# Afterwards merge them into a single BAM: samtools merge -@ 8 merged.bam ext_L7258-1_BFMI860-S12_S1_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-1_BFMI860-S12_S23_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-1_BFMI860-S12_S9_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-2_BFMI860-S12_S2_RP_trimmed.aligned.sorted.dedup.bam
-# Sort the merged BAM: samtools sort -@ 8 merged.bam > merged_sorted.bam
-# Index the merged sorted BAM: samtools index -@ 8 merged_sorted.bam merged_sorted.bai
+# BFMI 861-S1
+# nohup Rscript pipeline_Mar19.R ext_L7256-2_BFMI861-S1_S4_R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ /halde/BFMI_Alignment_Mar19/ BFMI861-S1 &> ext_L7256-2_BFMI861-S1_S4_nohup.out &
+# nohup Rscript pipeline_Mar19.R ext_L7256-1_BFMI861-S1_S2_R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ /halde/BFMI_Alignment_Mar19/ BFMI861-S1 &> ext_L7256-1_BFMI861-S1_S2_nohup.out &
+
+# BFMI 861-S2
+# nohup Rscript pipeline_Mar19.R ext_L7257-1_BFMI861-S2_S5_R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ /halde/BFMI_Alignment_Mar19/ BFMI861-S2 &> ext_L7257-1_BFMI861-S2_S5_nohup.out &
+# nohup Rscript pipeline_Mar19.R ext_L7257-2_BFMI861-S2_S6_R /home/danny/NAS/Mouse/DNA/Sequencing/DifeMouse/RAW/FASTQ/ /halde/BFMI_Alignment_Mar19/ BFMI861-S2 &> ext_L7257-2_BFMI861-S2_S6_nohup.out &
+
+
+# Afterwards merge them into a single BAM: 
+# 860-S12:
+# samtools merge -@ 8 merged_860-S12.bam ext_L7258-1_BFMI860-S12_S1_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-1_BFMI860-S12_S23_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-1_BFMI860-S12_S9_RP_trimmed.aligned.sorted.dedup.bam ext_L7258-2_BFMI860-S12_S2_RP_trimmed.aligned.sorted.dedup.bam
+# 861-S1:
+# samtools merge -@ 8 merged_861-S1.bam ext_L7256-1_BFMI861-S1_S2_RP_trimmed.aligned.sorted.dedup.bam ext_L7256-2_BFMI861-S1_S4_RP_trimmed.aligned.sorted.dedup.bam
+# 861-S2:
+# samtools merge -@ 8 merged_861-S2.bam ext_L7257-1_BFMI861-S2_S5_RP_trimmed.aligned.sorted.dedup.bam ext_L7257-2_BFMI861-S2_S6_RP_trimmed.aligned.sorted.dedup.bam
+
+# Sort the merged BAM files: 
+# samtools sort -m 5G -@ 8 merged_860-S12.bam > merged_sorted_860-S12.bam
+# samtools sort -m 5G -@ 8 merged_861-S1.bam > merged_sorted_861-S1.bam
+# samtools sort -m 5G -@ 8 merged_861-S2.bam > merged_sorted_861-S2.bam
+
+# Index the merged sorted BAM: 
+# samtools index -@ 8 merged_sorted_860-S12.bam merged_sorted_860-S12.bai
+# samtools index -@ 8 merged_sorted_861-S1.bam merged_sorted_861-S1.bai
+# samtools index -@ 8 merged_sorted_861-S2.bam merged_sorted_861-S2.bai
 
 
 cmdlineargs <- commandArgs(trailingOnly = TRUE)

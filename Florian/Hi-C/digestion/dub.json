@@ -1,9 +1,9 @@
 {
-	"name": "enzyme",
-	"description": "enzyme",
+	"name": "DigestGenome",
+	"description": "In-silico whole genome digestion using restriction enzymes",
 	"authors": ["Danny Arends"],
 	"homepage": "http://www.dannyarends.nl",
-	"mainSourceFile": "enzyme.d",
+	"mainSourceFile": "main.d",
 	"targetType": "executable",
 	"targetPath": "bin",
 	"configurations": [

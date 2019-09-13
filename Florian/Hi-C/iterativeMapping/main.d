@@ -125,11 +125,14 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
 }
 
 int main (string[] args) {
-  string fastqpath = "/halde/Hi-C/Human/ENCFF319AST.1Mio.fastq.gz";
-  string referencepath = "/home/danny/References/Mouse/GRCm38_95/Mus_musculus.GRCm38.dna.toplevel.fa.gz";
+  if(args.length < 4){
+    writeln("Please provide the fastq input file and fasta reference");
+    return(-1);
+  }
+  string referencepath = args[1]; //"/home/danny/References/Mouse/GRCm38_95/Mus_musculus.GRCm38.dna.toplevel.fa.gz";
+  string fastqpath = args[2]; //"/halde/Hi-C/Human/ENCFF319AST.1Mio.fastq.gz";
+  string outputfilename = args[3]; //"ReadAlignments.txt";
   size_t readLength = 25;
-
-  string outputfilename = "ReadAlignments.txt";
   if(outputfilename.exists) {
     writefln("Deleting previous output file: %s", outputfilename);
     outputfilename.remove();

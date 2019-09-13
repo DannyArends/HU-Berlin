@@ -1,0 +1,15 @@
+{
+	"name": "FragmentAssignment",
+	"description": "Assign read fragments to the digested genome sections",
+	"authors": ["Danny Arends"],
+	"homepage": "http://www.dannyarends.nl",
+	"mainSourceFile": "main.d",
+	"targetType": "executable",
+	"targetPath": "bin",
+	"configurations": [
+	{
+		"name": "default",
+		"targetType": "executable"
+	}
+	]
+}

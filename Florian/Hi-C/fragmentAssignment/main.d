@@ -47,6 +47,7 @@ Alignment[string] readAlignment(string path) {
 
 int findFragmentIndex(const Chromosome[string] digestion, const Alignment a) {
   size_t index = 0;
+  if((a.chromosome in digestion) is null) return(-1);
   foreach(fragment; digestion[a.chromosome].fragments){
     if(a.position >= fragment.start && a.position <= fragment.end) return(to!int(index));
     index++;

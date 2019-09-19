@@ -16,8 +16,6 @@ import std.path : baseName;
 
 import containers.hashmap;
 
-//@HISEQ-2500-1:44:C5UH7ANXX:7:1101:15031:68853 2:N:0:
-
 struct MapInfo {
   size_t nAlignments;
   string alignLine;
@@ -31,8 +29,6 @@ struct FastQ{
   size_t nUnmapped;
   HashMap!(string, MapInfo) reads;
 }
-
-//bool has(const HashMap!(string, MapInfo) aa, string k){ return(); }
 
 // Get basic information about the content of a gz fastq file
 FastQ infoFastQ(string fastqpath, bool verbose = true) {
@@ -90,7 +86,7 @@ string reduceFastQ(ref FastQ fq, string fmt = "readlength%s.fq.gz", size_t readL
       }
     }
     nlines++;
-    if(outputbuffer.length > 1024 * 1024){
+    if(outputbuffer.length > 1024 * 1024){ // if we have over 1mb of buffer compress it and write it to the disk
       ofp.rawWrite(cmp.compress(outputbuffer));
       ofp.rawWrite(cmp.flush(Z_FULL_FLUSH));
       outputbuffer = "";

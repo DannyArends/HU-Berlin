@@ -12,6 +12,7 @@
 		"targetType": "executable",
 		"dependencies": {
 				"iopipe": "~>0.1.7",
+				"emsi_containers": "~>0.6"
 		}
 	}
 	]

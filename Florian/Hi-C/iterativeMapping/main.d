@@ -13,12 +13,21 @@ import std.zlib : Compress, compress, HeaderFormat, Z_SYNC_FLUSH, Z_FULL_FLUSH;
 import std.file : exists, remove;
 import std.process : executeShell;
 import std.path : baseName;
+import std.array : Appender;
 
-import containers.hashmap;
+import containers.hashmap : HashMap;
+
+enum MB10 = 10 * 1024 * 1024;
 
 struct MapInfo {
   size_t nAlignments;
   string alignLine;
+}
+
+struct AlignmentResult {
+  size_t mapped;
+  size_t unknown;
+  string[] toremove;
 }
 
 struct FastQ{
@@ -66,47 +75,57 @@ string reduceFastQ(ref FastQ fq, string fmt = "readlength%s.fq.gz", size_t readL
 
   Compress cmp = new Compress(HeaderFormat.gzip);
   bool notAlignedYet = true;
-  string outputbuffer;
+  auto outputbuffer = Appender!(char[])();
   foreach (line; fp.assumeText.byLineRange!true) {
     if (nlines % 4 == 0) {
       string shortname = (to!string(line[1 .. $])).split(" ")[0];
-      if ((shortname in fq.reads) !is null) { // read in the AA, we need to align it
-        notAlignedYet = true;
-      } else {
-        notAlignedYet = false;
-      }
+      notAlignedYet = ((shortname in fq.reads) !is null);
     }
     if (nlines % 4 == 1 || nlines % 4 == 3) { // Read and Quality score need to be reduced
-      if (notAlignedYet){
-        outputbuffer ~= line[0..readLength] ~ "\n";
+      if (notAlignedYet) {
+        outputbuffer.put(line[0..readLength]);
+        outputbuffer.put("\n");
       }
     } else {
-      if (notAlignedYet){
-        outputbuffer ~= line;
-      }
+      if (notAlignedYet) { outputbuffer.put(line); }
     }
     nlines++;
-    if(outputbuffer.length > 1024 * 1024){ // if we have over 1mb of buffer compress it and write it to the disk
-      ofp.rawWrite(cmp.compress(outputbuffer));
-      ofp.rawWrite(cmp.flush(Z_FULL_FLUSH));
-      outputbuffer = "";
+    if (outputbuffer.data.length > MB10) { // if we have over 10mb of buffer compress it and write it to the disk
+      ofp.rawWrite(cmp.compress(outputbuffer.data));
+      ofp.rawWrite(cmp.flush(Z_FULL_FLUSH)); // Flush to be sure
+      outputbuffer.clear();
     }
   }
-  ofp.rawWrite(cmp.compress(outputbuffer));
+  ofp.rawWrite(cmp.compress(outputbuffer.data));
   ofp.rawWrite(cmp.flush());
   return(outputfilename);
 }
 
 // Map a fastq file to the reference genome and update the number of unmapped reads (nUnmapped)
 void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string outputfilename = "alignments.txt", size_t minMapQ = 30) {
+  // Step 0: Align reads using BWA
   auto ofp = File(outputfilename, "a");
   string cmd = format("~/Github/bwa/bwa mem -v 2 -t 12 -T 10 %s %s", referencepath, fastqpath);
   writefln("Aligning reads from %s to %s using bwa", fastqpath, baseName(referencepath));
   auto ret = executeShell(cmd);
-  writefln("Processing %.2f Megabyte of BWA output", to!float(ret.output.length) / (1024 * 1024));
+
+  // Step 1: Process BWA output and update fq.reads
+  size_t lines = fq.processBWA(ret.output, minMapQ);
+  
+  //Step 2: figure out which keys need to be removed since they have 1 unique alignment
+  auto res = fq.parseAlignments(ofp);
+
+  //Step 3: Remove keys from the AA
+  fq.removeFromAA(res.toremove);
+  writefln("Parsed %s lines, mapped %s reads, unmapped reads left %s", lines, res.mapped, fq.nUnmapped);
+}
+
+// Process BWA output and update the fq.reads structure
+size_t processBWA(ref FastQ fq, const string output, size_t minMapQ = 30){
+  writefln("Processing %.2f Megabyte of BWA output", to!float(output.length) / (1024 * 1024));
   size_t lines = 0;
   size_t unknownreads = 0;
-  foreach (line; ret.output.splitLines()) {
+  foreach (line; output.splitLines()) {
     if (line[0] == '@') continue;
     lines++;
     auto sline = line.split("\t");
@@ -124,27 +143,34 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
     }
   }
   writefln("Processed %d lines of BWA output (%s unknown reads)", lines, unknownreads);
+  return(lines);
+}
+
+// Parse alignment results of BWA and figure out which reads were aligned uniquely
+AlignmentResult parseAlignments(ref FastQ fq, File ofp) {
+  AlignmentResult res;
   //Step 2: figure out which keys need to be removed since they have 1 unique alignment
-  size_t mapped = 0;
-  unknownreads = 0;
-  string[] toremove;
   foreach (key; fq.reads.byKey) {
     if ((key in fq.reads) is null) {
-      unknownreads++;
+      res.unknown++;
       continue;
     }
     if (fq.reads[key].nAlignments == 1) {
       ofp.write(fq.reads[key].alignLine ~ "\n");
-      toremove ~= key;
-      mapped++;
+      res.toremove ~= key;
+      res.mapped++;
     } else { // none or multiple alignments found, reset the nAlignments to 0
       fq.reads[key] = MapInfo(0);
     }
   }
+  return(res);
+}
 
+// Remove the keys from the array, return the number of keys not found in the array
+size_t removeFromAA(ref FastQ fq, const string[] toremove) {
   //Step 3: Remove keys from the AA
-  unknownreads = 0;
-  foreach(key; toremove){
+  size_t unknownreads = 0;
+  foreach (key; toremove) {
     if ((key in fq.reads) is null) {
       unknownreads++;
       continue;
@@ -152,11 +178,10 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
     fq.reads.remove(key);
     fq.nUnmapped = fq.nUnmapped - 1;
   }
-
-  writefln("Parsed %s lines, mapped %s reads, unmapped reads left %s", lines, mapped, fq.nUnmapped);
+  return(unknownreads);
 }
 
-// dub -- /halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz /halde/Hi-C/Human/ENCFF319AST.fastq.gz ENCFF319AST.alignment
+// dub -- /halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz /halde/Hi-C/Human/ENCFF319AST.1Mio.fastq.gz ENCFF319AST.1Mio.alignment
 // dub -- /halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz /halde/Hi-C/Human/ENCFF478EAB.fastq.gz ENCFF478EAB.alignment
 int main (string[] args) {
   if(args.length < 4){
@@ -185,6 +210,5 @@ int main (string[] args) {
     }
     readLength += 5;
   }
-
   return(0);
 }

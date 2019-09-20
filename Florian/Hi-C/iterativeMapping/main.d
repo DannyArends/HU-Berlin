@@ -1,10 +1,5 @@
-// Iterative fragment mapping 
-
-import iopipe.textpipe : assumeText, byLineRange;
-import iopipe.zip : CompressionFormat, unzip, zip;
-import iopipe.bufpipe : bufd;
-
-import std.io : IOFile = File;
+// Iterative fragment mapping
+// (c) Danny Arends (HU-Berlin) Sept - 2019
 import std.stdio : File, writeln, writefln;
 import std.typecons : refCounted;
 import std.string : format, split, strip, toUpper, indexOf, splitLines;
@@ -14,8 +9,12 @@ import std.file : exists, remove;
 import std.process : executeShell;
 import std.path : baseName;
 import std.array : Appender;
-
+// imports from external dub packages
+import std.io : IOFile = File;
 import containers.hashmap : HashMap;
+import iopipe.textpipe : assumeText, byLineRange;
+import iopipe.zip : CompressionFormat, unzip, zip;
+import iopipe.bufpipe : bufd;
 
 enum MB10 = 10 * 1024 * 1024;
 
@@ -103,20 +102,16 @@ string reduceFastQ(ref FastQ fq, string fmt = "readlength%s.fq.gz", size_t readL
 
 // Map a fastq file to the reference genome and update the number of unmapped reads (nUnmapped)
 void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string outputfilename = "alignments.txt", size_t minMapQ = 30) {
-  // Step 0: Align reads using BWA
+  // Align reads using BWA
   auto ofp = File(outputfilename, "a");
   string cmd = format("~/Github/bwa/bwa mem -v 2 -t 12 -T 10 %s %s", referencepath, fastqpath);
   writefln("Aligning reads from %s to %s using bwa", fastqpath, baseName(referencepath));
   auto ret = executeShell(cmd);
 
-  // Step 1: Process BWA output and update fq.reads
-  size_t lines = fq.processBWA(ret.output, minMapQ);
-  
-  //Step 2: figure out which keys need to be removed since they have 1 unique alignment
-  auto res = fq.parseAlignments(ofp);
+  size_t lines = fq.processBWA(ret.output, minMapQ); // Process Output
+  auto res = fq.parseAlignments(ofp); // Find mapped reads
+  fq.removeFromAA(res.toremove); // Remove the mapped reads
 
-  //Step 3: Remove keys from the AA
-  fq.removeFromAA(res.toremove);
   writefln("Parsed %s lines, mapped %s reads, unmapped reads left %s", lines, res.mapped, fq.nUnmapped);
 }
 
@@ -126,10 +121,10 @@ size_t processBWA(ref FastQ fq, const string output, size_t minMapQ = 30){
   size_t lines = 0;
   size_t unknownreads = 0;
   foreach (line; output.splitLines()) {
-    if (line[0] == '@') continue;
+    if (line[0] == '@') continue; // SAM header (just ignore it)
     lines++;
     auto sline = line.split("\t");
-    if (sline.length > 4) {
+    if (sline.length > 4) { // Less than 4, not a valid SAM alignment line
       if (sline[2] == "*") continue; // Not aligned, just continue with the next line
       string qname = sline[0];
       if ((qname in fq.reads) is null) {
@@ -137,7 +132,8 @@ size_t processBWA(ref FastQ fq, const string output, size_t minMapQ = 30){
         continue;
       }
       size_t mapq = to!size_t(sline[4]);
-      if (fq.reads[qname].nAlignments > 0 || mapq > minMapQ) { // If we already had an alignment of the read, the mapQ doesn't matter anymore
+      // Good alignment (above minMapQ), if an alignment of the read was already found the mapQ doesn't matter
+      if (fq.reads[qname].nAlignments > 0 || mapq > minMapQ) {
         fq.reads[qname] = MapInfo(fq.reads[qname].nAlignments + 1, line.idup);
       }
     }
@@ -146,10 +142,9 @@ size_t processBWA(ref FastQ fq, const string output, size_t minMapQ = 30){
   return(lines);
 }
 
-// Parse alignment results of BWA and figure out which reads were aligned uniquely
+// Parse alignment results of BWA to figure out which keys need to be removed since they have 1 unique alignment
 AlignmentResult parseAlignments(ref FastQ fq, File ofp) {
   AlignmentResult res;
-  //Step 2: figure out which keys need to be removed since they have 1 unique alignment
   foreach (key; fq.reads.byKey) {
     if ((key in fq.reads) is null) {
       res.unknown++;
@@ -168,7 +163,6 @@ AlignmentResult parseAlignments(ref FastQ fq, File ofp) {
 
 // Remove the keys from the array, return the number of keys not found in the array
 size_t removeFromAA(ref FastQ fq, const string[] toremove) {
-  //Step 3: Remove keys from the AA
   size_t unknownreads = 0;
   foreach (key; toremove) {
     if ((key in fq.reads) is null) {
@@ -184,7 +178,7 @@ size_t removeFromAA(ref FastQ fq, const string[] toremove) {
 // dub -- /halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz /halde/Hi-C/Human/ENCFF319AST.1Mio.fastq.gz ENCFF319AST.1Mio.alignment
 // dub -- /halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz /halde/Hi-C/Human/ENCFF478EAB.fastq.gz ENCFF478EAB.alignment
 int main (string[] args) {
-  if(args.length < 4){
+  if (args.length < 4) {
     writeln("Please provide the fastq input file and fasta reference");
     return(-1);
   }
@@ -194,7 +188,7 @@ int main (string[] args) {
   string tmpfmt = baseName(args[3], ".alignment") ~ "%s.fq.gz";
   writefln("tmpfmt: %s", tmpfmt);
   size_t readLength = 25;
-  if(outputfilename.exists) {
+  if (outputfilename.exists) {
     writefln("Deleting previous output file: %s", outputfilename);
     outputfilename.remove();
   }

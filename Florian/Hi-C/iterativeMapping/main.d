@@ -1,5 +1,6 @@
 // Iterative fragment mapping
 // (c) Danny Arends (HU-Berlin) Sept - 2019
+
 import std.stdio : File, writeln, writefln;
 import std.typecons : refCounted;
 import std.string : format, split, strip, toUpper, indexOf, splitLines;
@@ -9,6 +10,7 @@ import std.file : exists, remove;
 import std.process : executeShell;
 import std.path : baseName;
 import std.array : Appender;
+
 // imports from external dub packages
 import std.io : IOFile = File;
 import containers.hashmap : HashMap;

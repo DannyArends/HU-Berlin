@@ -1,4 +1,5 @@
 // In-silico digestion of a gzip fasta file using a restriction enzyme
+// (c) Danny Arends (HU-Berlin) Sept - 2019
 
 import iopipe.textpipe : assumeText, byLineRange;
 import iopipe.zip : CompressionFormat, unzip;

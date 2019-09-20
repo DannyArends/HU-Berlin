@@ -1,3 +1,6 @@
+// Matching read (fragments) to an in-silico digested genome
+// (c) Danny Arends (HU-Berlin) Sept - 2019
+
 import std.stdio : File, writeln, writefln;
 import std.conv : to;
 import std.string : format, split, strip, toUpper, indexOf, splitLines;

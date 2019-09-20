@@ -1,5 +1,6 @@
 #
 # Plot results from a Hi-C experiment
+# (c) Danny Arends (HU-Berlin) Sept - 2019
 #
 
 setwd("D:/")

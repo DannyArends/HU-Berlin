@@ -3,22 +3,39 @@
 # (c) Danny Arends (HU-Berlin) Sept - 2019
 #
 
+library(h5)
+f <- h5file("C:/Users/Arends/Downloads/ENCFF971GRZ.h5")
+
 setwd("D:/")
 
-mold <- readLines("merged.txt")
-mdata <- readLines("merged2.txt")
+digested <- read.csv("HindIII_Digested.bed", sep="\t", header=FALSE)
+options(scipen=999)
 
-s1 <- unlist(lapply(strsplit(mdata, " in chromosomes "), "[",2))
-l1 <- unlist(lapply(strsplit(s1, " and "), "[", 1))
-l2 <- unlist(lapply(strsplit(s1, " and "), "[", 2))
+# Fix the chromosome name differences, and write out the genome_bins.txt file for binning
+bins <- f["bin_positions"][]
+ourbins <- f["bin_positions"][]
+chromosomes <- as.character(unique(digested[,1]))
+x <- 1
+for(chr in unique(bins[,1])){
+  ourbins[which(as.character(bins[,1]) == chr),1] <- chromosomes[x]
+  x <- x+1
+}
+write.table(ourbins, "genome_bins.txt",sep="\t", col.names=FALSE, row.names=FALSE, quote=FALSE)
 
-chr1 <- unlist(lapply(strsplit(l1,":"), "[", 1))
-posi1 <- unlist(lapply(strsplit(l1,":"), "[", 2))
-pos1 <- (as.numeric(unlist(lapply(strsplit(posi1,"-"), "[", 1))) + as.numeric(unlist(lapply(strsplit(posi1,"-"), "[", 2)))) / 2
-chr2 <- unlist(lapply(strsplit(l2,":"), "[", 1))
-posi2 <- unlist(lapply(strsplit(l2,":"), "[", 2))
-pos2 <- (as.numeric(unlist(lapply(strsplit(posi2,"-"), "[", 1))) + as.numeric(unlist(lapply(strsplit(posi2,"-"), "[", 2)))) / 2
+# Use the genome_bins.txt, and perform the binning on the server, the created file can be loaded into R
+interactions <- read.table("binned.alignments.txt", sep = "\t")
 
-plot(pos1[which(chr1 == "1" & chr2 == "1")], pos2[which(chr1 == "1" & chr2 == "1")], pch=20, col=rgb(1,0,0,0.1))
-plot(pos1[which(chr1 == "2" & chr2 == "2")], pos2[which(chr1 == "2" & chr2 == "2")], pch=20, col=rgb(1,0,0,0.1))
-plot(pos1[which(chr1 == "3" & chr2 == "3")], pos2[which(chr1 == "3" & chr2 == "3")], pch=20, col=rgb(1,0,0,0.1))
+# Plot comparing the first 100 bins on chromosome 1
+op <- par(mfrow=c(2,1))
+image(f["interactions"][1:100, 1:100], breaks = c(0, 10, 100, 10000), col=c("white", "gray", "black"))
+box()
+image(as.matrix(interactions[1:100, 1:100]), breaks = c(0, 10, 100, 10000), col=c("white", "gray", "black"))
+box()
+
+# Correlation between the two analysis paths
+allC <- c()
+for(x in 1:ncol(interactions)){
+  allC <- c(allC, cor(interactions[,x], f["interactions"][,x], use = "pair"))
+}
+
+h5close(f)

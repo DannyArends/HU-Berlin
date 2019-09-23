@@ -1,6 +1,6 @@
 {
-	"name": "FragmentAssignment",
-	"description": "Assign read fragments to the digested genome sections",
+	"name": "GenomeBinning",
+	"description": "Assign paired-end reads that have been mapped to a digested genome to genomic bins",
 	"authors": ["Danny Arends"],
 	"homepage": "http://www.dannyarends.nl",
 	"mainSourceFile": "main.d",
@@ -9,10 +9,7 @@
 	"configurations": [
 	{
 		"name": "default",
-		"targetType": "executable",
-		"dependencies": {
-				"emsi_containers": "~>0.6"
-		}
+		"targetType": "executable"
 	}
 	]
 }

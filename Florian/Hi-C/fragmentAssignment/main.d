@@ -1,5 +1,7 @@
 // Matching read (fragments) to an in-silico digested genome
 // (c) Danny Arends (HU-Berlin) Sept - 2019
+//
+// dub -- /halde/Hi-C/Human/HindIII_Digested.bed ENCFF319AST.alignment ENCFF478EAB.alignment merged.alignments.txt
 
 import std.stdio : File, writeln, writefln;
 import std.conv : to;
@@ -7,7 +9,7 @@ import std.string : format, split, strip, toUpper, indexOf, splitLines;
 
 import containers.hashmap : HashMap;
 
-struct GenomeFragment{
+struct GenomeFragment {
   size_t start;
   size_t end;
 }
@@ -24,6 +26,7 @@ struct Alignment {
 
 bool has(T)(const T[string] aa, string k){ return((k in aa)!is null); }
 
+// Read chromosome digestion results into memory
 Chromosome[string] readDigestion(string digestionPath) {
   Chromosome[string] res;
   auto fp = File(digestionPath, "r");
@@ -31,15 +34,14 @@ Chromosome[string] readDigestion(string digestionPath) {
     auto elements = line.split("\t");
     if (elements.length > 3) {
       string chr = to!string(elements[0]);
-      if (!has(res, chr)) {
-        res[chr] = Chromosome();
-      }
+      if (!has(res, chr)) { res[chr] = Chromosome(); } // First time a chromosome is encountered, create the structure
       res[chr].fragments ~= GenomeFragment(to!size_t(elements[1]), to!size_t(elements[2]));
     }
   }
   return(res);
 }
 
+// Read iterative mapping alignment results from a file
 HashMap!(string, Alignment) readAlignment(string path) {
   HashMap!(string, Alignment) res;
   auto fp = File(path, "r");
@@ -53,6 +55,7 @@ HashMap!(string, Alignment) readAlignment(string path) {
   return(res);
 }
 
+// Find the digestion fragment index of an aligned read
 int findFragmentIndex(const Chromosome[string] digestion, const Alignment a) {
   size_t index = 0;
   if ((a.chromosome in digestion) is null) return(-1);
@@ -63,8 +66,6 @@ int findFragmentIndex(const Chromosome[string] digestion, const Alignment a) {
   return(-1);
   assert(0, format("Alignment not in bound of chromosome %s", a));
 }
-
-// dub -- /halde/Hi-C/Human/HindIII_Digested.bed ENCFF319AST.alignment ENCFF478EAB.alignment merged.alignments.txt
 
 int main (string[] args) {
   if (args.length < 5) {
@@ -80,15 +81,15 @@ int main (string[] args) {
   auto digestion = readDigestion(digestionPath);
   auto a1 = readAlignment(path1);
   auto a2 = readAlignment(path2);
-  foreach (key; digestion.keys) {
+  foreach (key; digestion.byKey) {
     writefln("Chromosome %s has %s digestion fragments", key, digestion[key].fragments.length);
   }
-  writefln("Alignment file1: %s aligned reads", a1.keys.length);
-  writefln("Alignment file2: %s aligned reads", a2.keys.length);
+  writefln("Alignment file1: %s aligned reads", a1.byKey.length);
+  writefln("Alignment file2: %s aligned reads", a2.byKey.length);
   string[] paired;
   size_t l = 0;
   size_t p = 0;
-  foreach (readname; a1.keys) {
+  foreach (readname; a1.byKey) {
     if (readname in a2) {
       paired ~= readname;
       p++;
@@ -98,7 +99,7 @@ int main (string[] args) {
   }
   writefln("Paired a1 in a2: %s", paired.length);
   auto ofp = File(outfile, "w");
-  foreach(readname; paired){
+  foreach (readname; paired) {
     auto chr1 = a1[readname].chromosome;
     auto chr2 = a2[readname].chromosome;
     auto i1 = digestion.findFragmentIndex(a1[readname]);

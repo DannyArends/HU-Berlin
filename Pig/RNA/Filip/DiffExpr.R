@@ -39,6 +39,8 @@ p.ev <- cbind(genename = unlist(lapply(annot.p.ev, "[", 6)), p.ev)
 rownames(p.ev) <- ensgid
 write.table(p.ev, "ef_vs_ctrl.all.txt", sep = "\t", quote = FALSE)
 
+
+
 p.evuv <- t(apply(normalized_counts,1,function(x){
   return(c(mean(x[ctrl]), round(sd(x[ctrl]),1), mean(x[efuv]), round(sd(x[efuv]),1), mean(x[efuv])/mean(x[ctrl]), log2(mean(x[efuv])/mean(x[ctrl])), wilcox.test(x[ctrl], x[efuv])$p.value))
 }))

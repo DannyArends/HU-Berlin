@@ -11,6 +11,7 @@ import std.typecons : refCounted;
 import std.string : strip, toUpper, indexOf;
 import std.conv : to;
 
+// Enzyme structure
 struct Enzyme {
   string name;
   string site;
@@ -26,6 +27,7 @@ enum Enzymes : Enzyme {
   XmnI = Enzyme("XmnI", "GAANNNNTTC")
 }
 
+// Does the b base match the template (a)
 @nogc pure bool compatible (const char a, const char b) nothrow {
   if ("ATGC".indexOf(b) == -1) return false;
   switch(a) {
@@ -52,6 +54,7 @@ enum Enzymes : Enzyme {
   }
 }
 
+// Digest the genome
 void digest (string referencepath, Enzyme enzyme) {
   string chromosome; // Current chromosome we're analyzing
   size_t cPos = 0; // Current position on the chromosome

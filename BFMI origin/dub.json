@@ -1,0 +1,18 @@
+{
+	"name": "BFMIorigin",
+	"description": "Analysis of BFMI origin",
+	"authors": ["Danny Arends"],
+	"homepage": "http://www.dannyarends.nl",
+	"mainSourceFile": "main.d",
+	"targetType": "executable",
+	"targetPath": "bin",
+	"configurations": [
+	{
+		"name": "default",
+		"targetType": "executable",
+		"dependencies": {
+				"iopipe": "~>0.1.7",
+		}
+	}
+	]
+}

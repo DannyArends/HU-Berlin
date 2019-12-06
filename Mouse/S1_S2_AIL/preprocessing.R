@@ -9,7 +9,7 @@ splitted <- strsplit(locusxdna, ",")
 
 calls <- matrix(NA, length(locusxdna) / 2, length(splitted[[1]]))
 scores <- matrix(NA, length(locusxdna) / 2, length(splitted[[1]]))
-for(x in 1:nrow(mm)){
+for(x in 1:length(splitted)){
   if(x %% 2 == 1) calls[x/2,] <- splitted[[x]]
   if(x %% 2 == 0) scores[x/2,] <- splitted[[x]]
 }

@@ -45,16 +45,16 @@ analyzeRegions <- function(mb, positions){
   x <- 1
   regions <- c()
   while(x <= nrow(mb)) {
-    if(x == nrow(mb)){ # Last regions
+    if(x == nrow(mb)){ # Last region
       if(length(possible) == 1){
-        regions <- rbind(regions, c(possible, stretchstart, x, position[stretchstart], position[x]))
+        regions <- rbind(regions, c(possible, stretchstart, x, positions[stretchstart], positions[x]))
       }else{
-        regions <- rbind(regions, c(NA, stretchstart, x, position[stretchstart], position[x]))
+        regions <- rbind(regions, c(NA, stretchstart, x, positions[stretchstart], positions[x]))
       }
     }
     if(length(possible) == 1){
       if (!mb[x, possible]){
-        regions <- rbind(regions, c(possible, stretchstart, (x-1), position[stretchstart], position[x-1]))
+        regions <- rbind(regions, c(possible, stretchstart, (x-1), positions[stretchstart], positions[x-1]))
         stretchstart <- x
         possible <- colnames(mb)
       }
@@ -67,20 +67,21 @@ analyzeRegions <- function(mb, positions){
       }
       possible <- newpossible
       if(length(possible) == 0){ # we removed all possible strains
-        regions <- rbind(regions, c(NA, stretchstart, (x-1), position[stretchstart], position[x-1]))
+        regions <- rbind(regions, c(NA, stretchstart, (x-1), positions[stretchstart], positions[x-1]))
         stretchstart <- x
         possible <- colnames(mb)
       }
     }
-    #cat("Marker",x,"left", paste0(possible, sep=" "), "\n")
+    cat("Marker",x,"left", paste0(possible, sep=" "), "\n")
     x = x + 1;
   }
   colnames(regions) <- c("Strain", "IndexS", "IndexE", "PosS", "PosE")
+  return(regions)
 }
 
 setwd("D:/Edrive/Mouse/BFMIorigin")
 #chromosomes <- c(as.character(1:19), "X", "Y", "MT")
-chromosomes <- c("19", "MT")
+chromosomes <- c("3")
 origin <- vector("list", length(chromosomes))
 names(origin) <- chromosomes 
 for(chromosome in chromosomes){
@@ -152,7 +153,20 @@ zoomTo <- function(chromosome = 1, start = 1, end = 30000000, addGenes = TRUE){
     }
   }
 }
-zoomTo(3, 36500000, 36700000)
+zoomTo(19, 4886878, 4906628) # Bbs1
+zoomTo(8, 94060000, 94100000) # Bbs2 - NZW_LacJ
+zoomTo(9, 59321990, 59353508) # Bbs4
+zoomTo(2, 69647171, 69667571) # Bbs5 - AKR/J
+zoomTo("3", 36500000, 36700000) # Bbs7 - AKR/J
+# Add deletion information
+
+
+zoomTo(12, 98920574, 98983238) # Bbs8 - SPRET / CAST / NZO
+zoomTo(9, 22475715, 22888280) # Bbs9 - C3H_HeJ
+zoomTo(10, 111298679, 111301727) # Bbs10
+zoomTo(19, 53929861, 53944627) # Bbip1 - C57BL_6NJ
+zoomTo(16, 59612949, 59639391) # Arl6 - NZO
+
 zoomTo(8, 92900000, 93500000)
 zoomTo("MT", 0, 17000)
 

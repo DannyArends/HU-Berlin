@@ -1,0 +1,14 @@
+129P2_OlaHsd	USA	
+129S1_SvImJ	USA	
+A_J	USA	
+AKR_J	USA	
+C3H_HeJ	USA	
+C57BL_6NJ	USA	Domesticus
+CAST_EiJ	Thailand	Castaneus
+DBA_2J	USA	
+NZO_HlLtJ	UK	
+NZW_LacJ	UK	
+PWK_PhJ	Prague	Musculus
+SJL_J	Switzerland	
+SPRET_EiJ	Spain	
+BFMI860-S12	Germany	

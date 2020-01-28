@@ -31,7 +31,7 @@ phenotypes <- phenotypes[colnames(genotypes),]
 
 cl <- makeCluster(6)
 pvals <- c()
-for(x in "Triglycerides"){
+for(x in phenames){
   pvals <- rbind(pvals, 
     parApply(cl, genotypes, 1, function(gts, pheno){
       marker <- as.numeric(factor(as.character(gts), levels = c("A", "H", "B")))
@@ -45,14 +45,14 @@ for(x in "Triglycerides"){
 stopCluster(cl)
 rownames(pvals) <- phenames
 lods <- -log10(pvals)
-apply(lods,1,max)
+apply(lods,1,max,na.rm=TRUE)
 
 library(RColorBrewer)
 colz <- brewer.pal(n = 9, name = "PuRd")
 chrs <- 1:21 
 names(chrs) <- c(1:19, "X", "Y")
 
-for(x in "Triglycerides"){
+for(x in phenames){
   plot(c(1,21), c(0,200000000), t = 'n', xaxt = "n", las= 2, ylab = "Position (mb)", xlab = "Chr", yaxt = 'n', main=x)
   cnt <- 1
   aa <- apply(map, 1, function(r) { 
@@ -70,6 +70,12 @@ maxMarker <- function(phe){
   return(factor(as.character(genotypes[names(which.max(lods[phe,])),]), levels = c("A", "H", "B")))
 }
 
+res <- residuals(lm(phenotypes[, "Leber"] ~ phenotypes[, "Gewicht"]))
+realres <- rep(NA, 192)
+realres[as.numeric(names(res))] <- res
+
+boxplot(realres ~ maxMarker("Leber"))
+
 
 
 boxplot(phenotypes[, "Triglycerides"] ~ maxMarker("Triglycerides"))
@@ -78,9 +84,9 @@ boxplot(phenotypes[, "Leber"] ~ factor(as.character(genotypes[names(which.max(lo
 #model trygl
 m1 <- factor(genotypes["JAX00632487",], levels = c("A", "H", "B"))
 m2 <- factor(genotypes["UNC27577908",], levels = c("A", "H", "B"))
-m3 <- factor(genotypes["JAX00064248",], levels = c("A", "H", "B"))
 
-anova(lm(phenotypes[, "Triglycerides"] ~ m1 + m2 * m3))
+
+anova(lm(phenotypes[, "Triglycerides"] ~ m1 + m2))
 
 #Day 126
 

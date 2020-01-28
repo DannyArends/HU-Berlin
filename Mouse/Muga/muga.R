@@ -4,12 +4,12 @@
 # last modified Aug, 2014
 # first written Aug, 2014
 
-setwd("E:/Mouse/DNA/DiversityArray/")
+setwd("D:/Edrive/Mouse/DNA/DiversityArray/")
 chromosomes  <- c(1:19, "X", "Y", "M")
 chrInfo      <- read.table("Annotation/mouseChrInfo.txt", header=TRUE)
 mlength      <- max(chrInfo[,"Length"])
 
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 load("MM_snps.Rdata")
 
 locusxdnaheader <- unlist(strsplit(readLines("Humboldt_Berlin_MEGMUGV01_20140817/Humboldt_Berlin_MEGMUGV01_20140817_LocusXDNA.csv", n=16)[16],","))

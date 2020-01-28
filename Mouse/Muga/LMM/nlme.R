@@ -270,7 +270,7 @@ effects.mnR0 <- createEffectMatrix(mnR0, topmarker)
 effects.mnR0[1:5, ]
 estimates.mnR0 <- apply(effects.mnR0, 1, function(eff){
   curve(eff["intercept"] + eff["subfamily"] + eff["ltype2"] + eff["timepoint"]*x + eff["I(timepoint^2)"]*x^2 + eff["I(timepoint^3)"]*x^3 + 
-        eff["topmarker"] + eff["timepoint:topmarker"]*x, from=0, to=50, add=FALSE)
+        eff["topmarker"] + eff["timepoint:topmarker"]*x, from=0, to=50, add=TRUE)
 })
 predicted.mnR0 <- matrix(unlist(lapply(estimates.mnR0, "[", 'y')), nrow(effects.mnR0), length(estimates.mnR0[[1]]$x), byrow=TRUE, dimnames=list(rownames(effects.mnR0), estimates.mnR0[[1]]$x))
 predicted.mnR0 <- predicted.mnR0[,colnames(observed)]

@@ -6,7 +6,7 @@ source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/dateToSeason.R")
 source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
 
 # Load the genotype call data
-setwd("D:/Edrive//Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 phased.vcf <- read.table(gzfile(paste0("Analysis/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
 colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("Analysis/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
 
@@ -225,20 +225,22 @@ map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 ## Create the chromosome plot showing ATB and HWE
 
 postscript("Figure_2.eps", horizontal = FALSE, paper = "special", width=12, height=8)
+
 op <- par(mfrow=c(1,1))
+op <- par(mar =c(4,4,2,1))
 
 ymax <- max(as.numeric(map.autosomes[,"Pos"]))
 
-plot(c(1,19), c(0, ymax), t = 'n', xlab="Chromosome", ylab="Position (Mbp)", xaxt='n', yaxt='n', main="Transmission bias from heterozygous parents")
-axis(1, at=1:19, paste0("Chr ", 1:19), las=2, cex.axis=0.7)
-axis(2, at=seq(0,ymax, 20000000), seq(0, ymax, 20000000) / 1000000, las=2, cex.axis=0.9)
+plot(c(1,19), c(0, ymax+2000000), t = 'n', mgp=c(2.5,3.5,0), xlab="Chromosome", ylab="Position (Mbp)", xaxt='n', yaxt='n', main="Transmission bias from heterozygous parents", yaxs = "i")
+axis(1, at=1:19, paste0(1:19), las=1, cex.axis=1)
+axis(2, at=seq(0,ymax, 20000000), seq(0, ymax, 20000000) / 1000000, las=2, cex.axis=1)
 for(x in 1:19){
   onChr <- rownames(map.autosomes[which(map.autosomes[,"Chr"] == as.character(x)),])
   colz <- as.numeric(-log10(counts28[onChr, "pPat"]) >  -log10(0.01/(70000*4))) + 1
   colz <- colz + as.numeric(as.character(counts28[onChr,"bfmi"]) == as.character(counts28[onChr,"patPref"]))
   colz[(-log10(counts28[onChr, "pPat"]) <=  -log10(0.01/(70000*4)))] <- 1
   
-  colfunc <- c("white", "gray30", "orange")
+  colfunc <- c("white", "cornflowerblue", "orange")
   points(rep(x-0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colfunc[colz], cex=1.8)
 
   colz <- as.numeric(-log10(counts28[onChr, "pMat"]) >  -log10(0.01/(70000*4))) + 1
@@ -252,8 +254,16 @@ for(x in 1:19){
   points(rep(x,length(onC)), as.numeric(marker.annot[onC,"Pos"]), pch="-",cex=1.5, col="gray")
   mcolz <- rep(1,length(onChr))
   mcolz[which(p.adjust(HWEf2[onChr]) < 0.01)] <- 2  
-  points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"red")[mcolz],cex=1.5)
+  points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"coral4")[mcolz],cex=1.5)
 }
+for(x in 1:19){
+  mtext("♂", at = x - 0.22, side=1, cex=1.2)
+  mtext("♀", at = x + 0.22, side=1, cex=1.2)
+}
+legend("topright", c("Suitable marker", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "gray", "coral4"))
+legend(x=16.8,y = 170000000, c("C57BL/6NCrl", "BFMI860-S12"), fill = c("cornflowerblue", "orange"))
+
+
 dev.off()
 
 

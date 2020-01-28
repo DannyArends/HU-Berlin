@@ -65,7 +65,7 @@ snpdata <- snpdata[-which(callrates > 0.05),]                                   
 snpinfo <- snpinfo[rownames(snpdata),]
 dim(snpdata)
 
-noPos <- which(is.na(snpinfo[,"Position"]))                                       # unknown posiiton (remove them as well)
+noPos <- which(is.na(snpinfo[,"Position"]))                                       # unknown position (remove them as well)
 snpinfo <- snpinfo[-noPos,]
 snpdata <- snpdata[rownames(snpinfo), ]
 dim(snpdata)

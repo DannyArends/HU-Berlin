@@ -45,7 +45,7 @@ execute <- function(x, intern = FALSE){
 
 for(x in 1:nrow(allfiles)){
   command <- paste0("Rscript pipeline.R ", x, " ", allfiles[x,1], " ", allfiles[x,2], " ", allfiles[x,3])
-  execute(command)
+  execute(command, TRUE)
 }
 
 

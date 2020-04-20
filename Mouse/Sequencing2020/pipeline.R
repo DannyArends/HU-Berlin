@@ -8,7 +8,6 @@ outputfolder <- paste0("/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/", s
 referencefolder <- "/home/arends/NAS/Mouse/Reference_Genomes/GRCm38_99/"
 reference <- paste0(referencefolder, "/Mus_musculus.GRCm38.dna.toplevel.fa.gz")
 logfile <- paste0(outputfolder, "log.txt")
-cat("", file = logfile)
 
 cat("--------------------------------------------------------------------\n")
 cat("seqID:", seqID, "\n")
@@ -21,6 +20,7 @@ cat("reference:", reference, "\n")
 cat("--------------------------------------------------------------------\n")
 
 dir.create(outputfolder, showWarnings = FALSE, recursive = TRUE)
+cat("", file = logfile)
 cat("Created output folder\n", file = logfile, append = TRUE)
 
 execute <- function(x, intern = FALSE){

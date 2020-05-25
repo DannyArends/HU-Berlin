@@ -1,9 +1,16 @@
-setwd("D:/Edrive/Mouse/MDC/Jan2020")
+setwd("D:/Edrive/Mouse/MDC/Genotypes May20")
 
-geno <- read.csv("7984_geno.txt", sep = "\t")
-pheno <- read.csv("7984_pheno.txt", sep = "\t", na.strings = c("", "NA", "-", "X"))
+MDCfamily <- "8016"
+geno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
 
-colnames(geno) <- c("MouseID", "GT", "Uncertain")
+setwd("D:/Edrive/Mouse/MDC/Phenotypes May20")
+pheno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
+
+colnames(geno) <- c("MouseID", "GT", "Uncertain", "Ignore")
+if(length(which(!is.na(geno[, "Ignore"]))) > 0) geno <- geno[-which(!is.na(geno[, "Ignore"])),]
+
+dim(pheno)
+dim(geno)
 
 mother <- NA
 father <- NA
@@ -30,7 +37,7 @@ sex <- as.character(pheno[,"m"])
 sex[which(is.na(sex))] <- "f"
 pheno <- cbind(pheno, sex = sex)
 
-pheno <- pheno[, c(1:5, 10:18,25)]
+pheno <- pheno[, c("ID.Nr", "sex", "Gen.", "Mutter", "Vater", "W.dat", "WG", "X21", "X28", "X35", "X42", "X49", "X56", "X63", "X70")]
 
 pheno <- cbind(pheno, GenGood = NA)
 lookupTable <- c()
@@ -43,13 +50,17 @@ for(x in 1:nrow(pheno)){
   fGen <- NA
   cGen <- NA
 
+  if(substr(mother, 0, 3) == "100") mGen <- 0
   if(substr(mother, 0, 3) == "101") mGen <- 0
   if(substr(mother, 0, 3) == "TCF") mGen <- 0
   if(substr(mother, 0, 3) == "860") mGen <- 0
+  if(substr(mother, 0, 3) == "816") mGen <- 0
   
+  if(substr(father, 0, 3) == "100") fGen <- 0
   if(substr(father, 0, 3) == "101") fGen <- 0
   if(substr(father, 0, 3) == "TCF") fGen <- 0
   if(substr(father, 0, 3) == "860") fGen <- 0
+  if(substr(father, 0, 3) == "816") fGen <- 0
   
   if(is.na(mGen)){
     #Figure out what generation the mother is
@@ -82,15 +93,92 @@ for(x in 1:nrow(pheno)){
 
 # set the name of the animal as the rowname !!!
 rownames(pheno) <- gsub("MDC-", "", pheno[, "ID.Nr"])
-rownames(geno) <- paste0("7984-", geno[, "MouseID"])
+
+dupMouseID <- geno[duplicated(geno[, "MouseID"]),"MouseID"]
+
+for(m in dupMouseID){
+  dupIDs <- which(geno[, "MouseID"] == m)
+  tbl <- table(geno[dupIDs, "GT"])
+  if(length(tbl == 1)){
+    # Duplicates have same genotypes
+    if(any(!is.na(geno[dupIDs, "Uncertain"]))){
+      cat("Uncertainty for mouse: ",m,"\n")
+      notUncertain <- which(is.na(geno[dupIDs, "Uncertain"]))
+      geno <- geno[-dupIDs[-notUncertain],]
+    }else{
+      geno <- geno[-dupIDs[-1],]
+    }
+  }else{
+    cat("Multiple GTS for mouse: ",m,"\n")
+    geno <- geno[-dupIDs,]
+  }
+}
+
+rownames(geno) <- paste0(MDCfamily,"-", geno[, "MouseID"])
 
 mdata <- cbind(pheno, geno[rownames(pheno),])
 
 mdata <- mdata[-which(is.na(mdata[, "GT"])),]
-mdata <- mdata[-which(!is.na(mdata[, "Uncertain"])),]
-mdata <- mdata[, -ncol(mdata)]
+if(length(which(!is.na(mdata[, "Uncertain"]))) > 0) mdata <- mdata[-which(!is.na(mdata[, "Uncertain"])),]
+mdata <- mdata[, -which(colnames(mdata) %in% c("Uncertain", "Ignore"))]
 
-mdata <- mdata[-which(apply(apply(mdata, 1, is.na),2,sum) > 0),]
+hasNA <- which(apply(apply(mdata, 1, is.na),2,sum) > 0)
+if(length(hasNA) > 0){
+  mdata <- mdata[-hasNA,]
+}
 
-idxs <- which(mdata[, "GenGood"] == 10)
-boxplot(mdata[idxs, "X70"] ~ mdata[idxs, "GT"])
+# Correct for small genotype groups
+#smallGTS <- which(mdata[, "GT"] %in% names(which(table(mdata[, "GT"]) < 10)))
+#if(length(smallGTS) > 0){ mdata <- mdata[-smallGTS,] }
+
+correctWeight <- function(mdata, column = "X21", name = "C21"){
+  corrected <- round(mean(mdata[, column]) + residuals(lm(mdata[, column] ~ mdata[, "sex"] + as.factor(mdata[, "WG"]))),2)
+  mdata <- cbind(mdata, corrected)
+  colnames(mdata)[ncol(mdata)] <- name
+  return(mdata)
+}
+mdata <- correctWeight(mdata, "X21", "C21")
+mdata <- correctWeight(mdata, "X35", "C35")
+mdata <- correctWeight(mdata, "X42", "C42")
+mdata <- correctWeight(mdata, "X49", "C49")
+mdata <- correctWeight(mdata, "X56", "C56")
+mdata <- correctWeight(mdata, "X63", "C63")
+mdata <- correctWeight(mdata, "X70", "C70")
+
+for(x in c("C21","C35","C42","C49","C56","C63","C70")){
+  minV <- mean(mdata[,x]) - (3 * sd(mdata[,x]))
+  maxV <- mean(mdata[,x]) + (3 * sd(mdata[,x]))
+  mdata[mdata[,x] < minV | mdata[,x] > maxV, x] <- NA
+}
+
+GTS <- rep(NA, nrow(mdata))
+GTS[mdata[, "GT"] == "11"] <- "BFMI/BFMI"
+GTS[mdata[, "GT"] == "12"] <- "BFMI/B6N"
+GTS[mdata[, "GT"] == "33"] <- "MDC/MDC"
+GTS[mdata[, "GT"] == "31"] <- "MDC/BFMI"
+GTS[mdata[, "GT"] == "13"] <- "MDC/BFMI"
+GTS[mdata[, "GT"] == "32"] <- "MDC/B6N"
+GTS[mdata[, "GT"] == "23"] <- "MDC/B6N"
+GTS[mdata[, "GT"] == "22"] <- "B6N/B6N"
+
+mdata[, "GT"] <- GTS
+
+hasNA <- which(apply(apply(mdata, 1, is.na),2,sum) > 0)
+if(length(hasNA) > 0){ mdata <- mdata[-hasNA,] }
+
+dim(mdata)
+
+boxplot(mdata[, "C70"] ~ mdata[,"GT"], main = paste0("Family = ", MDCfamily))
+BvH <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/BFMI", "C70"])$p.value},error = function(e) {return(NA)})
+BvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/MDC", "C70"])$p.value},error = function(e) {return(NA)})
+HvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/MDC", "C70"])$p.value},error = function(e) {return(NA)})
+BvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", "C70"], mdata[mdata[,"GT"] == "B6N/B6N", "C70"])$p.value},error = function(e) {return(NA)})
+HvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", "C70"], mdata[mdata[,"GT"] == "B6N/B6N", "C70"])$p.value},error = function(e) {return(NA)})
+MvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/MDC", "C70"], mdata[mdata[,"GT"] == "B6N/B6N", "C70"])$p.value},error = function(e) {return(NA)})
+legend("bottomleft", 
+  c(paste0("BFMI/BFMI v MDC/BFMI (p = ", round(BvH,4), ")"), 
+    paste0("BFMI/BFMI v MDC/MDC (p = ", round(BvM,4), ")"),
+    paste0("MDC/BFMI v MDC/MDC (p = ", round(HvM,4), ")"),
+    paste0("BFMI/BFMI v B6N/B6N (p = ", round(BvB,4), ")"),
+    paste0("MDC/BFMI v B6N/B6N (p = ", round(HvB,4), ")"),
+    paste0("MDC/MDC v B6N/B6N (p = ", round(MvB,4), ")")))

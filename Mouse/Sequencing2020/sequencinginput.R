@@ -5,7 +5,7 @@ allfiles <- rbind(
  c("SJL", "/home/arends/NAS/Mouse/DNA/Sequencing/SJL_Dife_2016/ext_L7255-3_SJL_S16_R1_001.fastq.gz", "/home/arends/NAS/Mouse/DNA/Sequencing/SJL_Dife_2016/ext_L7255-3_SJL_S16_R2_001.fastq.gz"),
 # NZO
  c("NZO", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-1_NZO_S1_R1_001.fastq.gz", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-1_NZO_S1_R2_001.fastq.gz"),
- c("NZO", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-1_NZO_S3_R1_001.fastq.gz", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-1_NZO_S3_R2_001.fastq.gz"),
+ c("NZO", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-2_NZO_S3_R1_001.fastq.gz", "/home/arends/NAS/Mouse/DNA/Sequencing/NZO_Dife_2016/ext_L7254-2_NZO_S3_R2_001.fastq.gz"),
 # KH Mouse
  c("KH", "/home/arends/NAS/Mouse/DNA/Sequencing/KH_2020/fastq/M_KH_2_FDSW202341665-1r_H35JYDSXY_L1_1.fq.gz","/home/arends/NAS/Mouse/DNA/Sequencing/KH_2020/fastq/M_KH_2_FDSW202341665-1r_H35JYDSXY_L1_2.fq.gz"),
  c("KH", "/home/arends/NAS/Mouse/DNA/Sequencing/KH_2020/fastq/M_KH_2_FDSW202341665-1r_H35KFDSXY_L3_1.fq.gz","/home/arends/NAS/Mouse/DNA/Sequencing/KH_2020/fastq/M_KH_2_FDSW202341665-1r_H35KFDSXY_L3_2.fq.gz"),

@@ -1,13 +1,12 @@
-setwd("D:/Edrive/Mouse/MDC/Genotypes May20")
+MDCfamily <- "7984"
 
-MDCfamily <- "8016"
+setwd("D:/Edrive/Mouse/MDC/Genotypes May20")
 geno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
 
 setwd("D:/Edrive/Mouse/MDC/Phenotypes May20")
 pheno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
 
-colnames(geno) <- c("MouseID", "GT", "Uncertain", "Ignore")
-if(length(which(!is.na(geno[, "Ignore"]))) > 0) geno <- geno[-which(!is.na(geno[, "Ignore"])),]
+colnames(geno) <- c("MouseID", "GT", "Uncertain")
 
 dim(pheno)
 dim(geno)
@@ -128,8 +127,8 @@ if(length(hasNA) > 0){
 }
 
 # Correct for small genotype groups
-#smallGTS <- which(mdata[, "GT"] %in% names(which(table(mdata[, "GT"]) < 10)))
-#if(length(smallGTS) > 0){ mdata <- mdata[-smallGTS,] }
+smallGTS <- which(mdata[, "GT"] %in% names(which(table(mdata[, "GT"]) < 10)))
+if(length(smallGTS) > 0){ mdata <- mdata[-smallGTS,] }
 
 correctWeight <- function(mdata, column = "X21", name = "C21"){
   corrected <- round(mean(mdata[, column]) + residuals(lm(mdata[, column] ~ mdata[, "sex"] + as.factor(mdata[, "WG"]))),2)
@@ -167,8 +166,8 @@ hasNA <- which(apply(apply(mdata, 1, is.na),2,sum) > 0)
 if(length(hasNA) > 0){ mdata <- mdata[-hasNA,] }
 
 dim(mdata)
-
-boxplot(mdata[, "C70"] ~ mdata[,"GT"], main = paste0("Family = ", MDCfamily))
+plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(15,40), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab="Weight (70days)")
+boxplot(mdata[, "C70"] ~ mdata[,"GT"], main = paste0("Family = ", MDCfamily), add = TRUE, yaxt='n')
 BvH <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/BFMI", "C70"])$p.value},error = function(e) {return(NA)})
 BvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/MDC", "C70"])$p.value},error = function(e) {return(NA)})
 HvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", "C70"], mdata[mdata[,"GT"] == "MDC/MDC", "C70"])$p.value},error = function(e) {return(NA)})
@@ -182,3 +181,13 @@ legend("bottomleft",
     paste0("BFMI/BFMI v B6N/B6N (p = ", round(BvB,4), ")"),
     paste0("MDC/BFMI v B6N/B6N (p = ", round(HvB,4), ")"),
     paste0("MDC/MDC v B6N/B6N (p = ", round(MvB,4), ")")))
+    
+op <- par(mfrow=c(1,3))  
+for(g in unique(mdata[, "Gen."])[-c(1:3)]){
+  cdata <- mdata[which(mdata[, "Gen."] == g),]
+  plot(x = c(0.5, 0.5+length(unique(cdata[,"GT"]))), y = c(15,40), t = 'n', 
+       xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab="Weight (70days)")
+  boxplot(cdata[, "C70"] ~ cdata[,"GT"], main = paste0("Family = ", MDCfamily, ", Gen = ", g), add = TRUE, yaxt='n')
+}
+
+

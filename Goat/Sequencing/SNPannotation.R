@@ -59,10 +59,10 @@ for (x in 1:nrow(snps)) {                       # Go through each of the SNPs
         snps[x, "locExon"] <- 1 + (as.numeric(gff3exons[inR[1], "V5"]) - pos)
       }
     } else {
-      snps[x, "inExon"] <- NA  # We did not find an exon around our SNP
+      snps[x, "inExon"] <- "Intronic"  # We did not find an exon around our SNP
     }
   }else{
-    snps[x, "inExon"] <- NA  # Not in a gene not in an exon
+    snps[x, "inExon"] <- "Up/Downstream"  # Not in a gene not in an exon
   }
 }
 
@@ -98,11 +98,14 @@ snps <- cbind(snps, seqAA = NA)          # Add a column to hold the answer for e
 snps <- cbind(snps, refAA = NA)          # Add a column to hold the answer for each snp
 snps <- cbind(snps, newAA = NA)          # Add a column to hold the answer for each snp
 snps <- cbind(snps, altAA = NA)          # Add a column to hold the answer for each snp
+snps <- cbind(snps, seq6060 = NA)          # Add a column to hold the answer for each snp
 for (x in 1:nrow(snps)) {                   # Go through each of the SNPs
+  chr <- snps[x,"CHROM"]                      # Chromosome the SNP is located on
+  pos <- as.numeric(snps[x,"POS"])            # Position of the SNP
+  before <- toupper(paste0(fastaSeq[[chr]][(pos-60):(pos-1)], collapse="")) 
+  after <- toupper(paste0(fastaSeq[[chr]][(pos+1):(pos+60)], collapse=""))
+  snps[x, "seq6060"] <- paste0(before, "[", snps[x,"REF"], "/", snps[x,"ALT"], "]", after)
   if(!is.na(snps[x, "inGene"])) {             # if we are not in a gene, we cannot be in an exon
-    chr <- snps[x,"CHROM"]                      # Chromosome the SNP is located on
-    pos <- as.numeric(snps[x,"POS"])            # Position of the SNP
-
     # Test if the SNP is within the start and end position of any of the GFF exons
     inR <- which(gff3cds[, "V1"] == chr & pos > as.numeric(gff3cds[,"V4"]) & pos < as.numeric(gff3cds[,"V5"]))
     # inR will contain the row number of the exon in the GFF file (no gene: it will be NULL)
@@ -134,18 +137,22 @@ for (x in 1:nrow(snps)) {                   # Go through each of the SNPs
       snps[x, "refAA"] <- paste0(AAtranslate[refAA, 1], " (", refAA, ")")
       snps[x, "altAA"] <- paste0(AAtranslate[newAA, 1], " (", newAA, ")")
     } else {
-      snps[x, "inCDS"] <- NA  # We did not find an exon around our SNP
+      if(snps[x, "inExon"] == 1){
+        snps[x, "inCDS"] <- "UTR"  # In exon, but not in CDS
+      }else{
+        snps[x, "inCDS"] <- "Intronic"  # We did not find an exon around our SNP
+      }
     }
   }else{
-    snps[x, "inCDS"] <- NA  # Not in a gene not in an exon
+    snps[x, "inCDS"] <- "Up/Downstream"  # Not in a gene not in an exon
   }
 }
 
-snps[,c(1, 2, 4, 5, 43:54)]
+snps[1:80, c(1, 2, 4, 5, 43:55)]
 
-snpsincds <- snps[which(snps[,"inCDS"] == 1),c(1, 2, 4, 5, 43:54)]
+snpsincds <- snps[which(snps[,"inCDS"] == 1),c(1, 2, 4, 5, 43:55)]
 write.table(snpsincds, file="SNPsInCDS.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
-write.table(snps[,c(1, 2, 4, 5, 43:54)], file="SNPs.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
+write.table(snps[,c(1, 2, 4, 5, 43:55)], file="SNPs.filtered.annotated.txt", sep = "\t", quote = FALSE, row.names=FALSE)
 
 snps <- cbind(snps, MAF = NA)          # Add a column to hold the answer for each snp
 for(x in 1:nrow(snps)){

@@ -147,6 +147,28 @@ colnames(results) <- regionnames
 
 write.table(results, "ChiSqScores_Incompatible.txt", sep="\t")
 
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
+results <- read.table("ChiSqScores_Incompatible.txt", sep="\t", check.names=FALSE)
+rr <- apply(results,1,as.numeric)
+rownames(rr) <- colnames(rr)
+results <- rr
+
+
+# Load the Allele Transmission Biased regions
+regionsMat <- read.table("regions_matp0.01.txt", sep="\t", header=TRUE)
+regionsPat <- read.table("regions_patp0.01.txt", sep="\t", header=TRUE)
+
+
+allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
+allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
+
+regionnames <- paste0(allRegions[,"Chr"],":", 
+          round(allRegions[,"Start"] / 1000000, 0),"-",
+          round(allRegions[,"Stop"] / 1000000, 0), " ", 
+          allRegions[,"origin"])
+
+rownames(allRegions) <- regionnames
+
 # Generate an overview plot
 nTests <- (ncol(results) * ncol(results)) / 2
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
@@ -157,6 +179,10 @@ significant <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > threshold))
 allRegions <- allRegions[significant, ]
 regionnames <- rownames(allRegions)
 results <- results[significant,significant]
+
+allRegions["8:62-63 P", "Prefered.Allele"] <- "B6N"
+allRegions["9:88-91 M", "Prefered.Allele"] <- "B6N"
+allRegions["11:13-13 M", "Prefered.Allele"] <- "BFMI"
 
 bfmipref <- which(allRegions[,"Prefered.Allele"] == "BFMI")
 b6npref <- which(allRegions[,"Prefered.Allele"] == "B6N")
@@ -173,16 +199,18 @@ sum(LODscores > -log10(0.05 / nTests), na.rm=TRUE) / 2
 sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 
 #tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
-postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, height=14, pointsize = 18)
+#postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, height=14, pointsize = 18)
   op <- par(mar= c(7, 7, 4, 10) + 0.1, xpd=FALSE)
-  image(-log10(pchisq(results, 1, lower.tail=FALSE)), breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibility (BFMIxB6N)")
+  image(-log10(pchisq(results, 1, lower.tail=FALSE)), 
+        breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), 
+        col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibilities")
 
   axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
-  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
+  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="cornflowerblue")
   axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
 
   axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
-  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
+  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="cornflowerblue")
   axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
 
   grid(ncol(results),ncol(results))
@@ -196,8 +224,10 @@ postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, heig
   legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
          fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
          cex=1, inset=c(-0.20,0))
+  legend("topright", c("C57BL/6NCrl", "BFMI860-12"), fill = c("cornflowerblue", "orange"), inset=c(-0.20,0.18))
   box()
-dev.off()
+
+#dev.off()
 
 # Get all genes in each regions
 allgenes <- NULL

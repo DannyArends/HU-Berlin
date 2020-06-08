@@ -1,16 +1,17 @@
 genesInRegion <- function(chr, start_position, end_position, species = "mmusculus", verbose = TRUE){
   require("biomaRt")
   if(is.na(end_position)) end_position <- start_position + 1
-  mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = paste0(species, "_gene_ensembl"), host="www.ensembl.org")
+  mart = useMart("ENSEMBL_MART_ENSEMBL")
+  dataset = useDataset("mmusculus_gene_ensembl", mart)
   chr.region = c(paste0(chr, ":",start_position, ":", end_position))
   filterlist = list(chr.region, "protein_coding")
   if(verbose) cat("Retrieving results for ", chr.region, "\n")
-  res <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "mgi_symbol", "mgi_description"), filters = c("chromosomal_region","biotype"), values = filterlist, mart = mart)
+  res <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "mgi_symbol", "mgi_description"), filters = c("chromosomal_region","biotype"), values = filterlist, mart = dataset)
   if(verbose) cat("Retrieved ",nrow(res), "results for ", chr.region, "\n")
   return(res)
 }
 
-setwd("E:/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 
 patRegions <- read.table("Analysis/ATB_PAT.txt",sep="\t",header=TRUE, check.names=FALSE)
 matRegions <- read.table("Analysis/ATB_MAT.txt",sep="\t",header=TRUE, check.names=FALSE)

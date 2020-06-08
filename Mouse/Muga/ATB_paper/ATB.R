@@ -261,7 +261,7 @@ for(x in 1:19){
   mtext("♀", at = x + 0.22, side=1, cex=1.2)
 }
 legend("topright", c("Suitable marker", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "gray", "coral4"))
-legend(x=16.8,y = 170000000, c("C57BL/6NCrl", "BFMI860-S12"), fill = c("cornflowerblue", "orange"))
+legend(x=17.2,y = 175000000, c("C57BL/6NCrl", "BFMI860-12"), fill = c("cornflowerblue", "orange"))
 
 
 dev.off()

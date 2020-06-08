@@ -38,6 +38,7 @@ for(r in 1:nrow(mydata)){
   
   mlpdata <- c(as.character(mydata[r, "OHR"]), birthdate, firstcalfindays,
                as.character(mydata[r, "DATUM"]), 
+               as.character(mydata[r, "MT"]), 
                as.character(mydata[r, "LAKTATION"]), 
                as.character(mydata[r, "MKG"]),as.character(mydata[r, "FETT"]),as.character(mydata[r, "EIWEISS"]), as.character(mydata[r, "ZELLZAHL"]))
   mlpdata <- c(mlpdata, as.character(gts[which(as.character(gts[, "Barcode.Ohmark"]) == as.character(mydata[r, "OHR"])), -1]))
@@ -45,9 +46,9 @@ for(r in 1:nrow(mydata)){
   mmatrix <- rbind(mmatrix, mlpdata)
 }
 
-colnames(mmatrix) <- c("ID", "Birthdate", "FirstCalfIndays","Sampledate", "Lactation", "MKG", "Fat", "Protein", "SCC", colnames(gts)[-1])
+colnames(mmatrix) <- c("LOM", "Birthdate", "FirstCalfIndays","Sampledate", "DIM", "Lactation", "MKG", "Fat", "Protein", "SCC", colnames(gts)[-1])
 rownames(mmatrix) <- 1:nrow(mmatrix)
 
 setwd("D:/Edrive/Cow/Salma Wachow")
 
-write.table(mmatrix, "phenotypes2020.wachow.txt", sep = "\t", quote=FALSE)
+write.table(mmatrix, "phenotypes2020.wachow.txt", sep = "\t", row.names=FALSE, quote=FALSE)

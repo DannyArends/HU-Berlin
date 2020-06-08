@@ -16,7 +16,8 @@ butanadata <- read.csv("phenotypes_2020.txt", sep = "\t", header=TRUE, check.nam
 butana <- butanadata[which(butanadata[, "Breed"] == "Butana"),]
 
 # Get the phenotype we are analyzing
-phenotype <- log2(as.numeric(as.character(butana[, "SCC"])) / 100000) + 3
+#phenotype <- log2(as.numeric(as.character(butana[, "SCC"])) / 100000) + 3
+phenotype <- (as.numeric(as.character(butana[, "FC1"])) + as.numeric(as.character(butana[, "FC2"]))) / 2
 
 # Get the covariates we want to investigate in model building
 animal <- butana[, "ID"]

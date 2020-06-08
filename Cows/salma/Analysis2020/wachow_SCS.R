@@ -14,7 +14,7 @@ getSeason <- function(mmonths) {
 library(lme4)
 
 setwd("D:/Edrive/Cow/Salma Wachow")
-wachowdata <- read.csv("phenotypes2020.wachow.txt", sep = "\t", header=TRUE, check.names=FALSE)
+wachowdata <- read.csv("phenotypes2020.wachow_v2.txt", sep = "\t", header=TRUE, check.names=FALSE)
 
 # Get the phenotype we are analyzing
 phenotype <- log2(as.numeric(as.character(wachowdata[, "SCC"])) / 100) + 3

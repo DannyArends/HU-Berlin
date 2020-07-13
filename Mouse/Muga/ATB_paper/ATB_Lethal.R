@@ -42,8 +42,6 @@ for(x in c(seq(1,19),"X","Y","M")) {  # Reorder the chromosomes and name it geno
   genotypes <- rbind(genotypes, phased.AHB[which(phased.AHB[,"CHROM"] == x), ])
 }
 
-
-
 # Load the Allele Transmission Biased regions
 regionsMat <- read.table("regions_matp0.01.txt", sep="\t", header=TRUE)
 regionsPat <- read.table("regions_patp0.01.txt", sep="\t", header=TRUE)
@@ -158,7 +156,6 @@ results <- rr
 regionsMat <- read.table("regions_matp0.01.txt", sep="\t", header=TRUE)
 regionsPat <- read.table("regions_patp0.01.txt", sep="\t", header=TRUE)
 
-
 allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
 allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
 
@@ -172,9 +169,13 @@ rownames(allRegions) <- regionnames
 # Generate an overview plot
 nTests <- (ncol(results) * ncol(results)) / 2
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
-threshold <- -log10(0.05 / nTests)
+thresholdL <- -log10(0.05 / nTests)
+thresholdH <- -log10(0.01 / nTests)
 
-significant <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > threshold))
+significant <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > thresholdL))
+length(significant)
+significantH <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > thresholdH))
+length(significantH)
 
 allRegions <- allRegions[significant, ]
 regionnames <- rownames(allRegions)
@@ -223,8 +224,8 @@ sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
   op <- par(xpd=TRUE)
   legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
          fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
-         cex=1, inset=c(-0.20,0))
-  legend("topright", c("C57BL/6NCrl", "BFMI860-12"), fill = c("cornflowerblue", "orange"), inset=c(-0.20,0.18))
+         cex=1, inset=c(-0.18,0))
+  legend("topright", c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"), inset=c(-0.18,0.14))
   box()
 
 #dev.off()

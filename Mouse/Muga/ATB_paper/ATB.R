@@ -224,7 +224,7 @@ map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 
 ## Create the chromosome plot showing ATB and HWE
 
-postscript("Figure_2.eps", horizontal = FALSE, paper = "special", width=12, height=8)
+#postscript("Figure_2.eps", horizontal = FALSE, paper = "special", width=12, height=8)
 
 op <- par(mfrow=c(1,1))
 op <- par(mar =c(4,4,2,1))
@@ -254,17 +254,17 @@ for(x in 1:19){
   points(rep(x,length(onC)), as.numeric(marker.annot[onC,"Pos"]), pch="-",cex=1.5, col="gray")
   mcolz <- rep(1,length(onChr))
   mcolz[which(p.adjust(HWEf2[onChr]) < 0.01)] <- 2  
-  points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"coral4")[mcolz],cex=1.5)
+  points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"red")[mcolz],cex=1.5)
 }
 for(x in 1:19){
   mtext("♂", at = x - 0.22, side=1, cex=1.2)
   mtext("♀", at = x + 0.22, side=1, cex=1.2)
 }
-legend("topright", c("Suitable marker", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "gray", "coral4"))
-legend(x=17.2,y = 175000000, c("C57BL/6NCrl", "BFMI860-12"), fill = c("cornflowerblue", "orange"))
+legend("topright", c("Suitable marker", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "gray", "red"),cex=1.2)
+legend(x=18.12,y = 169900000, c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"),cex=1.2)
 
 
-dev.off()
+#dev.off()
 
 
 

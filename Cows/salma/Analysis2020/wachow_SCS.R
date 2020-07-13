@@ -21,7 +21,7 @@ phenotype <- log2(as.numeric(as.character(wachowdata[, "SCC"])) / 100) + 3
 phenotype[which(!is.finite(phenotype))] <- 0
 
 # Get the covariates we want to investigate in model building
-animal <- wachowdata[, "ID"]
+animal <- wachowdata[, "LOM"]
 lactation <- as.factor(wachowdata[, "Lactation"])
 year <- unlist(lapply(strsplit(as.character(wachowdata[,"Sampledate"]), "-"), "[", 1))
 birthyear <- unlist(lapply(strsplit(as.character(wachowdata[,"Birthdate"]), "-"), "[", 1))

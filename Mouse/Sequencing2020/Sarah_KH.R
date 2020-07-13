@@ -30,4 +30,3 @@ callSNPs(c("/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/4/KHP_trimmed.al
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/18/B6-5P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/19/B6-5P_trimmed.aligned.sorted.dedup.recalibrated.bam"
            ), 7, 127500000, 128250000, "KH_Sarah")
-

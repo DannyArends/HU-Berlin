@@ -35,15 +35,15 @@ callSNPs(c("/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/1/SJLP_trimmed.a
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/11/BFMI860-12P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/12/BFMI860-12P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/13/BFMI860-12P_trimmed.aligned.sorted.dedup.recalibrated.bam",
-           #"/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/14/",
+           "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/14/BFMI860-12P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/15/B6-3P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/16/B6-4P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/17/B6-5P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/18/B6-5P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/19/B6-5P_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/20/AKRP_trimmed.aligned.sorted.dedup.recalibrated.bam",
-           #"/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/21/"
-           #"/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/22/"
+           "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/21/AKRP_trimmed.aligned.sorted.dedup.recalibrated.bam",
+           "/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/22/AKRP_trimmed.aligned.sorted.dedup.recalibrated.bam",
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/129P2_OlaHsd.bam",
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/129S1_SvImJ.bam",
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/129S5SvEvBrd.bam",

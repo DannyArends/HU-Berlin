@@ -1,4 +1,5 @@
-library(lme4)
+library(nlme)
+
 setwd("D:/Edrive/Mouse/DNA/MegaMuga/inputF2")
 genotypes <- read.table(file="cleaned_recoded_genotypes_F2.txt", sep = '\t', check.names = FALSE)
 map <- read.table(file="cleaned_map_25MbGap.txt", sep = '\t')
@@ -38,19 +39,17 @@ names(ltype2) <- individual
 season <- as.factor(season)
 names(season) <- individual
 
+individual <- as.factor(individual)
 
-ctrl = lmerControl(optimizer ="Nelder_Mead", optCtrl=list(maxfun=20000))
+m0     <- lme(phenotype ~ subfamily, random = ~ 1 | individual, method="ML")
+m1_L2  <- lme(phenotype ~ subfamily + litternumber2, random = ~ 1 | individual, method="ML")
+m1_L5  <- lme(phenotype ~ subfamily + litternumber5, random = ~ 1 | individual, method="ML")
 
+m2_L2  <- lme(phenotype ~ subfamily + litternumber2 + littersize, random = ~ 1 | individual, method="ML")
+m2_L5  <- lme(phenotype ~ subfamily + litternumber5 + littersize, random = ~ 1 | individual, method="ML")
 
-m0     <- lmer(phenotype ~ subfamily + (1|individual), REML = FALSE, control = ctrl)
-m1_L2  <- lmer(phenotype ~ subfamily + litternumber2 + (1|individual), REML = FALSE, control = ctrl)
-m1_L5  <- lmer(phenotype ~ subfamily + litternumber5 + (1|individual), REML = FALSE, control = ctrl)
-
-m2_L2  <- lmer(phenotype ~ subfamily + litternumber2 + littersize + (1|individual), REML = FALSE, control = ctrl)
-m2_L5  <- lmer(phenotype ~ subfamily + litternumber5 + littersize + (1|individual), REML = FALSE, control = ctrl)
-
-m2_Lt2 <- lmer(phenotype ~ subfamily + ltype2 + (1|individual), REML = FALSE, control = ctrl)
-m2_Lt5 <- lmer(phenotype ~ subfamily + ltype5 + (1|individual), REML = FALSE, control = ctrl)
+m2_Lt2 <- lme(phenotype ~ subfamily + ltype2, random = ~ 1 | individual, method="ML")
+m2_Lt5 <- lme(phenotype ~ subfamily + ltype5, random = ~ 1 | individual, method="ML")
 
 # Data for the AIC table
 diff(AIC(m0, m1_L2)[,"AIC"]) 
@@ -67,7 +66,7 @@ diff(AIC(m1_L2, m2_Lt2)[,"AIC"])
 diff(AIC(m1_L2, m2_Lt5)[,"AIC"])
 
 diff(AIC(m1_L5, m2_L2)[,"AIC"])
-diff(AIC(m1_L5, m2_L2)[,"AIC"])
+diff(AIC(m1_L5, m2_L5)[,"AIC"])
 diff(AIC(m1_L5, m2_Lt2)[,"AIC"])
 diff(AIC(m1_L5, m2_Lt5)[,"AIC"])
 
@@ -81,25 +80,28 @@ diff(AIC(m2_L5, m2_Lt5)[,"AIC"])
 diff(AIC(m2_Lt2, m2_Lt5)[,"AIC"])
 
 # Data for the big LMM models
-m0 <- lmer(phenotype ~ subfamily + ltype2 + (1|individual), REML = FALSE, control = ctrl)
-m1 <- lmer(phenotype ~ subfamily + ltype2 + season + (1|individual), REML = FALSE, control = ctrl)
+m0 <- lme(phenotype ~ subfamily + ltype2, random = ~ 1 | individual, method="ML", control = lmeControl(opt="optim"))
+m1 <- lme(phenotype ~ subfamily + ltype2 + season, random = ~ 1 | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m0, m1)[,"AIC"])
-m2 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + (1|individual), REML = FALSE, control = ctrl)
+m2 <- lme(phenotype ~ subfamily + ltype2 + timepoint, random = ~ 1 | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m1, m2)[,"AIC"])
-m3 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + (timepoint|individual), REML = FALSE, control = ctrl)
+m3 <- lme(phenotype ~ subfamily + ltype2 + timepoint, random = ~ timepoint | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m2, m3)[,"AIC"])
-m4 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + (timepoint|individual), REML = FALSE, control = ctrl)
+m4 <- lme(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2), random = ~ timepoint | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m3, m4)[,"AIC"])
-m5 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + (timepoint|individual), REML = FALSE, control = ctrl)
+m5 <- lme(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3), random = ~ timepoint | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m4, m5)[,"AIC"])
-m6 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + I(timepoint^4) + (timepoint|individual), REML = FALSE, control = ctrl)
+m6 <- lme(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + I(timepoint^4), random = ~ timepoint | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m5, m6)[,"AIC"])
-m7 <- lmer(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + topmarker + topmarker:timepoint + (timepoint|individual), REML = FALSE, control = ctrl)
+m7 <- lme(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + topmarker + topmarker:timepoint, random = ~ timepoint | individual, method="ML", control = lmeControl(opt="optim"))
 diff(AIC(m5, m7)[,"AIC"])
 
 top.markers <- c("UNC1938399","UNC030576333","JAX00522656","UNC9857021","UNC10016752","UNC090485124","UNC30294194")
 
+library("lme4")
 library("MuMIn")
+
+ctrl = lmerControl(optimizer ="Nelder_Mead", optCtrl=list(maxfun=20000))
 
 variance.explained.raw <- function(m){
   model.anova = anova(m)
@@ -107,7 +109,7 @@ variance.explained.raw <- function(m){
   RE.var = summary(m)$sigma^2
   FE.var = anova(m)[,"Sum Sq"] / nobs(m)
   names(FE.var) = FE.names
-  VarExp.Model = r.squaredGLMM(m)["R2c"]
+  VarExp.Model = r.squaredGLMM(m)[1, "R2c"]
   VarExp.FE = (VarExp.Model * FE.var) / (RE.var +sum(FE.var))
   VarExp.left = 1 - sum(VarExp.FE)
   VarExp.All = c(VarExp.FE, "Unexplained" = VarExp.left)
@@ -123,8 +125,7 @@ variance.explained.scaled <- function(m){
   return(scaled)
 }
 
-
-
+# To get variance explained we need to use lmer model, since lme doesn't allow us to get sum of squares
 null <- lmer(phenotype ~ subfamily + ltype2 + timepoint + I(timepoint^2) + I(timepoint^3) + (timepoint|individual), REML = FALSE, control = ctrl)
 variance.explained.raw(null)
 variance.explained.scaled(null)

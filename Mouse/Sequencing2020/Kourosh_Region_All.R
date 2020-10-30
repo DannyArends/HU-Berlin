@@ -17,7 +17,7 @@ callSNPs <- function(bamfiles, chr = 1, startpos = 1, endpos = 2, outname = "myS
 
   cmd1 <- paste0(bcftools, " mpileup -q 30 -Ou -r ", region, " -f ", reference, " ", bamstr)
   cmd2 <- paste0(bcftools, " call -mv -Ov ")
-  cmd3 <- paste0(bcftools, " view -v snps -i '%QUAL>=30 && DP>10' - -o ", outname, ".snps-filtered.vcf")
+  cmd3 <- paste0(bcftools, " view -i '%QUAL>=30 && DP>10' - -o ", outname, ".snps-filtered.vcf")
   execute(paste0(cmd1, " | ", cmd2, " | ", cmd3))
   invisible("")
 }
@@ -84,5 +84,5 @@ callSNPs(c("/home/arends/NAS/Mouse/DNA/Sequencing/Alignment2020/1/SJLP_trimmed.a
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/ST_bJ.bam",
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/WSB_EiJ.bam",
            "/home/arends/NAS/old_naszb/Mouse/DNA/Sequencing/MouseGenomeProject/REL-1604-BAM/ZALENDE_EiJ.bam"
-           ), 3, 36000000, 37000000, "MGP_Chr3:36000000-37000000")
+           ), 3, 36000000, 37000000, "MGP_ALL_Chr3:36000000-37000000")
 

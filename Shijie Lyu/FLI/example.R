@@ -7,7 +7,7 @@ abline(a=0, b=1)
 
 lambdaB <- round(median(qchisq(pvals, 1, lower.tail = FALSE), na.rm=TRUE) /  qchisq(0.5, 1),3)
 chiSq <- qchisq(pvals, 1, lower.tail = FALSE)
-p.deflated1 <- pchisq(chiSq / lambdaB, 1)
+p.deflated1 <- pchisq(chiSq / lambdaB, 1, lower.tail = FALSE)
 lambdaA1 <- round(median(qchisq(p.deflated1, 1, lower.tail = FALSE),na.rm=TRUE) /  qchisq(0.5, 1),3)
 
 cat("Before:", lambdaB, "After", lambdaA1, "\n")

@@ -1,11 +1,11 @@
-MDCfamily <- "8017"
+MDCfamily <- "7984"
 
-setwd("D:/Edrive/Mouse/MDC/Genotypes May20")
-geno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
+setwd("D:/Edrive/Mouse/MDC/Genotypes Okt20")
+geno <- read.csv(paste0("geno_", MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
 
-setwd("D:/Edrive/Mouse/MDC/Phenotypes May20")
-pheno <- read.csv(paste0(MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
-pheno2 <- read.csv(paste0(MDCfamily, "_mri.txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
+pheno <- read.csv(paste0("pheno_", MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X", "#DIV/0!"))
+pheno2 <- read.csv(paste0("pheno_", MDCfamily, "_mri.txt"), sep = "\t", na.strings = c("", "NA", "-", "X", "#DIV/0!"))
+pheno2 <- pheno2[-which(is.na(pheno2[, "ID.Nr"])),]
 
 colnames(geno) <- c("MouseID", "GT", "Uncertain")
 
@@ -136,10 +136,10 @@ smallGTS <- which(mdata[, "GT"] %in% names(which(table(mdata[, "GT"]) < 10)))
 if(length(smallGTS) > 0){ mdata <- mdata[-smallGTS,] }
 
 correctPhe <- function(mdata, column = "X21", name = "C21"){
-  cresiduals <- residuals(lm(mdata[, column] ~ mdata[, "sex"] + as.factor(mdata[, "WG"])))
+  cresiduals <- residuals(lm(as.numeric(mdata[, column]) ~ mdata[, "sex"] + as.factor(mdata[, "WG"])))
   cres <- rep(NA, nrow(mdata))
   cres[as.numeric(names(cresiduals))] <- cresiduals
-  corrected <- round(mean(mdata[, column],na.rm=TRUE) + cres,2)
+  corrected <- round(mean(as.numeric(mdata[, column]),na.rm=TRUE) + cres,2)
   mdata <- cbind(mdata, corrected)
   colnames(mdata)[ncol(mdata)] <- name
   return(mdata)
@@ -180,7 +180,7 @@ mdata[, "GT"] <- GTS
 phe <- "FatLeanC70"
 
 dim(mdata)
-plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(0,0.60), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab="Weight (70days)")
+plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(0,0.60), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab=paste0(phe))
 mybplot <- boxplot(mdata[, phe] ~ mdata[,"GT"], main = paste0("Family = ", MDCfamily, " (", phe, ")"), add = TRUE, yaxt='n', xaxt='n')
 nums <- c()
 for(gt in mybplot$names){
@@ -204,12 +204,14 @@ legend("topright",
     paste0("MDC/BFMI v B6N/B6N (p = ", round(HvB,4), ")"),
     paste0("MDC/MDC v B6N/B6N (p = ", round(MvB,4), ")")))
 
-op <- par(mfrow=c(1,3))  
-for(g in unique(mdata[, "Gen."])){
+# too many generations only plot the last 8
+# 
+op <- par(mfrow=c(2,3))  
+for(g in unique(mdata[, "Gen."])[(length(unique(mdata[, "Gen."]))-5): length(unique(mdata[, "Gen."]))]){
   cdata <- mdata[which(mdata[, "Gen."] == g),]
   plot(x = c(0.5, 0.5+length(unique(cdata[,"GT"]))), y = c(0,0.50), t = 'n', 
-       xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab="Weight (70days)")
-  mybplot <- boxplot(cdata[, phe] ~ cdata[,"GT"], main = paste0("Family = ", MDCfamily, ", Gen = ", g), add = TRUE, yaxt='n', xaxt='n')
+       xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab=phe, main = paste0("Family = ", MDCfamily, ", Gen = ", g))
+  mybplot <- boxplot(cdata[, phe] ~ cdata[,"GT"], add = TRUE, yaxt='n', xaxt='n')
   nums <- c()
   for(gt in mybplot$names){
     n <- length(which(!is.na(cdata[which(cdata[,"GT"] == gt), phe])))

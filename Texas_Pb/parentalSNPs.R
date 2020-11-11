@@ -23,3 +23,9 @@ for(f in list.files()){
 }
 
 
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL2.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL2.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+vep2 <- read.csv("Texas_Pb_QTL2.vep.txt",sep="\t")
+vep2[grep("missense_variant", vep2[,"Consequence"]),]

@@ -29,3 +29,28 @@ write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL2.noinfo.vcf" , sep="\t", 
 
 vep2 <- read.csv("Texas_Pb_QTL2.vep.txt",sep="\t")
 vep2[grep("missense_variant", vep2[,"Consequence"]),]
+
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL3.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL3.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL4.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL4.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL5.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL5.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL6.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL6.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTL9.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTL9.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+
+setwd("D:/Edrive/Mouse/Texas_Pb/")
+qtl2 <- read.csv("Texas_Pb_QTLI1.filtered.vcf",sep="\t")
+write.table(qtl2[,c(1:5, 10,11)], file = "Texas_Pb_QTLI1.noinfo.vcf" , sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)

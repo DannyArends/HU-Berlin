@@ -1,6 +1,6 @@
-MDCfamily <- "7984"
+MDCfamily <- "8015"
 
-setwd("D:/Edrive/Mouse/MDC/Genotypes Okt20")
+setwd("D:/Edrive/Mouse/MDC/Jan2021")
 geno <- read.csv(paste0("geno_", MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
 
 pheno <- read.csv(paste0("pheno_", MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X", "#DIV/0!"))
@@ -180,7 +180,7 @@ mdata[, "GT"] <- GTS
 phe <- "FatLeanC70"
 
 dim(mdata)
-plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(0,0.60), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab=paste0(phe))
+plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(0,0.70), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab=paste0(phe))
 mybplot <- boxplot(mdata[, phe] ~ mdata[,"GT"], main = paste0("Family = ", MDCfamily, " (", phe, ")"), add = TRUE, yaxt='n', xaxt='n')
 nums <- c()
 for(gt in mybplot$names){
@@ -189,6 +189,32 @@ for(gt in mybplot$names){
 }
 xn <- apply(nums,1, paste0,collapse="\n n=")
 axis(1, at = 1:length(xn), xn)
+
+mdata[which(mdata[,"GT"] == "MDC/BFMI"), phe]
+mdata[which(mdata[,"GT"] == "MDC/B6N"), phe]
+mdata[which(mdata[,"GT"] == "BFMI/BFMI"), phe]
+
+for(gt in unique(mdata[,"GT"])){
+  cat(gt, mean(mdata[which(mdata[,"GT"] == gt), phe],na.rm=TRUE), "+/-", sd(mdata[which(mdata[,"GT"] == gt), phe],na.rm=TRUE), "\n")
+}
+
+complementation <- mdata[which(mdata[,"GT"] == "MDC/BFMI"), phe]
+mrange <- seq(5, 80, 5)
+nps <- c()
+for(x in mrange){
+  np <- 0
+  for(p in 1:1000){
+    null <- rnorm(x, 0.096, 0.036)
+    if(t.test(complementation, null)$p.value < 0.005) np <- np+1
+  }
+  nps <- c(nps, np / 1000)
+}
+plot(nps, xaxt='n', ylab ="Power", xlab="N samples in negative control", pch=19, las=2)
+axis(1, at = 1:length(mrange), mrange)
+abline(h = 0.80, col="red")
+abline(h = 0.95, col="orange")
+abline(h = 0.995, col = "green")
+legend("bottomright", c("80% power (original estimate)", "95% (no multiple test adjustment)", "99% (multiple test adjusted)"), lwd=1, col=c("red", "orange", "green"))
 
 BvH <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/BFMI", phe])$p.value},error = function(e) {return(NA)})
 BvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})

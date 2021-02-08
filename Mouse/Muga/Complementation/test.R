@@ -7,7 +7,7 @@
 #############################################
 #              packages & external          #
 #############################################
-source("D:\\Github\\HU-Berlin\\Mouse\\Muga\\Complementation\\createMRI.R")
+source("D:\\Ddrive\\Github\\HU-Berlin\\Mouse\\Muga\\Complementation\\createMRI.R")
 
 #############################################
 #                Functions                  #
@@ -24,7 +24,7 @@ adjust.phenotype <- function(geno, tp = "21"){
 #############################################
 #               Reading data                #
 #############################################
-setwd("E:/Mouse/ClassicalPhenotypes/Complementation")
+setwd("D:/Edrive/Mouse/ClassicalPhenotypes/Complementation")
 
 months <- rbind(c("Jan",31),c("Feb",28),c("Mar",31),c("Apr",30),c("May",31),c("Jun",30),
                 c("Jul",31),c("Aug",31),c("Sep",30),c("Oct",31),c("Nov",30),c("Dec",31))
@@ -131,19 +131,19 @@ NZO_geno <- cbind(NZO_geno, Gtype = NZO.cg)
 #############################################
 
 op <- par(mfrow=c(1,3))
-boxplot(adjust.phenotype(AKR_geno, "fat70") ~ AKR_geno[,"Gtype"], main="F1 - AKR x (BFMI x B6N)", sub=paste0("Fat Day 70"))
-boxplot(adjust.phenotype(NZO_geno, "fat70") ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Fat Day 70"))
-boxplot(adjust.phenotype(TRPC_geno, "fat70") ~ TRPC_geno[,"Gtype"], main="F1 - TRPC x (BFMI x B6N)", sub=paste0("Fat Day 70"))
+boxplot(adjust.phenotype(AKR_geno, "63") ~ AKR_geno[,"Gtype"], main="F1 - AKR x (BFMI x B6N)", sub=paste0("Fat Day 63"))
+boxplot(adjust.phenotype(NZO_geno, "63") ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Fat Day 63"))
+boxplot(adjust.phenotype(TRPC_geno, "63") ~ TRPC_geno[,"Gtype"], main="F1 - TRPC x (BFMI x B6N)", sub=paste0("Fat Day 63"))
 
-op <- par(mfrow=c(3,4))
-for(x in colnames(NZO_geno)[9:16]) {
-  boxplot(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", sub=paste0("Day ",x))
+op <- par(mfrow=c(4,4))
+for(x in colnames(NZO_geno)[13:16]) {
+  boxplot(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"Gtype"], main="F1 - NZO x (BFMI x B6N)", xlab="", sub=paste0("Day ",x))
   cat("NZO:", anova(lm(adjust.phenotype(NZO_geno, x) ~ NZO_geno[,"Gtype"]))[[5]][1], "\n")
-  boxplot(adjust.phenotype(TRPC_geno, x) ~ TRPC_geno[,"Gtype"], main="F1 - TRPC x (BFMI x B6N)", sub=paste0("Day ",x))
+  boxplot(adjust.phenotype(TRPC_geno, x) ~ TRPC_geno[,"Gtype"], main="F1 - TRPC x (BFMI x B6N)", xlab="", sub=paste0("Day ",x))
   cat("TRPC:", anova(lm(adjust.phenotype(TRPC_geno, x) ~ TRPC_geno[,"Gtype"]))[[5]][1], "\n")
-  boxplot(adjust.phenotype(AKR_geno, x) ~ AKR_geno[,"Gtype"], main="F1 - AKR x (BFMI x B6N)", sub=paste0("Day ",x))
+  boxplot(adjust.phenotype(AKR_geno, x) ~ AKR_geno[,"Gtype"], main="F1 - AKR x (BFMI x B6N)", xlab="", sub=paste0("Day ",x))
   cat("AKR:", anova(lm(adjust.phenotype(AKR_geno, x) ~ AKR_geno[,"Gtype"]))[[5]][1], "\n")
-  boxplot(adjust.phenotype(BBS7_geno, x) ~ BBS7_geno[,"C3GAB5"], main="F1 - Bbs7 x (BFMI x B6N)", sub=paste0("Day ",x), las=2)
+  boxplot(adjust.phenotype(BBS7_geno, x) ~ BBS7_geno[,"C3GAB5"], main="F1 - Bbs7 x (BFMI x B6N)", sub=paste0("Day ",x), xlab="", las=2)
   cat("Bbs7:", anova(lm(adjust.phenotype(BBS7_geno, x) ~ BBS7_geno[,"C3GAB5"]))[[5]][1], "\n")
   cat("Done",x,"\n")
   #line <- readline()

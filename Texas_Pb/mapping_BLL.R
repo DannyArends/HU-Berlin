@@ -9,6 +9,8 @@ rownames(phe) <- gsub("-", ".",rownames(phe))
 phe <- phe[colnames(gts),]
 map <- map[rownames(gts),]
 
+heatmap(cor(apply(phe[,c(2,8:23, 25:ncol(phe))],2,as.numeric), use="pair"))
+
 # Some info
 chroms <- c(1:19, "X")
 
@@ -223,8 +225,8 @@ for(chr in chroms){
   abline(v = sum(tbls[chrs]), lty=2)
 }
 
-m1 <- rownames(map[which(apply(pairscanLODs,1, function(x){any(x > threshold,na.rm=TRUE)})),])
-m18 <- rownames(map[which(apply(pairscanLODs,2, function(x){any(x > threshold,na.rm=TRUE)})),])
+m1 <- rownames(map[which(apply(pairscanLODs,1, function(x){any(x > 5,na.rm=TRUE)})),])
+m18 <- rownames(map[which(apply(pairscanLODs,2, function(x){any(x > 5,na.rm=TRUE)})),])
 
 pairscanLODs[m1,m18]
 
@@ -232,13 +234,14 @@ BLLadj <- mean(phe[, "BLL"],na.rm=TRUE) + residuals(lm(BLL ~ sex + urineVolume +
 top1 <- "gJAX00272462"
 top18 <- "gUNC29787730"
 topX <- "SXX202459414"
-chr1Top <- "gUNC2018619"
+chr1Top <- "backupUNC010628673"
 chr7Top <- "gUNC13158239"
 
 op <- par(mfrow=c(1,2))
 
-plot(c(0.4, 3.6), c(0,100), t = 'n', xaxt='n', las=2, ylab = "Adjusted blood lead level (BLL)", xlab="Genotype gUNC2018619", main=paste0("BLL - Combined - Chromosome 1"),cex.axis=1.5,cex.lab=1.5)
+plot(c(0.4, 3.6), c(0,100), t = 'n', xaxt='n', las=2, ylab = "Adjusted blood lead level (BLL)", xlab="Genotype backupUNC010628673", main=paste0("BLL - Combined - Chromosome 1"),cex.axis=1.5,cex.lab=1.5)
 boxplot(BLLadj ~ as.character(gts[chr1Top,names(BLLadj)]), notch=TRUE, yaxt='n', add=TRUE, col=c("gray25", "gray50", "gray75"),cex.axis=1.5,cex.lab=1.5)
+boxplot(BLLadj ~ as.character(gts[top18,names(BLLadj)]), notch=TRUE, yaxt='n', add=TRUE, col=c("gray25", "gray50", "gray75"),cex.axis=1.5,cex.lab=1.5)
 
 plot(c(0.4, 3.6), c(0,100), t = 'n', xaxt='n', las=2, ylab = "Adjusted blood lead level (BLL)", xlab="Genotype gUNC13158239", main=paste0("BLL - Combined - Chromosome 7"),cex.axis=1.5,cex.lab=1.5)
 boxplot(BLLadj ~ as.character(gts[chr7Top,names(BLLadj)]), notch=TRUE, yaxt='n', add=TRUE, col=c("gray25", "gray50", "gray75"),cex.axis=1.5,cex.lab=1.5)
@@ -248,14 +251,16 @@ op <- par(mfrow=c(1,1))
 fem <- rownames(phe[which(phe[colnames(gts), "sex"] == "F"),])
 males <- rownames(phe[which(phe[colnames(gts), "sex"] == "M"),])
 
-plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (All)",cex.axis=1.5,cex.lab=1.5, las=2)
+layout(matrix(c(1, 1, 2, 3), 2, 2, byrow = FALSE))
+
+plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype gJAX00272462 (chr1)", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Combined)",cex.axis=1.5,cex.lab=1.2, las=2)
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     mymean <- median(BLLadj[ind],na.rm=TRUE)
     myse <- sd(BLLadj[ind],na.rm=TRUE)/sqrt(length(ind))
@@ -264,25 +269,25 @@ for(gt1 in c("AA", "AG", "GG")){
     points(c(at-0.02,at+0.015), c(mymean+myse, mymean+myse), col=cnt, t = 'l', lwd=1)
     points(c(at-0.02,at+0.015), c(mymean-myse, mymean-myse), col=cnt, t = 'l', lwd=1)
     at <- at + 1
-    cat("n = ",length(ind), "\n")
+    cat(gt1, gt18, "n = ",length(ind), mymean, "\n")
   }
   points(1:3 + (cnt-2) / 20, means, t = 'l', col = cnt, lwd=2)
   cnt <- cnt + 1
 }
-legend("topleft", c("AA", "AG", "GG"), lty=1, title  = "Chromosome 18", col = 1:3, bg="white")
+legend("topright", c("AA", "AG", "GG"), lty=1, title  = "Genotype gUNC29787730 (chr18)", col = 1:3, bg="white", ncol = 3)
 axis(1, at = c(1,2,3), c("AA", "AG", "GG"),cex.axis=1.5,cex.lab=1.5)
 box()
 
-op <- par(mfrow = c(1,2))
+#op <- par(mfrow = c(1,2))
 
-plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Females)",cex.axis=1.5,cex.lab=1.5, las=2)
+plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype gJAX00272462 (chr1)", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Females)",cex.axis=1.2,cex.lab=1, las=2)
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     ind <- ind[ind %in% fem]
     mymean <- median(BLLadj[ind],na.rm=TRUE)
@@ -292,24 +297,24 @@ for(gt1 in c("AA", "AG", "GG")){
     points(c(at-0.02,at+0.015), c(mymean+myse, mymean+myse), col=cnt, t = 'l', lwd=1)
     points(c(at-0.02,at+0.015), c(mymean-myse, mymean-myse), col=cnt, t = 'l', lwd=1)
     at <- at + 1
-    cat("n = ",length(ind), "\n")
+    cat(gt1, gt18, "n = ",length(ind), mymean, "\n")
   }
   points(1:3 + (cnt-2) / 20, means, t = 'l', col = cnt, lwd=2)
   cnt <- cnt + 1
 }
-legend("topleft", c("AA", "AG", "GG"), lty=1, title  = "Chromosome 18", col = 1:3, bg="white")
+legend("topright", c("AA", "AG", "GG"), lty=1, title  = "Genotype gUNC29787730 (chr18)", col = 1:3, bg="white", ncol = 3)
 axis(1, at = c(1,2,3), c("AA", "AG", "GG"),cex.axis=1.5,cex.lab=1.5)
 box()
 
 
-plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Males)",cex.axis=1.5,cex.lab=1.5, las=2)
+plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype gJAX00272462 (chr1)", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Males)",cex.axis=1.2,cex.lab=1, las=2)
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     ind <- ind[ind %in% males]
     mymean <- median(BLLadj[ind],na.rm=TRUE)
@@ -319,15 +324,14 @@ for(gt1 in c("AA", "AG", "GG")){
     points(c(at-0.02,at+0.015), c(mymean+myse, mymean+myse), col=cnt, t = 'l', lwd=1)
     points(c(at-0.02,at+0.015), c(mymean-myse, mymean-myse), col=cnt, t = 'l', lwd=1)
     at <- at + 1
-    cat("n = ",length(ind), "\n")
+    cat(gt1, gt18, "n = ",length(ind), mymean, "\n")
   }
   points(1:3 + (cnt-2) / 20, means, t = 'l', col = cnt, lwd=2)
   cnt <- cnt + 1
 }
-legend("topleft", c("AA", "AG", "GG"), lty=1, title  = "Chromosome 18", col = 1:3, bg="white")
+legend("topright", c("AA", "AG", "GG"), lty=1, title  = "Genotype gUNC29787730 (chr18)", col = 1:3, bg="white", ncol = 3)
 axis(1, at = c(1,2,3), c("AA", "AG", "GG"),cex.axis=1.5,cex.lab=1.5)
 box()
-
 
 
 xAA <- colnames(gts)[which(gts[topX,] == "AA")]
@@ -336,14 +340,14 @@ xTT <- colnames(gts)[which(gts[topX,] == "TT")]
 
 op <- par(mfrow = c(1,3))
 
-plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Chr X=AA)",cex.axis=1.5,cex.lab=1.5, las=2)
+plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", ylab = "Adjusted blood lead level (BLL)", xaxs = 'i', yaxs = 'i', main = "Interaction Chr1 and Chr18 (Chr X=AA)",cex.axis=1.5,cex.lab=1, las=2)
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     ind <- ind[ind %in% xAA]
     mymean <- median(BLLadj[ind],na.rm=TRUE)
@@ -353,7 +357,7 @@ for(gt1 in c("AA", "AG", "GG")){
     points(c(at-0.02,at+0.015), c(mymean+myse, mymean+myse), col=cnt, t = 'l', lwd=1)
     points(c(at-0.02,at+0.015), c(mymean-myse, mymean-myse), col=cnt, t = 'l', lwd=1)
     at <- at + 1
-    cat("n = ",length(ind), "\n")
+    cat(gt1," ", gt18,"n = ",length(ind), "\n")
   }
   points(1:3 + (cnt-2) / 20, means, t = 'l', col = cnt, lwd=2)
   cnt <- cnt + 1
@@ -367,10 +371,10 @@ plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", yl
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     ind <- ind[ind %in% xAT]
     mymean <- median(BLLadj[ind],na.rm=TRUE)
@@ -393,10 +397,10 @@ plot(c(0.75,3.25), c(20, 70), t = 'n',xaxt='n', xlab="Genotype chromosome 1", yl
 abline(h = seq(0,100,5), lty=2, col = "gray")
 #abline(v = 1:3, lty=2, col = "gray")
 cnt <- 1
-for(gt1 in c("AA", "AG", "GG")){
+for(gt18 in c("AA", "AG", "GG")){
   means <- c()
   at <- 1 + (cnt-2) / 20
-  for(gt18 in c("AA", "AG", "GG")){
+  for(gt1 in c("AA", "AG", "GG")){
     ind <- colnames(gts)[which(gts[top1,] == gt1 & gts[top18,] == gt18)]
     ind <- ind[ind %in% xTT]
     mymean <- median(BLLadj[ind],na.rm=TRUE)

@@ -40,3 +40,6 @@ callSNPs(founders, 7, 62305639, 81923457, "CCfounders_QTL6")
 callSNPs(founders, 7, 62305639, 97260868, "CCfounders_QTL7")
 callSNPs(founders, 7, 19482853, 119720011, "CCfounders_QTL8")
 callSNPs(founders, 8, 31799796, 104944836, "CCfounders_QTL9")
+
+callSNPs(founders, 1, 151111612, 157672910, "CCfounders_QTLI1-1")
+callSNPs(founders, 18, 81259093, 88823124, "CCfounders_QTLI1-18")

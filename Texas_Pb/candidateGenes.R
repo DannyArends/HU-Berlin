@@ -12,11 +12,14 @@ regions <- c("1:124548738:184926264",
              "7:62305639:97260868", 
              "7:19482853:119720011", 
              "8:31799796:104944836",
-             "18:82679518:88144138")
-for(r in regions){
+             "1:151111612:157672910",
+             "18:81259093:88823124")
+
+for(r in regions[10:11]){
   res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "external_gene_name", "mgi_id", "mgi_symbol", "mgi_description"), 
                           filters = c("chromosomal_region", "biotype"), values = list(r, "protein_coding"), mart = bio.mart)
   write.table(res.biomart, file=paste0("genes_", gsub(":", "-",r), ".txt"), sep="\t", quote=FALSE, row.names=FALSE)
+  cat("Done",r,"\n")
 }
 
 # VEP predictions and CC founder genotypes
@@ -185,14 +188,14 @@ for(x in 1:nrow(res.biomart)){
 write.table(res.biomart, file=paste0("candidateGenes/QTL6.annot.vep.txt"), sep="\t", quote=FALSE, row.names=FALSE)
 
 
-# VEP predictions and CC founder genotypes
+# VEP predictions and CC founder genotypes chromosome 1 of the 1-18 interaction
 setwd("D:/Edrive/Mouse/Texas_Pb")
 library(biomaRt)
 bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")
 res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "external_gene_name", "mgi_id", "mgi_symbol", "mgi_description"), 
-                     filters = c("chromosomal_region", "biotype"), values = list("18:82679518:88144138", "protein_coding"), mart = bio.mart)
+                     filters = c("chromosomal_region", "biotype"), values = list("1:151111612:157672910", "protein_coding"), mart = bio.mart)
 
-QTLI1.vep <- read.table("Texas_Pb_QTLI1.vep.txt", sep = "\t")
+QTLI1.vep <- read.table("Texas_Pb_QTLI1-1.vep.txt", sep = "\t")
 # Take high and moderate impact SNPs
 QTLI1.vep <- QTLI1.vep[which(QTLI1.vep[, "V5"] %in% c("HIGH", "MODERATE")),]
 QTLI1.vep <- QTLI1.vep[-which(duplicated(QTLI1.vep[, "V1"])),]
@@ -208,5 +211,32 @@ for(x in 1:nrow(res.biomart)){
   }
 }
 
-write.table(res.biomart, file=paste0("candidateGenes/QTLI1.annot.vep.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+write.table(res.biomart, file=paste0("candidateGenes/QTLI1-1.annot.vep.txt"), sep="\t", quote=FALSE, row.names=FALSE)
+
+
+
+# VEP predictions and CC founder genotypes chromosome 18 of the 1-18 interaction
+setwd("D:/Edrive/Mouse/Texas_Pb")
+library(biomaRt)
+bio.mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl")
+res.biomart <- getBM(attributes = c("ensembl_gene_id", "chromosome_name", "start_position", "end_position", "strand", "external_gene_name", "mgi_id", "mgi_symbol", "mgi_description"), 
+                     filters = c("chromosomal_region", "biotype"), values = list("18:81259093:88823124", "protein_coding"), mart = bio.mart)
+
+QTLI1.vep <- read.table("Texas_Pb_QTLI1-18.vep.txt", sep = "\t")
+# Take high and moderate impact SNPs
+QTLI1.vep <- QTLI1.vep[which(QTLI1.vep[, "V5"] %in% c("HIGH", "MODERATE")),]
+QTLI1.vep <- QTLI1.vep[-which(duplicated(QTLI1.vep[, "V1"])),]
+QTLI1.summ <- table(QTLI1.vep[,"V6"])
+
+res.biomart <- cbind(res.biomart, "Impactful SNPs" = NA)
+for(x in 1:nrow(res.biomart)){
+  ii <- which(names(QTLI1.summ) == res.biomart[x, "mgi_symbol"])
+  if(length(ii) == 0){
+    res.biomart[x, "Impactful SNPs"] = 0
+  }else{
+    res.biomart[x, "Impactful SNPs"] = QTLI1.summ[ii]
+  }
+}
+
+write.table(res.biomart, file=paste0("candidateGenes/QTLI1-18.annot.vep.txt"), sep="\t", quote=FALSE, row.names=FALSE)
 

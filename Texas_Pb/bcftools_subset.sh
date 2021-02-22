@@ -14,4 +14,7 @@ gzip -cd Joint_69_flagged.tab.vcf.gz | head -n 570
 /home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr7:62305639-97260868 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTL7.vcf
 /home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr7:19482853-119720011 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTL8.vcf
 /home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr8:31799796-104944836 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTL9.vcf
-/home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr18:82679518-88144138 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTLI1.vcf
+
+# Extract the interaction regions
+/home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr1:151111612-157672910 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTLI1-1.vcf
+/home/danny/Github/bcftools/bcftools view -s CC011,CC017 -r chr18:81259093-88144138 Joint_69_flagged.tab.vcf.gz > Texas_Pb_QTLI1-18.vcf

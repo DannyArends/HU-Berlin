@@ -7,8 +7,8 @@ source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/vcfTools.R")
 
 # Load the genotype call data
 setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
-phased.vcf <- read.table(gzfile(paste0("Analysis/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
-colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("Analysis/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
+phased.vcf <- read.table(gzfile(paste0("TRDredo/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
+colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("TRDredo/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
 
 samples <- colnames(phased.vcf)[-c(1:9)]
 
@@ -37,17 +37,10 @@ phased.AHBp <- phased.AHBpN
 phased.geno <- phased.genoN
 
 #Load marker annotation
-marker.annot <- read.table("Analysis/markerAnnotation.txt", sep="\t")
-# Remove the duplicated markers
-duplicates <- rownames(marker.annot)[which(duplicated(apply(marker.annot[,c("Chr","Pos")],1,paste0,collapse="")))]
-marker.annot <- marker.annot[-which(rownames(marker.annot) %in% duplicates),]
-
-# Remove markers that do not have a known location
-missingloc <- rownames(marker.annot)[which(is.na(marker.annot[,"Pos"]))]
-marker.annot <- marker.annot[-which(rownames(marker.annot) %in% missingloc),]
+marker.annot <- read.table("TRDredo/markers.annot", sep="\t")
+marker.excl <- read.table("TRDredo/marker.excluded", sep="\t")
 
 #order the chromosomes
-marker.annot <- marker.annot[order(marker.annot[,"Chr"], as.numeric(marker.annot[,"Pos"])),]
 marker.annot <- marker.annot[rownames(phased.geno), ]
 
 # Load in the phenotypes
@@ -58,7 +51,7 @@ phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.AHBp)
 
 calculateATB <- function(phased.AHBp, phenotypes, generation = 28){
   individuals <- rownames(phenotypes)[which(phenotypes[, "Gen."] == generation)]
-  if(!file.exists(paste0("Analysis/TransmissionBias_",generation,".txt"))){
+  if(!file.exists(paste0("TRDredo/TransmissionBias_",generation,".txt"))){
     counts <- matrix(c(rep(0,8),rep(NA,4)), nrow(phased.AHBp), 12, dimnames = list(rownames(phased.AHBp), c("P12","P21", "M12", "M21", "C12", "C21", "nFat", "nMat", "Xp", "Xm", "PO", "Xh")),byrow=TRUE)
     updateCounts <- function(m, type, pG, iG){
       if(pG == "H0" || pG == "H1"){
@@ -95,17 +88,17 @@ calculateATB <- function(phased.AHBp, phenotypes, generation = 28){
       counts[m, "Xh"] <-  ((counts[m, "C12"] - counts[m, "C21"])^2) / (counts[m, "C12"] + counts[m, "C21"])
       if(m %% 100 == 0) cat(m,"/",nrow(phased.AHBp),"\n")
     }
-    write.table(counts, file=paste0("Analysis/TransmissionBias_",generation,".txt"), sep="\t")
+    write.table(counts, file=paste0("TRDredo/TransmissionBias_",generation,".txt"), sep="\t")
   }else{
-    cat("Loading results from disk:", paste0("Analysis/TransmissionBias_",generation,".txt"), "\n")
-    counts <- read.table(paste0("Analysis/TransmissionBias_", generation, ".txt"), sep="\t", row.names=1, header=TRUE)
+    cat("Loading results from disk:", paste0("TRDredo/TransmissionBias_",generation,".txt"), "\n")
+    counts <- read.table(paste0("TRDredo/TransmissionBias_", generation, ".txt"), sep="\t", row.names=1, header=TRUE)
   }
   return(counts)
 }
 
 getSignificant <- function(phased.AHBp, phenotypes, generation = 28){
   counts <- NULL
-  if(!file.exists(paste0("Analysis/TransmissionBias_annotated_",generation,".txt"))){
+  if(!file.exists(paste0("TRDredo/TransmissionBias_annotated_",generation,".txt"))){
     counts <- calculateATB(phased.AHBp, phenotypes, generation)
     enoughSamples <- unlist(apply(counts[,c("nFat", "nMat")] , 1, function(x){ any(x > 10) }))
     counts <- counts[enoughSamples,]
@@ -125,13 +118,13 @@ getSignificant <- function(phased.AHBp, phenotypes, generation = 28){
     counts  <- cbind(counts, pPat, pMat, pPoO, pPh, bfmi, patPref = NA, matPref = NA)
 
     for(x in 1:nrow(counts)){
-      if(counts[x, "P12"] > counts[x, "P21"]){ counts[x,"patPref"] <- "B"; }else{ counts[x,"patPref"] <- "A"; }
-      if(counts[x, "M12"] > counts[x, "M21"]){ counts[x,"matPref"] <- "B"; }else{ counts[x,"matPref"] <- "A"; }
+      if(as.numeric(counts[x, "P12"]) > as.numeric(counts[x, "P21"])){ counts[x,"patPref"] <- "B"; }else{ counts[x,"patPref"] <- "A"; }
+      if(as.numeric(counts[x, "M12"]) > as.numeric(counts[x, "M21"])){ counts[x,"matPref"] <- "B"; }else{ counts[x,"matPref"] <- "A"; }
     }
     counts <- cbind(map.autosomes[rownames(counts),],counts)
-    write.table(counts, file=paste0("Analysis/TransmissionBias_annotated_",generation,".txt"), sep="\t")
+    write.table(counts, file=paste0("TRDredo/TransmissionBias_annotated_",generation,".txt"), sep="\t")
   }else{
-    counts <- read.table(paste0("Analysis/TransmissionBias_annotated_",generation,".txt"))
+    counts <- read.table(paste0("TRDredo/TransmissionBias_annotated_",generation,".txt"))
   }
   return(counts)
 }
@@ -140,22 +133,22 @@ counts27 <- getSignificant(phased.AHBp, phenotypes, generation = 27)
 counts28 <- getSignificant(phased.AHBp, phenotypes, generation = 28)
 
 sPat27 <- counts27[which(-log10(counts27[,"pPat"]) > -log10(0.05/(70000*4))),]
-if(!file.exists("Analysis/TransmissionBias_Pat_0.05_27.txt")) {
-  write.table(sPat27, file="Analysis/TransmissionBias_Pat_0.05_27.txt", sep="\t")
+if(!file.exists("TRDredo/TransmissionBias_Pat_0.05_27.txt")) {
+  write.table(sPat27, file="TRDredo/TransmissionBias_Pat_0.05_27.txt", sep="\t")
 }
 sPat28 <- counts28[which(-log10(counts28[,"pPat"]) > -log10(0.01/(70000*4))),]
-if(!file.exists("Analysis/TransmissionBias_Pat_0.01_28.txt")) {
-  write.table(sPat28, file="Analysis/TransmissionBias_Pat_0.01_28.txt", sep="\t")
+if(!file.exists("TRDredo/TransmissionBias_Pat_0.01_28.txt")) {
+  write.table(sPat28, file="TRDredo/TransmissionBias_Pat_0.01_28.txt", sep="\t")
 }
 all(rownames(sPat27) %in% rownames(sPat28))
 
 sMat27 <- counts27[which(-log10(counts27[,"pMat"]) > -log10(0.05/(70000*4))),]
-if(!file.exists("Analysis/TransmissionBias_Mat_0.05_27.txt")) {
-  write.table(sMat27, file="Analysis/TransmissionBias_Mat_0.05_27.txt", sep="\t")
+if(!file.exists("TRDredo/TransmissionBias_Mat_0.05_27.txt")) {
+  write.table(sMat27, file="TRDredo/TransmissionBias_Mat_0.05_27.txt", sep="\t")
 }
 sMat28 <- counts28[which(-log10(counts28[,"pMat"]) > -log10(0.01/(70000*4))),]
-if(!file.exists("Analysis/TransmissionBias_Mat_0.01_28.txt")) {
-  write.table(sMat28, file="Analysis/TransmissionBias_Mat_0.01_28.txt", sep="\t")
+if(!file.exists("TRDredo/TransmissionBias_Mat_0.01_28.txt")) {
+  write.table(sMat28, file="TRDredo/TransmissionBias_Mat_0.01_28.txt", sep="\t")
 }
 all(rownames(sMat27) %in% rownames(sMat28))
 
@@ -204,20 +197,20 @@ create.plot <- function(counts, HWEdata = NULL){
   axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
   abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
   if(!is.null(HWEdata)){
-    plot(x= map.autosomes[,"cumPos"],  y = -log10(HWEdata[,"HWP"]), col = chr.cols, pch=19,xaxt='n', ylab="-log10(HW)", main = "HW equilibrium test", las=2, t ="h")
+    plot(x= map.autosomes[,"cumPos"],  y = -log10(HWEdata), col = chr.cols, pch=19,xaxt='n', ylab="-log10(HW)", main = "HW equilibrium test", las=2, t ="h")
     axis(1, at=(chr.lengths[,2] +  chr.lengths[,3]) / 2, paste0("Chr",rownames(chr.lengths)))
     abline(h=-log10(0.1 / N), col="orange") ; abline(h=-log10(0.01 / N), col="green")
   }
   box()
 }
 
-HWEdata <- read.table("Analysis/HWEdata28.txt", sep = "\t")
-
-HWEf2 <- HWEdata[,"HWPbh"] # ??
-names(HWEf2) <- rownames(HWEdata)
+library(heterozygous)
+F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]
+HWEf2 <- HWE(phased.geno[, F2])
 
 create.plot(counts27)
-create.plot(counts28, HWEdata)
+create.plot(counts28)
+create.plot(counts28, HWEf2)
 
 map <- marker.annot[rownames(counts28), ]
 map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
@@ -240,7 +233,7 @@ for(x in 1:19){
   colz <- colz + as.numeric(as.character(counts28[onChr,"bfmi"]) == as.character(counts28[onChr,"patPref"]))
   colz[(-log10(counts28[onChr, "pPat"]) <=  -log10(0.01/(70000*4)))] <- 1
   
-  colfunc <- c("white", "cornflowerblue", "orange")
+  colfunc <- c(rgb(0,0,0,0), "cornflowerblue", "orange")
   points(rep(x-0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colfunc[colz], cex=1.8)
 
   colz <- as.numeric(-log10(counts28[onChr, "pMat"]) >  -log10(0.01/(70000*4))) + 1
@@ -250,8 +243,14 @@ for(x in 1:19){
 #  colfunc <- c("white", "gray30", "orange")
   points(rep(x+0.15,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=colfunc[colz], cex=1.8)
 
+  onC <- which(marker.excl[,"Chr"] == x)
+  mC <- as.numeric(marker.excl[onC,"reason"] == "founderequal")+1
+
+  points(rep(x,length(onC)), as.numeric(marker.excl[onC,"Pos"]), pch="-",cex=1.5, col=c("darkgray", "beige")[mC])
+
   onC <- which(marker.annot[,"Chr"] == x)
-  points(rep(x,length(onC)), as.numeric(marker.annot[onC,"Pos"]), pch="-",cex=1.5, col="gray")
+  points(rep(x,length(onC)), as.numeric(marker.annot[onC,"Pos"]), pch="-",cex=1.5, col="darkgray")
+
   mcolz <- rep(1,length(onChr))
   mcolz[which(p.adjust(HWEf2[onChr]) < 0.01)] <- 2  
   points(rep(x,length(onChr)), as.numeric(map.autosomes[onChr,"Pos"]), pch="-", col=c('black',"red")[mcolz],cex=1.5)
@@ -260,13 +259,11 @@ for(x in 1:19){
   mtext("♂", at = x - 0.22, side=1, cex=1.2)
   mtext("♀", at = x + 0.22, side=1, cex=1.2)
 }
-legend("topright", c("Suitable marker", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "gray", "red"),cex=1.2)
-legend(x=18.12,y = 169900000, c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"),cex=1.2)
+legend("topright", c("Suitable marker", "Founders equal", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "beige", "darkgray", "red"),cex=1.2)
+legend(x=18.12,y = 159900000, c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"),cex=1.2)
 
 
 #dev.off()
-
-
 
 ## Create the chromosome plot for generation 28 and generation 27
 map <- marker.annot[unique(rownames(counts27), rownames(counts28)), ]

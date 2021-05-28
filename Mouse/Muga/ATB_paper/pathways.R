@@ -1,4 +1,4 @@
-setwd("D:/Edrive/Mouse/DNA/MegaMuga/Analysis")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/TRDredo")
 
 pat_bfmi <- read.csv("PAT_BFMIgenesInfo.txt",sep="\t", header=TRUE, colClasses=c("character", rep("numeric",3), "character", "character"))
 mat_bfmi <- read.csv("MAT_BFMIgenesInfo.txt",sep="\t", header=TRUE, colClasses=c("character", rep("numeric",3), "character", "character"))
@@ -62,14 +62,14 @@ write.table(mat_b6_snp, file="MAT_B6N_NSyn_Filtered.txt", sep = "\t", row.names=
 
 
 
-setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/TRDredo")
 results <- read.table("ChiSqScores_Incompatible.txt", sep="\t", check.names=FALSE)
 rr <- apply(results,1,as.numeric)
 rownames(rr) <- colnames(rr)
 results <- rr
 
 # Generate an overview plot
-nTests <- (ncol(results) * ncol(results)) / 2
+nTests <- 1008  * 1008  * 0.5 # Tests from simpleM
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
 threshold <- -log10(0.05 / nTests)
 

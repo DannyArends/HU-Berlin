@@ -11,8 +11,8 @@ source("D:/Ddrive/Github/HU-Berlin/Mouse/Muga/ATB_Paper/incompatible.R")
 setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 
 # Load the genotype call data
-phased.vcf <- read.table(gzfile(paste0("Analysis/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
-colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("Analysis/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
+phased.vcf <- read.table(gzfile(paste0("TRDredo/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
+colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("TRDredo/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
 
 samples <- colnames(phased.vcf)[-c(1:9)]
 
@@ -42,9 +42,10 @@ for(x in c(seq(1,19),"X","Y","M")) {  # Reorder the chromosomes and name it geno
   genotypes <- rbind(genotypes, phased.AHB[which(phased.AHB[,"CHROM"] == x), ])
 }
 
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 # Load the Allele Transmission Biased regions
-regionsMat <- read.table("regions_matp0.01.txt", sep="\t", header=TRUE)
-regionsPat <- read.table("regions_patp0.01.txt", sep="\t", header=TRUE)
+regionsMat <- read.table("TRDredo/regions_matp0.01.txt", sep="\t", header=TRUE)
+regionsPat <- read.table("TRDredo/regions_patp0.01.txt", sep="\t", header=TRUE)
 
 sift <- read.table("siftscores.txt", sep="\t")
 sift <- sift[which(sift[,16] == "Deleterious" | sift[,20] == "Damaging"),]
@@ -98,20 +99,27 @@ for(x in 1:nrow(regionsPat)){
 cat("nBFMI:", nBFMI, "SUM:", sumBFMI, "\nnB6N", nB6N, "SUM:", sumB6N, "\n")
 
 
-map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
-aa <- read.table("analysis/QTLresults_newModelQTL.txt",sep="\t")
+#map <- read.table("Analysis/map.txt", sep="\t", colClasses=c("character"))
+#aa <- read.table("analysis/QTLresults_newModelQTL.txt",sep="\t")
 
 
-xmap <- map[which(map[,1] == "X"),]
+#xmap <- map[which(map[,1] == "X"),]
 
-markers <- rownames(xmap[which(xmap[,2] > 50000000 & xmap[,2] < 80000000),])
-markers <- markers[which(markers %in% rownames(aa))]
+#markers <- rownames(xmap[which(xmap[,2] > 50000000 & xmap[,2] < 80000000),])
+#markers <- markers[which(markers %in% rownames(aa))]
 
-plot(aa[markers,"d70"])
+#plot(aa[markers,"d70"])
 
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
+# Load the Allele Transmission Biased regions
+regionsMat <- read.table("TRDredo/mat0.01annot.txt", sep="\t", header=FALSE)
+regionsPat <- read.table("TRDredo/pat0.01annot.txt", sep="\t", header=FALSE)
 
 allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
+colnames(allRegions) <- c("Code", "Flanking.Marker", "Chr", "Start", "TopPos", "Stop",  "Flanking.Marker.1", "Size", "Prefered.Allele", "nSNPs", "T1", "T2", "Top", "TopT1", "TopT2", "perc", "origin")
 allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
+rownames(allRegions) <- 1:nrow(allRegions)
+allRegions[which(allRegions[, "Top"] == "-"), "Top"] <- allRegions[which(allRegions[, "Top"] == "-"), "Flanking.Marker"]
 
 
 regionnames <- paste0(allRegions[,"Chr"],":", 
@@ -126,38 +134,55 @@ results <- matrix(0, nrow(allRegions), nrow(allRegions))
 results2 <- matrix(0, nrow(allRegions), nrow(allRegions))
 
 for(y in 1:nrow(allRegions)){
-  mR1 <- genotypes[as.character(allRegions[y,"Flanking.Marker"]), F2]
+  mR1 <- genotypes[as.character(allRegions[y,"Top"]), F2]
+  mR1.B6 <- genotypes[as.character(allRegions[y,"Top"]), "B6N"]
+  mR1.BF <- genotypes[as.character(allRegions[y,"Top"]), "BFMI860-12 (V2)"]
   chrR1 <- allRegions[y,"Chr"]
   for(x in 1:nrow(allRegions)) {
-    mR2 <- genotypes[as.character(allRegions[x,"Flanking.Marker"]), F2]
+    mR2 <- genotypes[as.character(allRegions[x,"Top"]), F2]
+    mR2.B6 <- genotypes[as.character(allRegions[x,"Top"]), "B6N"]
+    mR2.BF <- genotypes[as.character(allRegions[x,"Top"]), "BFMI860-12 (V2)"]
     chrR2 <- allRegions[x,"Chr"]
     if(chrR1 == chrR2){
       results[x,y] <- NA
       results2[x,y] <- NA
     }else{
-      results[x,y] <- incompatible(mR1, mR2, TRUE)$chisq
-      #results2[x,y] <- doLD(mR1, mR2)
+      testStat <- incompatible(mR1, mR2, FALSE)
+      results[x,y] <- testStat$chisq
+      alleleCombo <- names(which.max(((testStat$exp - testStat$obs) / testStat$obs)))
+      if(length(alleleCombo) > 1) stop("!")
+      aa <- strsplit(alleleCombo, "")[[1]]
+      if(aa[1] == mR1.B6) aa[1] <- "B6N"
+      if(aa[1] == mR1.BF) aa[1] <- "BFMI"
+      if(aa[2] == mR2.B6) aa[2] <- "B6N"
+      if(aa[2] == mR2.BF) aa[2] <- "BFMI"
+      results2[x,y] <- paste0(aa[1], "|", aa[2], collapse="")#alleleCombo
     }
   }
 }
-rownames(results) <- regionnames
-colnames(results) <- regionnames
+rownames(results) <- regionnames; colnames(results) <- regionnames
+rownames(results2) <- regionnames; colnames(results2) <- regionnames
 
-write.table(results, "ChiSqScores_Incompatible.txt", sep="\t")
+write.table(results, "TRDredo/ChiSqScores_Incompatible.txt", sep="\t")
+write.table(results2, "TRDredo/AlleleCombo_Incompatible.txt", sep="\t")
 
 setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
-results <- read.table("ChiSqScores_Incompatible.txt", sep="\t", check.names=FALSE)
+results <- read.table("TRDredo/ChiSqScores_Incompatible.txt", sep="\t", check.names=FALSE)
+results2 <- read.table("TRDredo/AlleleCombo_Incompatible.txt", sep="\t", check.names=FALSE)
 rr <- apply(results,1,as.numeric)
 rownames(rr) <- colnames(rr)
 results <- rr
 
-
 # Load the Allele Transmission Biased regions
-regionsMat <- read.table("regions_matp0.01.txt", sep="\t", header=TRUE)
-regionsPat <- read.table("regions_patp0.01.txt", sep="\t", header=TRUE)
+regionsMat <- read.table("TRDredo/mat0.01annot.txt", sep="\t", header=FALSE)
+regionsPat <- read.table("TRDredo/pat0.01annot.txt", sep="\t", header=FALSE)
 
 allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
+colnames(allRegions) <- c("Code", "Flanking.Marker", "Chr", "Start", "TopPos", "Stop",  "Flanking.Marker.1", "Size", "Prefered.Allele", "nSNPs", "T1", "T2", "Top", "TopT1", "TopT2", "perc", "origin")
 allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
+rownames(allRegions) <- 1:nrow(allRegions)
+allRegions[which(allRegions[, "Top"] == "-"), "Top"] <- allRegions[which(allRegions[, "Top"] == "-"), "Flanking.Marker"]
+
 
 regionnames <- paste0(allRegions[,"Chr"],":", 
           round(allRegions[,"Start"] / 1000000, 0),"-",
@@ -166,10 +191,13 @@ regionnames <- paste0(allRegions[,"Chr"],":",
 
 rownames(allRegions) <- regionnames
 
+
 # Generate an overview plot
-nTests <- (ncol(results) * ncol(results)) / 2
+#nTests <- (ncol(results) * ncol(results)) / 2
+nTests <- 1008  * 1008  * 0.5 # Tests from simpleM
+#nTests <- 18000  * 18000  * 0.5 # Tests from simpleM
 LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
-thresholdL <- -log10(0.05 / nTests)
+thresholdL <- -log10(0.1 / nTests)
 thresholdH <- -log10(0.01 / nTests)
 
 significant <-  names(which(apply(LODscores,1,max,na.rm=TRUE) > thresholdL))
@@ -180,18 +208,33 @@ length(significantH)
 allRegions <- allRegions[significant, ]
 regionnames <- rownames(allRegions)
 results <- results[significant,significant]
-
-allRegions["8:62-63 P", "Prefered.Allele"] <- "B6N"
-allRegions["9:88-91 M", "Prefered.Allele"] <- "B6N"
-allRegions["11:13-13 M", "Prefered.Allele"] <- "BFMI"
+results2 <- results2[significant,significant]
+LODscores <- LODscores[significant,significant]
 
 bfmipref <- which(allRegions[,"Prefered.Allele"] == "BFMI")
 b6npref <- which(allRegions[,"Prefered.Allele"] == "B6N")
-nopref <- which(allRegions[,"Prefered.Allele"] == "?")
 
 colz <- rep("black", nrow(allRegions))
 colz[bfmipref] <- "orange"
 colz[b6npref] <- "gray"
+
+library(RColorBrewer)
+acolz <- c(brewer.pal(6, "Blues")[c(2,4,6)],brewer.pal(6, "Greens")[c(2,4,6)],brewer.pal(6, "Purples")[c(2,4,6)])
+names(acolz) <- c("B6N|B6N", "B6N|H", "B6N|BFMI","BFMI|BFMI","BFMI|H", "BFMI|B6N","H|B6N","H|BFMI","H|H")
+
+LODcols <- LODscores
+for(x in 1:nrow(LODscores)){
+  for(y in 1:ncol(LODscores)){
+    if(is.na(LODscores[x,y])){
+      LODcols[x,y] <- -1
+    }else if(LODscores[x,y] < -log10(0.1 / nTests)){
+      LODcols[x,y] <- 0
+    }else{
+      LODcols[x,y] <- which(names(acolz) == results2[x,y])
+    }
+  }
+}
+
 
 locations <- seq(0, 1, length.out=ncol(results))
 
@@ -202,17 +245,20 @@ sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
 #tiff("genetic_incompatibilities.tiff", width=1024 * 3, height=1024* 3, res=300)
 #postscript("Figure_3.eps", horizontal = FALSE, paper = "special", width=16, height=14, pointsize = 18)
   op <- par(mar= c(7, 7, 4, 10) + 0.1, xpd=FALSE)
-  image(-log10(pchisq(results, 1, lower.tail=FALSE)), 
-        breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), 
-        col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibilities")
+  #image(-log10(pchisq(results, 1, lower.tail=FALSE)), 
+  #      breaks=c(0, -log10(0.1 / nTests), -log10(0.05 / nTests), -log10(0.01 / nTests), -log10(0.001 / nTests), 100), 
+  #      col=c("white",  "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), xaxt='n', yaxt='n', main = "Genetic incompatibilities")
 
-  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
-  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="cornflowerblue")
-  axis(1, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
+  image(LODcols, 
+        breaks=c(-2, -0.5, 0.5, 1.5, 2.5, 3.5,4.5, 5.5, 6.5, 7.5, 8.5, 9.5), 
+        col=c("gray", "white", acolz), xaxt='n', yaxt='n', main = "Genetic incompatibilities")
 
-  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="darkorange2")
-  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="cornflowerblue")
-  axis(2, at=locations[nopref],   regionnames[nopref], las=2, cex.axis=1, col.axis="gray")
+  
+  axis(1, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="black")
+  axis(1, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
+
+  axis(2, at=locations[bfmipref], regionnames[bfmipref], las=2, cex.axis=1, col.axis="black")
+  axis(2, at=locations[b6npref],  regionnames[b6npref], las=2, cex.axis=1, col.axis="black")
 
   grid(ncol(results),ncol(results))
   sx <- 0
@@ -222,35 +268,51 @@ sum(LODscores > -log10(0.01 / nTests), na.rm=TRUE) / 2
     sx = sx + x
   }
   op <- par(xpd=TRUE)
-  legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
-         fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
-         cex=1, inset=c(-0.18,0))
-  legend("topright", c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"), inset=c(-0.18,0.14))
+  #legend("topright", c("p > 0.1", "0.05 < p < 0.1", "0.01 < p < 0.05", "0.001 < p < 0.01", "p < 0.001"), 
+  #       fill  = c("white", "darkolivegreen1", "darkolivegreen2", "darkolivegreen3", "darkolivegreen4"), 
+  #       cex=1, inset=c(-0.18,0))
+  #legend("topright", c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"), inset=c(-0.18,0.20))
+  legend("topright", names(acolz), fill = acolz, inset=c(-0.18,0.20))
   box()
 
 #dev.off()
 
+
+
+
 # Get all genes in each regions
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
+results <- read.table("TRDredo/ChiSqScores_Incompatible.txt", sep="\t", check.names=FALSE)
+rr <- apply(results,1,as.numeric)
+rownames(rr) <- colnames(rr)
+results <- rr
+
+
+# Load the Allele Transmission Biased regions
+regionsMat <- read.table("TRDredo/mat0.01annot.txt", sep="\t", header=FALSE)
+regionsPat <- read.table("TRDredo/pat0.01annot.txt", sep="\t", header=FALSE)
+
+allRegions <- rbind(cbind(regionsMat, origin = "M"), cbind(regionsPat, origin = "P"))
+colnames(allRegions) <- c("Code", "Flanking.Marker", "Chr", "Start", "TopPos", "Stop",  "Flanking.Marker.1", "Size", "Prefered.Allele", "nSNPs", "T1", "T2", "Top", "TopT1", "TopT2", "perc", "origin")
+allRegions <- allRegions[with(allRegions, order(Chr, Start)), ]
+rownames(allRegions) <- 1:nrow(allRegions)
+allRegions[which(allRegions[, "Top"] == "-"), "Top"] <- allRegions[which(allRegions[, "Top"] == "-"), "Flanking.Marker"]
+
+
+regionnames <- paste0(allRegions[,"Chr"],":", 
+          round(allRegions[,"Start"] / 1000000, 0),"-",
+          round(allRegions[,"Stop"] / 1000000, 0), " ", 
+          allRegions[,"origin"])
+rownames(allRegions) <- regionnames
+
+
+LODscores <- -log10(pchisq(results, 1, lower.tail=FALSE))
+
 allgenes <- NULL
-allgenes <- read.table("Analysis/Mat_B6NgenesInfo.txt", sep="\t", header=TRUE)
-allgenes <- rbind(allgenes, read.table("Analysis/Mat_BFMIgenesInfo.txt", sep="\t", header=TRUE))
-allgenes <- rbind(allgenes, read.table("Analysis/Pat_B6NgenesInfo.txt", sep="\t", header=TRUE))
-allgenes <- rbind(allgenes, read.table("Analysis/Pat_BFMIgenesInfo.txt", sep="\t", header=TRUE))
-
-# retrieve entrez gene ID
-require("biomaRt")
-mart = useMart("ENSEMBL_MART_ENSEMBL", dataset = "mmusculus_gene_ensembl", host="www.ensembl.org")
-ensembltoentrez <- getBM(attributes = c("ensembl_gene_id", "entrezgene"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)
-write.table(ensembltoentrez, "genesToEntrez.txt",sep="\t")
-
-# Look at P:P interactions in BIOGRID
-biogriddata <- read.csv("stringdb/BIOGRID-ALL-3.4.132.tab2.txt",sep="\t")
-biogriddata <- biogriddata[which(biogriddata[,"Organism.Interactor.A"] == 10090 & biogriddata[,"Organism.Interactor.B"] == 10090),]
-biogriddata <- biogriddata[which(as.character(biogriddata[,"Entrez.Gene.Interactor.A"]) %in% as.character(ensembltoentrez[,2]) & biogriddata[,"Entrez.Gene.Interactor.B"] %in% ensembltoentrez[,2]),]
-
-# Create results
-interacting <- biogriddata[which(as.character(biogriddata[,c(2,3,8,9)][,3]) != as.character(biogriddata[,c(2,3,8,9)][,4])), c(2,3,8,9)]
-interacting <- cbind(interacting, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA, LOD = NA)
+allgenes <- read.table("TRDredo/MAT_B6N_NSyn_Filtered.txt", sep="\t", header=TRUE)
+allgenes <- rbind(allgenes, read.table("TRDredo/MAT_BFMI_NSyn_Filtered.txt", sep="\t", header=TRUE))
+allgenes <- rbind(allgenes, read.table("TRDredo/PAT_B6N_NSyn_Filtered.txt", sep="\t", header=TRUE))
+allgenes <- rbind(allgenes, read.table("TRDredo/PAT_BFMI_NSyn_Filtered.txt", sep="\t", header=TRUE))
 
 # Which region the gene is in
 geneLocation <- function(allgenes, ensgid, verbose = TRUE){
@@ -266,56 +328,60 @@ geneLocation <- function(allgenes, ensgid, verbose = TRUE){
 whichRegion <- function(allgenes, ensgid, verbose = TRUE){
   ii <- allgenes[which(allgenes[,1] == ensgid),]
   cat(ensgid, ": Found", nrow(ii), "matching genes\n")
-  gChr <- ii[1,"chromosome_name"];gLoc <- ii[1,"start_position"]  # Chr:Location
+  gChr <- ii[1,"chromosome_name"];
+  gLocS <- ii[1,"start_position"]  # Chr:Location
+  gLocE <- ii[1,"end_position"]  # Chr:Location
   cat(ensgid, ": ", gChr, "-", gLoc, "\n")
-  rownames(allRegions[which(allRegions[,"Chr"] == gChr & as.numeric(allRegions[,"Start"]) < gLoc & as.numeric(allRegions[,"Stop"]) > gLoc ),])
+  rownames(allRegions[which(allRegions[,"Chr"] == gChr & as.numeric(allRegions[,"Start"]) < gLocE & as.numeric(allRegions[,"Stop"]) > gLocS ),])
 }
 
-## Get regions and Chi2 scores
-for(x in 1:nrow(interacting)){
-  ensgidA <- ensembltoentrez[which(ensembltoentrez[,2] == interacting[x,1]),1]
-  ensgidB <- ensembltoentrez[which(ensembltoentrez[,2] == interacting[x,2]),1]
-  interacting[x, "RegionGeneA"] <- whichRegion(allgenes, ensgidA)[1]
-  interacting[x, "RegionGeneB"] <- whichRegion(allgenes, ensgidB)[1]
-  if(!is.na(interacting[x, "RegionGeneA"]) && !is.na(interacting[x, "RegionGeneB"])){
-    interacting[x, "ChiSq"] <- results[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
-    interacting[x, "LOD"] <- LODscores[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
-  }
+inR <- 0
+for(x in unique(allgenes[,1])){
+  R <- whichRegion(allgenes, x)[1]
+  S <- any(LODscores[ R , ] > -log10(0.05 / (1008  * 1008  * 0.5)), na.rm=T)
+  if(S) inR <- inR + 1
+  cat(x, R, S, inR, "\n")
 }
-colnames(interacting)[1:4] <- c("Entrez.A","Entrez.B","Symbol.A", "Symbol.B")
-
 
 # Look at P:P interactions in STRINGDB
-stringdbdata <- read.csv("stringdb/10090.protein.actions.v10.txt",sep="\t")
+stringdbdata <- read.csv("stringdb/10090.protein.links.v11.0.txt",sep=" ")
+require("biomaRt")
+mart <- useMart("ensembl", dataset="mmusculus_gene_ensembl", host="http://nov2020.archive.ensembl.org")
 ensembltopeptide <- getBM(attributes = c("ensembl_gene_id", "ensembl_peptide_id", "mgi_symbol"), filters = c("ensembl_gene_id"), values = unique(as.character(allgenes[,1])), mart = mart)
-write.table(ensembltopeptide, "genesToPeptide.txt",sep="\t")
+write.table(ensembltopeptide, "TRDredo/genesToPeptide.txt",sep="\t")
 
-stringdbdata <- stringdbdata[as.numeric(stringdbdata[,"score"]) > 700,]
+#stringdbdata <- stringdbdata[as.numeric(stringdbdata[,"score"]) > 200,]
 dim(stringdbdata)
-stringdbdata <- stringdbdata[which(as.character(stringdbdata[,"item_id_a"]) %in% paste0("10090.",as.character(ensembltopeptide[,2])) & 
-                                                stringdbdata[,"item_id_b"] %in% paste0("10090.",as.character(ensembltopeptide[,2]))),]
+stringdbdata <- stringdbdata[which(as.character(stringdbdata[,"protein1"]) %in% paste0("10090.",as.character(ensembltopeptide[,2])) & 
+                                                stringdbdata[,"protein2"] %in% paste0("10090.",as.character(ensembltopeptide[,2]))),]
 dim(stringdbdata)
 interacting <- stringdbdata[which(stringdbdata[,1] != stringdbdata[,2]),]
-interacting <- cbind(interacting, MGI_A = NA, LOC_A = NA, MGI_B = NA, LOC_B = NA, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA, LOD = NA)
+interacting <- cbind(interacting, ensgidA = NA, MGI_A = NA, LOC_A = NA, ensgidB = NA, MGI_B = NA, LOC_B = NA, RegionGeneA = NA, RegionGeneB = NA, ChiSq = NA, LOD = NA)
 
 ## Get regions and Chi2 scores
 for(x in 1:nrow(interacting)){
   ensgidA <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,1])),1]
-  mgiIDA  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,1])),3]
+  interacting[x, "ensgidA"]  <- ensgidA
+  interacting[x, "MGI_A"]  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,1])),3]
   ensgidB <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,2])),1]
-  mgiIDB  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,2])),3]
+  interacting[x, "ensgidB"]  <- ensgidB
+  interacting[x, "MGI_B"]  <- ensembltopeptide[which(paste0("10090.",as.character(ensembltopeptide[,2])) == as.character(interacting[x,2])),3]
   interacting[x, "RegionGeneA"] <- whichRegion(allgenes, ensgidA)[1]
   interacting[x, "RegionGeneB"] <- whichRegion(allgenes, ensgidB)[1]
   if(!is.na(interacting[x, "RegionGeneA"]) && !is.na(interacting[x, "RegionGeneB"])){
     interacting[x, "ChiSq"] <- results[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
     interacting[x, "LOD"] <- LODscores[ interacting[x, "RegionGeneA"] , interacting[x, "RegionGeneB"] ]
-    interacting[x, "MGI_A"] <- mgiIDA
-    interacting[x, "MGI_B"] <- mgiIDB
     interacting[x, "LOC_A"] <- geneLocation(allgenes, ensgidA)
     interacting[x, "LOC_B"] <- geneLocation(allgenes, ensgidB)
   }
 }
-write.table(interacting[which(interacting[,"LOD"] > threshold),], "interactionsInRegions_Sign3x3.txt",sep="\t", row.names=FALSE)
+dim(interacting)
+threshold <- -log10(0.05 / (1008  * 1008  * 0.5))
+dim(interacting[which(interacting[,"LOD"] > threshold),])
+
+write.table(interacting, "TRDredo/interactionsTRDRegionsStringDB.txt",sep="\t", row.names=FALSE)
+write.table(interacting[which(interacting[,"LOD"] > 4),], "TRDredo/interactionsStringDB.txt",sep="\t", row.names=FALSE)
+write.table(interacting[which(interacting[,"LOD"] > threshold),], "TRDredo/interactionsGIRegionsStringDB.txt",sep="\t", row.names=FALSE)
 
 significant <- interacting[which(interacting[,"LOD"] > threshold),]
 
@@ -323,7 +389,7 @@ significant <- interacting[which(interacting[,"LOD"] > threshold),]
 sift[which(paste0("10090.", as.character(sift[, 7])) %in%  c(as.character(interacting[,"item_id_a"]), as.character(interacting[,"item_id_b"]))),]
 
 
-setwd("E:/Mouse/DNA/Sequencing/BFMI")
+setwd("D:/Edrive/Mouse/DNA/Sequencing/BFMI")
 
 if(!file.exists("20140515_VEP_BFMI860mm10.txt")){
   library(openxlsx)

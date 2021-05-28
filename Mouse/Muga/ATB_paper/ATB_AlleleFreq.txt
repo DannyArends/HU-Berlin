@@ -1,0 +1,25 @@
+
+setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
+
+# Load the genotype call data
+phased.vcf <- read.table(gzfile(paste0("TRDredo/phased.vcf.gz")), header = FALSE, colClasses="character")     # Load
+colnames(phased.vcf)  <- strsplit(sub("#","",readLines(gzfile(paste0("TRDredo/phased.vcf.gz")), n=10)[10]),"\t")[[1]]       # Add column header
+
+samples <- colnames(phased.vcf)[-c(1:9)]
+
+phased.vcf[, samples] <- apply(phased.vcf[, samples],2,function(x){unlist(lapply(strsplit(x,":"),"[",1))})                   # Only the genotypes
+rownames(phased.vcf) <- phased.vcf[,"ID"]
+phased.vcf <- phased.vcf[,-which(colnames(phased.vcf) %in% c("ID", "QUAL","FILTER","INFO","FORMAT"))]                        # Remove unneeded columns
+phased.vcf[1:10,1:10]
+
+# Load in the phenotypes and create the pedigree file
+phenotypes <- read.table("Phenotypes/allPhenotypes.txt",sep="\t",header=TRUE,na.strings=c(0,"-","NA"))
+rownames(phenotypes) <- phenotypes[,"ID"]
+phenotypes <- cbind(phenotypes, Season = getSeason(phenotypes[,"W.dat"]))                                     # Add the season column to the matrix
+phenotypes <- phenotypes[-which(!rownames(phenotypes) %in% colnames(phased.vcf)),]                            # We do not have genotypes for all individuals
+
+F2 <- rownames(phenotypes)[which(phenotypes[, "Gen."] == 28)]                                                 # The F2 individuals
+
+# Change the genotype coding
+phased.AHB <- phased.vcf                                                                         # Copy
+phased.AHB[, samples] <- apply(phased.AHB[, samples], 2, fromVCFcode.AHB)                        # Change coding to A H B

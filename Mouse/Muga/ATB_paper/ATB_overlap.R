@@ -1,8 +1,8 @@
 
 setwd("D:/Edrive/Mouse/DNA/MegaMuga/")
 
-patRegions <- read.table("Analysis/ATB_PAT.txt",sep="\t",header=TRUE, check.names=FALSE)
-matRegions <- read.table("Analysis/ATB_MAT.txt",sep="\t",header=TRUE, check.names=FALSE)
+patRegions <- read.table("TRDredo/regions_patp0.01.txt",sep="\t",header=TRUE, check.names=FALSE)
+matRegions <- read.table("TRDredo/regions_matp0.01.txt",sep="\t",header=TRUE, check.names=FALSE)
 
 patUnique <- 0
 patOverlaps <- c()

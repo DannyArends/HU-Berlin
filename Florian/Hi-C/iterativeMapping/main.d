@@ -109,7 +109,7 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
   string cmd = format("~/Github/bwa/bwa mem -v 2 -t 12 -T 10 %s %s", referencepath, fastqpath);
   writefln("Aligning reads from %s to %s using bwa", fastqpath, baseName(referencepath));
   auto ret = executeShell(cmd);
-
+  writefln("output length: %s", output.length);
   size_t lines = fq.processBWA(ret.output, minMapQ); // Process Output
   auto res = fq.parseAlignments(ofp); // Find mapped reads
   fq.removeFromAA(res.toremove); // Remove the mapped reads
@@ -187,7 +187,7 @@ int main (string[] args) {
   string referencepath = args[1]; //"/home/danny/References/Mouse/GRCm38_95/Mus_musculus.GRCm38.dna.toplevel.fa.gz";
   string fastqpath = args[2]; //"/halde/Hi-C/Human/ENCFF319AST.1Mio.fastq.gz";
   string outputfilename = args[3]; //"ReadAlignments.txt";
-  string tmpfmt = baseName(args[3], ".alignment") ~ "%s.fq.gz";
+  string tmpfmt = baseName(args[3], ".alignment") ~ ".%s.fq.gz";
   writefln("tmpfmt: %s", tmpfmt);
   size_t readLength = 25;
   if (outputfilename.exists) {
@@ -200,6 +200,7 @@ int main (string[] args) {
     if(fq.nUnmapped == 0) break;
     string path = fq.reduceFastQ(tmpfmt, readLength);
     fq.mapToGenome(path, referencepath, outputfilename);
+    return(-1);
     if (path.exists) {
       writefln("Deleting temporary input file: %s", path);
       path.remove();

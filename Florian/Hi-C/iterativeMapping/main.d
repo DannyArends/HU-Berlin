@@ -109,7 +109,7 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
   string cmd = format("~/Github/bwa/bwa mem -v 2 -t 12 -T 10 %s %s", referencepath, fastqpath);
   writefln("Aligning reads from %s to %s using bwa", fastqpath, baseName(referencepath));
   auto ret = executeShell(cmd);
-  writefln("output length: %s", output.length);
+  writefln("output length: %s", ret.output.length);
   size_t lines = fq.processBWA(ret.output, minMapQ); // Process Output
   auto res = fq.parseAlignments(ofp); // Find mapped reads
   fq.removeFromAA(res.toremove); // Remove the mapped reads

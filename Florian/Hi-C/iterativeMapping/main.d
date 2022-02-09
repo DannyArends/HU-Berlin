@@ -10,6 +10,7 @@ import std.file : exists, remove;
 import std.process : executeShell;
 import std.path : baseName;
 import std.array : Appender;
+import std.datetime : MonoTime;
 
 // imports from external dub packages
 import std.io : IOFile = File;
@@ -45,7 +46,8 @@ FastQ infoFastQ(string fastqpath, bool verbose = true) {
   FastQ fq = FastQ(fastqpath);
   auto fp = IOFile(fq.path).refCounted.bufd.unzip(CompressionFormat.gzip);
   string shortname;
-  
+
+  MonoTime tS = MonoTime.currTime;
   foreach (line; fp.assumeText.byLineRange) {
     final switch (fq.nlines % 4) {
       // Fasta header line
@@ -61,7 +63,7 @@ FastQ infoFastQ(string fastqpath, bool verbose = true) {
     }
     fq.nlines++;
   }
-  writefln("FastQ contained %s reads, read length: %s bp", fq.nReads, fq.readLength);
+  writefln("FastQ contained %s reads, read length: %s bp in %d seconds", fq.nReads, fq.readLength, (MonoTime.currTime - tS).total!"seconds"());
   return(fq);
 }
 
@@ -77,14 +79,15 @@ string reduceFastQ(ref FastQ fq, string fmt = "readlength%s.fq.gz", size_t readL
   Compress cmp = new Compress(HeaderFormat.gzip);
   bool notAlignedYet = true;
   auto outputbuffer = Appender!(char[])();
+  MonoTime tS = MonoTime.currTime;
   foreach (line; fp.assumeText.byLineRange!true) {
     if (nlines % 4 == 0) {
       string shortname = (to!string(line[1 .. $])).split(" ")[0];
       notAlignedYet = ((shortname in fq.reads) !is null);
     }
     if (nlines % 4 == 1 || nlines % 4 == 3) { // Read and Quality score need to be reduced
-      if (notAlignedYet) {
-        outputbuffer.put(line[0..readLength]);
+      if (notAlignedYet && line.length >= readLength) {
+        outputbuffer.put(line[0..readLength]); // Crash here because of read-length > trimmed length
         outputbuffer.put("\n");
       }
     } else {
@@ -99,6 +102,7 @@ string reduceFastQ(ref FastQ fq, string fmt = "readlength%s.fq.gz", size_t readL
   }
   ofp.rawWrite(cmp.compress(outputbuffer.data));
   ofp.rawWrite(cmp.flush());
+  writefln("Wrote %d lines in %d seconds", nlines, (MonoTime.currTime - tS).total!"seconds"());
   return(outputfilename);
 }
 
@@ -108,13 +112,13 @@ void mapToGenome(ref FastQ fq, string fastqpath, string referencepath, string ou
   auto ofp = File(outputfilename, "a");
   string cmd = format("~/Github/bwa/bwa mem -v 2 -t 12 -T 10 %s %s", referencepath, fastqpath);
   writefln("Aligning reads from %s to %s using bwa", fastqpath, baseName(referencepath));
+  MonoTime tS = MonoTime.currTime;
   auto ret = executeShell(cmd);
-  writefln("output length: %s", ret.output.length);
   size_t lines = fq.processBWA(ret.output, minMapQ); // Process Output
   auto res = fq.parseAlignments(ofp); // Find mapped reads
   fq.removeFromAA(res.toremove); // Remove the mapped reads
 
-  writefln("Parsed %s lines, mapped %s reads, unmapped reads left %s", lines, res.mapped, fq.nUnmapped);
+  writefln("Parsed %s lines, mapped %s reads, unmapped reads left %s in %d seconds", lines, res.mapped, fq.nUnmapped, (MonoTime.currTime - tS).total!"seconds"());
 }
 
 // Process BWA output and update the fq.reads structure
@@ -200,7 +204,6 @@ int main (string[] args) {
     if(fq.nUnmapped == 0) break;
     string path = fq.reduceFastQ(tmpfmt, readLength);
     fq.mapToGenome(path, referencepath, outputfilename);
-    return(-1);
     if (path.exists) {
       writefln("Deleting temporary input file: %s", path);
       path.remove();

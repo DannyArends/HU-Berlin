@@ -11,3 +11,6 @@ Cows/Sim/test.pdf
 *.nin
 Pig/RNA/Filip/locations.txt
 *.gz
+.dub
+bin/
+dub.selections.json

@@ -11,7 +11,7 @@
 		"name": "default",
 		"targetType": "executable",
 		"dependencies": {
-				"emsi_containers": "~>0.6"
+				"emsi_containers": "==0.7.0"
 		}
 	}
 	]

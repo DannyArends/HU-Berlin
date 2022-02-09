@@ -29,10 +29,14 @@ Genome readBins(string path) {
   Genome genome;
   auto fp = File(path, "r");
   size_t nbin = 0;
+  //writefln("Starting to read bins from %s", path);
   foreach (line; fp.byLine) {
     auto elements = strip(line).split("\t");
     string chr = to!string(elements[0]);
-    if (!has(genome.chrs, chr)) { genome.chrs[chr] = Chromosome(nbin); }
+    if (!has(genome.chrs, chr)) { 
+      //writefln("Creating new chromosome %s at bin: %d", chr, nbin);
+      genome.chrs[chr] = Chromosome(nbin); 
+    }
     genome.chrs[chr].bins ~= Bin(to!size_t(elements[1]), to!size_t(elements[2]));
     nbin = nbin + 1;
   }
@@ -52,12 +56,12 @@ int inBin(string chr, size_t pos, Genome genome){
 }
 
 // Bin the aligned reads per digestion fragment into the genomic bin size
-size_t[][] binAlignments(string path, Genome genome){
-  size_t[][] alignments;
+void binAlignments(string path, Genome genome, File fpo){
+  /*size_t[][] alignments;
   alignments.length = genome.nbins;
   for(size_t i = 0; i < genome.nbins; i++) {
     alignments[i].length = genome.nbins;
-  }
+  }*/
 
   auto fp = File(path, "r");
   size_t n = 0;
@@ -72,12 +76,13 @@ size_t[][] binAlignments(string path, Genome genome){
     int i1 = inBin(to!string(elements[1]), (to!size_t(elements[2]) + to!size_t(elements[3])) / 2, genome);
     int i2 = inBin(to!string(elements[4]), (to!size_t(elements[5]) + to!size_t(elements[6])) / 2, genome);
     if (i1 > -1 && i2 > -1 ) {
-      alignments[i1][i2]++;
+      //alignments[i1][i2]++;
+      fpo.writeln(format("%s\t%d\t%d", to!string(elements[0]), i1, i2));
       a = a + 1;
     }
     if(n % 1000000 == 0) writefln("Done %s of %s", a, n);
   }
-  return(alignments);
+  //return(alignments);
 }
 
 int main (string[] args) {
@@ -93,14 +98,14 @@ int main (string[] args) {
   writefln("Loading bins");
   auto genome = binPath.readBins();
   writefln("Matching alignments");
-  auto alignments = binAlignments(mergedAlignments, genome);
-  writefln("Writing bins");
+  binAlignments(mergedAlignments, genome, fp);
+  /*writefln("Writing bins");
   for(size_t i = 0; i < genome.nbins; i++) {
     for(size_t j = 0; j < genome.nbins; j++) {
       if(j > 0) fp.write("\t");
       fp.write(alignments[i][j]);
     }
     fp.write("\n");
-  }
+  } */
   return(0);
 }

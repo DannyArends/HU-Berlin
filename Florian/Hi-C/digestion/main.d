@@ -24,7 +24,8 @@ enum Enzymes : Enzyme {
   BamHI = Enzyme("BamHI", "GGATCC"),
   EcoRI = Enzyme("EcoRI", "GAATTC"),
   HindIII = Enzyme("HindIII", "AAGCTT"),
-  XmnI = Enzyme("XmnI", "GAANNNNTTC")
+  XmnI = Enzyme("XmnI", "GAANNNNTTC"),
+  MboI = Enzyme("MboI", "GATC")
 }
 
 // Does the b base match the template (a)
@@ -101,6 +102,6 @@ void digest (string referencepath, Enzyme enzyme) {
 }
 
 int main (string[] args) {
-  digest("/halde/Hi-C/Human/Homo_sapiens.GRCh38.dna.toplevel.fa.gz", Enzymes.HindIII);
+  digest("/home/danny/NAS/Mouse/Reference_Genomes/GRCm38_68/GRCm38_68.fa.gz", Enzymes.MboI);
   return(0);
 }

@@ -84,8 +84,8 @@ int main (string[] args) {
   foreach (key; digestion.byKey) {
     writefln("Chromosome %s has %s digestion fragments", key, digestion[key].fragments.length);
   }
-  writefln("Alignment file1: %s aligned reads", a1.byKey.length);
-  writefln("Alignment file2: %s aligned reads", a2.byKey.length);
+  //writefln("Alignment file1: %s aligned reads", a1.byKey.length);
+  //writefln("Alignment file2: %s aligned reads", a2.byKey.length);
   string[] paired;
   size_t l = 0;
   size_t p = 0;

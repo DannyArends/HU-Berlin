@@ -6,9 +6,9 @@
 
 library(preprocessCore)                                                                                               # preprocessCore - For quantile normalisation
 
-setwd("E:/Mouse/RNA/FV3")
+setwd("D:/Edrive/Mouse/RNA/FV3")
 
-rawdata  <- read.table("RawData/expressions.txt", sep="\t", header=TRUE, row.names=1, check.names=FALSE)              # Load the expression data
+rawdata  <- read.table("RawData/Old/expressions.txt", sep="\t", header=TRUE, row.names=1, check.names=FALSE)              # Load the expression data
 arrays   <- read.table("Annotation/arrays.txt", sep="\t", header=TRUE, row.names=1)                                   # Arrays annotation
 probes   <- read.table("Annotation/illumina.txt", sep="\t", header=TRUE)                                              # Probe annotation
 

@@ -1,4 +1,4 @@
-MDCfamily <- "8015"
+MDCfamily <- "7984"
 
 setwd("D:/Edrive/Mouse/MDC/Jan2021")
 geno <- read.csv(paste0("geno_", MDCfamily, ".txt"), sep = "\t", na.strings = c("", "NA", "-", "X"))
@@ -177,7 +177,7 @@ mdata[, "GT"] <- GTS
 #hasNA <- which(apply(apply(mdata, 1, is.na),2,sum) > 0)
 #if(length(hasNA) > 0){ mdata <- mdata[-hasNA,] }
 
-phe <- "FatLeanC70"
+phe <- "C70"
 
 dim(mdata)
 plot(x = c(0.5, 0.5+length(unique(mdata[,"GT"]))), y = c(0,0.70), t = 'n', xaxs="i", yaxs="i", xaxt='n', las=2, xlab="GT", ylab=paste0(phe))
@@ -198,23 +198,48 @@ for(gt in unique(mdata[,"GT"])){
   cat(gt, mean(mdata[which(mdata[,"GT"] == gt), phe],na.rm=TRUE), "+/-", sd(mdata[which(mdata[,"GT"] == gt), phe],na.rm=TRUE), "\n")
 }
 
-complementation <- mdata[which(mdata[,"GT"] == "MDC/BFMI"), phe]
-mrange <- seq(5, 80, 5)
-nps <- c()
-for(x in mrange){
-  np <- 0
-  for(p in 1:1000){
-    null <- rnorm(x, 0.096, 0.036)
-    if(t.test(complementation, null)$p.value < 0.005) np <- np+1
-  }
-  nps <- c(nps, np / 1000)
+
+p12 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/B6N", phe], mdata[mdata[,"GT"] == "BFMI/BFMI", phe])$p.value},error = function(e) {return(NA)})
+p13 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/B6N", phe], mdata[mdata[,"GT"] == "MDC/B6N", phe])$p.value},error = function(e) {return(NA)})
+p14 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/B6N", phe], mdata[mdata[,"GT"] == "MDC/BFMI", phe])$p.value},error = function(e) {return(NA)})
+p15 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/B6N", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})
+
+p23 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/B6N", phe])$p.value},error = function(e) {return(NA)})
+p24 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/BFMI", phe])$p.value},error = function(e) {return(NA)})
+p25 <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})
+
+p34 <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/B6N", phe], mdata[mdata[,"GT"] == "MDC/BFMI", phe])$p.value},error = function(e) {return(NA)})
+p35 <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/B6N", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})
+
+p45 <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})
+
+asN <- function(x){
+  return(formatC(x, format = "e", digits = 1))
 }
-plot(nps, xaxt='n', ylab ="Power", xlab="N samples in negative control", pch=19, las=2)
-axis(1, at = 1:length(mrange), mrange)
-abline(h = 0.80, col="red")
-abline(h = 0.95, col="orange")
-abline(h = 0.995, col = "green")
-legend("bottomright", c("80% power (original estimate)", "95% (no multiple test adjustment)", "99% (multiple test adjusted)"), lwd=1, col=c("red", "orange", "green"))
+
+asNN <- function(x){
+  format(round(x, 2), nsmall = 2)
+}
+
+colz <- rep("black",10)
+colz[3:4] <- "red"
+colz[8:9] <- "darkgreen"
+
+options(digits = 2)
+legend("topright", 
+  c(paste0("BFMI/B6N v BFMI/BFMI (p < 0.05)"),#", asN(min(p12 * 10,1)), ")"), 
+    paste0("BFMI/B6N v MDC/B6N (N.S.)"),#, asNN(min(p13 * 10,1)), ")"),
+    paste0("BFMI/B6N v MDC/BFMI (p = 0.58)"),#, asNN(min(p14 * 10,1)), ")"),
+    paste0("BFMI/B6N v MDC/MDC (p = 0.77)"),#, asNN(min(p15 * 10,1)), ")"),
+    paste0("BFMI/BFMI v MDC/B6N (p < 0.05)"),#, asN(min(p23 * 10,1)), ")"),
+    paste0("BFMI/BFMI v MDC/BFMI (p < 0.05)"),#, asN(min(p24 * 10,1)), ")"),
+    paste0("BFMI/BFMI v MDC/MDC (p < 0.05)"),#, asN(min(p25 * 10,1)), ")"),
+    paste0("MDC/B6N v MDC/BFMI (p < 0.05)"),#, asN(min(p34 *10,1)), ")"),
+    paste0("MDC/B6N v MDC/MDC (p < 0.05)"),#, asN(min(p35*10,1)), ")"),
+    paste0("MDC/BFMI v MDC/MDC (N.S.)"))#, asNN(min(p45*10,1)), ")"))
+    , text.col = colz)
+
+
 
 BvH <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/BFMI", phe])$p.value},error = function(e) {return(NA)})
 BvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "MDC/MDC", phe])$p.value},error = function(e) {return(NA)})
@@ -222,6 +247,8 @@ HvM <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", phe], mdata[mdata[,"GT
 BvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "BFMI/BFMI", phe], mdata[mdata[,"GT"] == "B6N/B6N", phe])$p.value},error = function(e) {return(NA)})
 HvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/BFMI", phe], mdata[mdata[,"GT"] == "B6N/B6N", phe])$p.value},error = function(e) {return(NA)})
 MvB <- tryCatch({t.test(mdata[mdata[,"GT"] == "MDC/MDC", phe], mdata[mdata[,"GT"] == "B6N/B6N", phe])$p.value},error = function(e) {return(NA)})
+
+
 legend("topright", 
   c(paste0("BFMI/BFMI v MDC/BFMI (p = ", round(BvH,4), ")"), 
     paste0("BFMI/BFMI v MDC/MDC (p = ", round(BvM,4), ")"),
@@ -229,6 +256,26 @@ legend("topright",
     paste0("BFMI/BFMI v B6N/B6N (p = ", round(BvB,4), ")"),
     paste0("MDC/BFMI v B6N/B6N (p = ", round(HvB,4), ")"),
     paste0("MDC/MDC v B6N/B6N (p = ", round(MvB,4), ")")))
+
+
+#complementation <- mdata[which(mdata[,"GT"] == "MDC/BFMI"), phe]
+#mrange <- seq(5, 80, 5)
+#nps <- c()
+#for(x in mrange){
+#  np <- 0
+#  for(p in 1:1000){
+#    null <- rnorm(x, 0.096, 0.036)
+#    if(t.test(complementation, null)$p.value < 0.005) np <- np+1
+#  }
+#  nps <- c(nps, np / 1000)
+#}
+#plot(nps, xaxt='n', ylab ="Power", xlab="N samples in negative control", pch=19, las=2)
+#axis(1, at = 1:length(mrange), mrange)
+#abline(h = 0.80, col="red")
+#abline(h = 0.95, col="orange")
+#abline(h = 0.995, col = "green")
+#legend("bottomright", c("80% power (original estimate)", "95% (no multiple test adjustment)", "99% (multiple test adjusted)"), lwd=1, col=c("red", "orange", "green"))
+
 
 # too many generations only plot the last 8
 # 

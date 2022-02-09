@@ -5,7 +5,7 @@
 # first written Juli, 2014
 #
 
-setwd("E:/Mouse/DNA/DiversityArray/")
+setwd("D:/Edrive/Mouse/DNA/DiversityArray/")
 library(ape)
 
 calldata <- read.table(file="Analysis/measurementsALL_annotated.txt", sep="\t", header=TRUE)
@@ -43,3 +43,14 @@ png(file="Analysis/Figures/PhyloFanALL-lines.png",width=800, height=800)
   plot(phylogram, type = "fan", tip.col=strain2color[annotation[phylogram$tip.label,"Strain"],"Color"])
   legend("topleft",rownames(strain2color), col=strain2color[,"Color"], lwd=2, cex=0.8)
 dev.off()
+
+
+
+s1 <- "X8614310"
+s2 <- "X8614277"
+
+sum(apply(calldata[, c(s1,s2)],1,function(x){
+  x[1]!=x[2]
+}),na.rm=TRUE)
+
+

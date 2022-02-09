@@ -63,9 +63,9 @@ ggplot(LODscores2, aes(Var1, Var2)) + theme_bw() +  # Load data
 	scale_x_continuous(breaks=1:29, labels= levels(LODscores$Var1), limits=c(0.5,29.5), expand=c(0,0))+
 	scale_y_continuous(breaks=1:29, labels= levels(LODscores$Var1), limits=c(0.5,29.5), expand=c(0,0))+
 	# set legend name, color for rectangles (order: B6N, H, BFMI), and fix coordinates so that the plot is quadratic
-	scale_fill_manual(name="", values= toupper(c("orange", "yellowgreen", "cornflowerblue")))+coord_fixed(1)+
+	scale_fill_manual(name="", values= toupper(c("cornflowerblue", "yellowgreen", "orange")))+coord_fixed(3/4)+
 	# add x- and y- labels
 	xlab("") + ylab("")
 
 # save plot
-ggsave("figure2.png", width=8, height=8)
+ggsave("figure2.png", width=8, height=8, dpi =600)

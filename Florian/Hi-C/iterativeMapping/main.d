@@ -201,11 +201,11 @@ int main (string[] args) {
     string path = fq.reduceFastQ(tmpfmt, readLength);
     fq.mapToGenome(path, referencepath, outputfilename);
     return(-1);
-    if (path.exists) {
+ /*   if (path.exists) {
       writefln("Deleting temporary input file: %s", path);
       path.remove();
     }
     readLength += 5;
-  }
+  } */
   return(0);
 }

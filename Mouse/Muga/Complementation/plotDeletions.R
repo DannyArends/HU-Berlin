@@ -7,7 +7,7 @@
 #############################################
 #              read data                    #
 #############################################
-setwd("E:/Mouse/ClassicalPhenotypes/Complementation/RawData")
+setwd("D:/Edrive/Mouse/ClassicalPhenotypes/Complementation/RawData")
 
 df <- read.table("dfraw.txt", header =T, sep = "\t", colClasses="character")
 bbs7 <- read.table(file="Bbs7_visual.txt", sep="\t", na.strings = "NA", stringsAsFactors=F, header=TRUE ) 

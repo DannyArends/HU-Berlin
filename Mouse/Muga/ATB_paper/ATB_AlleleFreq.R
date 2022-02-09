@@ -78,10 +78,14 @@ write.table(t(gtsinfo), file="TRDredo/Phased_Genotypes_Info.txt", sep = "\t", qu
 
 locusxdna <- read.table("TRDredo/genotypes.txt", sep="\t", check.names=FALSE)
 
+gtsinfo <- rbind(gtsinfo[1:2,], B6N=NA, "BFMI860-12 (V2)"=NA, gtsinfo[3:nrow(gtsinfo),])
 
-gtsinfo[3:nrow(gtsinfo), 5:ncol(gtsinfo)] <- t(locusxdna[colnames(gtsinfo[-c(1:2), -c(1:4)]), rownames(gtsinfo[-c(1:2), -c(1:4)])])
+gtsinfo[3:nrow(gtsinfo), 5:ncol(gtsinfo)] <- t(locusxdna[colnames(gtsinfo[-c(1:2), -c(1:4)]), c(rownames(gtsinfo[-c(1:2), -c(1:4)]))])
+gtsinfo <- t(gtsinfo)
 
-write.table(t(gtsinfo), file="TRDredo/Raw_Genotypes_Info.txt", sep = "\t", quote=FALSE)
+order <- sort(gtsinfo[1,], index=TRUE,na.last=FALSE,method = "radix")$ix
+
+write.table(gtsinfo[, order], file="TRDredo/Raw_Genotypes_Info.txt", sep = "\t", quote=FALSE,na="-")
 mmap <- t(mmap)
 
 # Load the Allele Transmission Biased regions

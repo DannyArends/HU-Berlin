@@ -6,7 +6,7 @@
 #
 
 library(qtl)
-setwd("E:/Mouse/ClassicalPhenotypes/FV3")
+setwd("D:/Edrive/Mouse/ClassicalPhenotypes/FV3")
 
 # Analyse the whole F2 cross
 

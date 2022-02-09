@@ -178,7 +178,7 @@ op <- par(mar=c(2,12,5,4))
 par(xpd=FALSE)
 image(1:nrow(genotypes), 1:8, -log10(matrixLMMpTP), breaks=breaks, col = heatcols, xaxt='n', yaxt='n', ylab="Time point", xlab="", main= "Per time point LMM QTL mapping")
 axis(2, at=1:8, timepoints, las=2)
-axis(1, at=chrbreaks - (.5 * chrmap), names(chrmap), las=2)
+axis(1, at=chrbreaks - (.5 * chrmap), names(chrmap), las=1)
 box()
 abline(v = chrbreaks)
 abline(h = 1:8 + 0.5)
@@ -186,24 +186,31 @@ onChr <- rownames(map[map[, "Chr"] == 3,])
 par(xpd=TRUE)
 legend(-2800, 8.5, paste0(breaks[-length(breaks)], " - ",c(breaks[-1])), fill=heatcols, title="LOD score")
 
-arrows(which(rownames(map) %in% top.markers), 9,which(rownames(map) %in% top.markers), 8.5, length=0.1, col=1, lwd=1)
-text(which(rownames(map) %in% top.markers), 9.3, paste0("nR",1:5),cex=0.6)
+pmarker <- which(rownames(map) %in% top.markers)
+pmarker[2] <- pmarker[2] - 150
+pmarker[3] <- pmarker[3] + 150
+arrows(pmarker, 9.5,which(rownames(map) %in% top.markers), 8.5, length=0.1, col=1, lwd=1)
+text(pmarker, 10, paste0("nR",1:5),cex=1.0)
 
 ## heatmap of LMM corrected data
 matrixLMMCpTP <- matrix(unlist(lapply(results.lmm,"[[", 2)),nrow(genotypes), 8)
 
 op <- par(mar=c(2,12,5,4))
 par(xpd=FALSE)
-image(1:nrow(genotypes), 1:8, -log10(matrixLMMCpTP), breaks=breaks, col = heatcols, xaxt='n', yaxt='n', ylab="Time point", xlab="", main= "Per time point LMM MQM mapping")
+image(1:nrow(genotypes), 1:8, -log10(matrixLMMCpTP), breaks=breaks, col = heatcols, xaxt='n', yaxt='n', ylab="Time point", xlab="", main= "Per time point LMM-MQM mapping")
 axis(2, at=1:8, timepoints, las=2)
-axis(1, at=chrbreaks - (.5 * chrmap), names(chrmap), las=2)
+axis(1, at=chrbreaks - (.5 * chrmap), names(chrmap), las=1)
 box()
 abline(v = chrbreaks)
 abline(h = 1:8 + 0.5)
 onChr <- rownames(map[map[, "Chr"] == 3,])
 par(xpd=TRUE)
-arrows(which(rownames(map) %in% top.markers), 9,which(rownames(map) %in% top.markers), 8.5, length=0.1, col=1, lwd=1)
-text(which(rownames(map) %in% top.markers), 9.3, paste0("nR",1:5),cex=0.6)
+
+pmarker <- which(rownames(map) %in% top.markers)
+pmarker[2] <- pmarker[2] - 150
+pmarker[3] <- pmarker[3] + 150
+arrows(pmarker, 9.5,which(rownames(map) %in% top.markers), 8.5, length=0.1, col=1, lwd=1)
+text(pmarker, 10, paste0("nR",1:5),cex=1.0)
 
 #legend(-1500, 8, paste0(breaks[-length(breaks)], " - ",c(breaks[-1])), fill=heatcols, title="LOD score")
 
@@ -258,10 +265,10 @@ legend("topright", c("LMM mapping", "LMM MQM mapping"), col=c("black", "blue"), 
 par(xpd=TRUE)
 arrows(map["UNC5048297", "sumPos"], 12, map["UNC5048297", "sumPos"], 15, length=0.1, col=1, lwd=1.2)
 text(map["UNC5048297", "sumPos"], 11, expression(paste(italic("jObes1"), "QTL")), cex=1.2)
-arrows(map["UNC030576333", "sumPos"], -1.8, map["UNC030576333", "sumPos"], - 0.7, length=0.1, col=1, lwd=1.5)
-text(map["UNC030576333", "sumPos"], -2.2, "nR2", cex=1.2)
-arrows(map["JAX00522656", "sumPos"], -1.8, map["JAX00522656", "sumPos"], - 0.7, length=0.1, col=1, lwd=1.5)
-text(map["JAX00522656", "sumPos"], -2.2, "nR3", cex=1.2)
+arrows(map["UNC030576333", "sumPos"], 8, map["UNC030576333", "sumPos"], 7, length=0.1, col=1, lwd=1.5)
+text(map["UNC030576333", "sumPos"], 8.5, "nR2", cex=1.2)
+arrows(map["JAX00522656", "sumPos"], 7, map["JAX00522656", "sumPos"], 6, length=0.1, col=1, lwd=1.5)
+text(map["JAX00522656", "sumPos"], 7.5, "nR3", cex=1.2)
 par(xpd=FALSE)
 
 above <- rownames(global.lmm)[which(-log10(global.lmm[,"F_M_C"]) >= -log10(0.05/nrow(genotypes)))]

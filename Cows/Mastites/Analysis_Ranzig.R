@@ -1,4 +1,4 @@
-setwd("D:/Edrive/Cow/Ranzig")
+setwd("D:/Edrive/Cow/HERDE")
 mydata <- read.table("data.txt", sep="\t", header=TRUE)
 isMastites = which(grepl("1.13", mydata[,"STAUFEN"], fixed=TRUE))
 mastitesData = mydata[isMastites, ]
@@ -54,7 +54,7 @@ generateInfo = function(mastitesData){
     }else{
       mastitesInfo = rbind(mastitesInfo, c(cow, 1, 1))
     }
-    cat("cow",cow,"\n")
+    #cat("cow",cow,"\n")
   }
   colnames(mastitesInfo) <- c("OHR", "nDiagnosis", "nMastites")
   return(mastitesInfo)

@@ -41,8 +41,10 @@ aa <- power_n_hsq(seq(25, 1000, 25), (1:10)/100 ,2e-06)
 colfunc <- colorRampPalette(c("red","gold","springgreen","royalblue"))
 colz <- colfunc(ncol(aa))
 
-plot(c(0,1000), y = c(0, 1), xlab="Sample Size", ylab = "Power", main= "Power analysis GWAS (threshold = 2e-06)", sub = "Computation based on DOI: 10.1016/j.ajhg.2017.06.005", t = 'n', las=2,xaxt='n')
-axis(1, at = seq(0,1000,50), seq(0,1000,50))
+op <- par(mar = c(10,10,10,10))
+plot(c(0,1000), y = c(0, 1), xlab="Sample Size", ylab = "Power", main= "Power analysis GWAS (threshold = 2e-06)", t = 'n', cex.lab = 1.5, las=2,xaxt='n', yaxt='n',cex.axis=1.5)
+axis(1, at = seq(0,1000,50), seq(0,1000,50),cex.axis=1.2)
+axis(2, at = seq(0,1,0.1), paste0(seq(0,100,10), "%"),cex.axis=1.2, las=2)
 i <- 1
 apply(aa, 2, function(x){
   points(rownames(aa), x, t = 'b', col = colz[i], pch=19)

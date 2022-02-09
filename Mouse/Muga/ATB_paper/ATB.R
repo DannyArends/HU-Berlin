@@ -219,8 +219,10 @@ map.autosomes <- map[which(map[,"Chr"] %in% 1:19),]
 
 #postscript("Figure_2.eps", horizontal = FALSE, paper = "special", width=12, height=8)
 
+png("Figure1.png", width = 4800, height = 2400, res = 600, pointsize = 6)
+
 op <- par(mfrow=c(1,1))
-op <- par(mar =c(4,4,2,1))
+op <- par(mar =c(4,4,4,4))
 
 ymax <- max(as.numeric(map.autosomes[,"Pos"]))
 
@@ -260,10 +262,8 @@ for(x in 1:19){
   mtext("♀", at = x + 0.22, side=1, cex=1.2)
 }
 legend("topright", c("Suitable marker", "Founders equal", "Unsuitable marker", "Marker out of HWE"), fill = c("black", "beige", "darkgray", "red"),cex=1.2)
-legend(x=18.12,y = 159900000, c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"),cex=1.2)
-
-
-#dev.off()
+legend(x=18.27,y = 160000000, c("B6N", "BFMI"), fill = c("cornflowerblue", "orange"),cex=1.2)
+dev.off()
 
 ## Create the chromosome plot for generation 28 and generation 27
 map <- marker.annot[unique(rownames(counts27), rownames(counts28)), ]

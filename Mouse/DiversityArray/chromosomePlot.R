@@ -27,7 +27,7 @@ chromosomePlot <- function(file, main, plotMarkers = TRUE){
   })
   aa <- apply(snpOUT, 1,function(x){
     yloc <- match(x["Chr"], chromosomes); xloc <- x["Location"]
-    cat(x["Chr"],"->",yloc,"\n")
+    #cat(x["Chr"],"->",yloc,"\n")
     points(x=xloc, y=yloc+0.15, pch='▼', col='red',cex=0.5)
   })
   if(plotMarkers){

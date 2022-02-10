@@ -1,7 +1,7 @@
 
 library(ShortRead)
 
-base <- "FKR02_3bfmi_R2_001"
+base <- "FKR02_6b6n_R1_001"
 
 f1 <- FastqStreamer(paste0(base, ".fastq.gz"), n=25000000)
 batch <- 1

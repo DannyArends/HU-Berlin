@@ -42,10 +42,10 @@ nohup ~/Github/HU-Berlin/Florian/Hi-C/iterativeMapping/bin/IterativeMapping \
 /home/danny/NAS/Mouse/Reference_Genomes/GRCm38_68/GRCm38_68-digested.bed \
 /halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n_R1.subset1.alignment \
 /halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n_R2.subset1.alignment \
-/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n_R2.subset1.merged.alignments.txt
+/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n.subset1.merged.alignments.txt
 
 # Genome binning
 ~/Github/HU-Berlin/Florian/Hi-C/genomeBinning/bin/GenomeBinning \
 /home/danny/NAS/Mouse/Reference_Genomes/GRCm38_68/GRCm38_68-digested.bed \
-/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n_R2.subset1.merged.alignments.txt \
-/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n_R2.subset1.binned.alignments.txt
+/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n.subset1.merged.alignments.txt \
+/halde/Florian/raw_data/FKR02_2b6n/FKR02_2b6n.subset1.binned.alignments.txt

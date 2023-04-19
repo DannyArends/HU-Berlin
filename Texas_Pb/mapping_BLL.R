@@ -1,7 +1,7 @@
-setwd("D:/Ddrive/Github/HU-Berlin/Texas_Pb")
+setwd("~/Github/HU-Berlin/Texas_Pb")
 source("functions.R")
 
-setwd("D:/Edrive/Mouse/Texas_Pb")
+setwd("~/Data/Texas_Pb")
 map <- read.table("reblasted_map.txt",sep="\t", header=TRUE, row.names=1)
 gts <- read.table("genotypes_F2_filtered_ordered.txt",sep="\t", header=TRUE, row.names=1)
 phe <- read.table("F2_phenotypes_cleaned_matched.txt",sep="\t", header=TRUE, row.names=1, na.strings=c("","-", "na", "NA", "NaN", "X", "x"))
@@ -21,8 +21,8 @@ phenotypes <- c("BLL", "weightBeforeDiet", "weightInitialMRI", "fatInitial", "le
                 "leanMassInitial", "weightFinalMRI", "fatFinal", "leanFinal", "totalWaterFinal", "fatMassFinal", "leanMassFinal", 
                 "urineVolume", "waterConsumed", "waterConsumedDayMouse", "ageAtDosing", "ageAtDosingW", "ageAtUC", "ageAtUCW", "fatGain", "weightGain")
 
-pheM <- phe[phe[, "sex"] == "M",phenotypes]
-pheF <- phe[phe[, "sex"] == "F",phenotypes]
+pheM <- phe[phe[, "sex"] == "M", phenotypes]
+pheF <- phe[phe[, "sex"] == "F", phenotypes]
 
 op <- par(mar=c(12,4,2,2))
 plot(c(1,length(phenotypes)), c(-1,1), main = "Correlations",xaxt='n',xlab="", ylab="Pearson's R", las=2, t = 'n')
@@ -172,6 +172,10 @@ chr7Top <- "gUNC13158239"
 gts.num <- read.table("genotypes_F2_filtered_ordered_numeric.txt", sep = "\t")
 
 BLLadj <- residuals(lm(BLL ~ sex + urineVolume + waterConsumed, data = phe)) + mean(phe[,"BLL"], na.rm=TRUE)
+
+phe <- cbind(phe[,1:2], BLLadj = round(BLLadj[rownames(phe)],1), phe[,3:ncol(phe)])
+write.table(phe, "phe_BLLadjusted.txt",sep="\t", quote=FALSE)
+
 op <- par(mfrow=c(1,2))
 plot(c(0.4, 3.6), c(0,100), t = 'n', xaxt='n', las=2, ylab = "Adjusted blood lead level (BLL)", xlab="Genotype", main=paste0("BLL - Combined - ",chr1Top))
 boxplot(BLLadj ~ as.character(gts[chr1Top,names(BLLadj)]), notch=TRUE, yaxt='n', add=TRUE, col=c("gray25", "gray50", "gray75"))
